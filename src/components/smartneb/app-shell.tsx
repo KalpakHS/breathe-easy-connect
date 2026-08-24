@@ -44,6 +44,10 @@ export const patientNav: NavItem[] = [
   { label: "Settings", to: "/patient/settings", icon: Settings },
 ];
 
+export const doctorNav: NavItem[] = [
+  { label: "Clinical Dashboard", to: "/doctor/dashboard", icon: Stethoscope },
+];
+
 export const roleHome: Record<MeContext["role"], string> = {
   patient: "/patient/dashboard",
   doctor: "/doctor/dashboard",
