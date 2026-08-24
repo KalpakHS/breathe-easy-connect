@@ -233,6 +233,7 @@ function DoctorDashboard() {
           {selected ? (
             <PatientWorkspace
               key={selected}
+              signedIn={signedIn}
               patient={patients.find((p) => p.id === selected) ?? null}
               patientId={selected}
             />
