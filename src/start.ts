@@ -1,7 +1,9 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
-import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+// Replaces the generated `attachSupabaseAuth`: same bearer attachment, but it
+// also aborts protected calls made without a session (sign-out race).
+import { attachSupabaseAuthOrAbort } from "@/lib/supabase-auth-attacher";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
