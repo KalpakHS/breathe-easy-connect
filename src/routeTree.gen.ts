@@ -25,6 +25,7 @@ import { Route as AuthenticatedDoctorDashboardRouteImport } from './routes/_auth
 import { Route as AuthenticatedDoctorNotesRouteImport } from './routes/_authenticated/doctor/notes'
 import { Route as AuthenticatedDoctorProfileRouteImport } from './routes/_authenticated/doctor/profile'
 import { Route as AuthenticatedDoctorReportsRouteImport } from './routes/_authenticated/doctor/reports'
+import { Route as AuthenticatedDoctorSettingsRouteImport } from './routes/_authenticated/doctor/settings'
 import { Route as AuthenticatedDoctorSosRouteImport } from './routes/_authenticated/doctor/sos'
 import { Route as AuthenticatedPatientAdherenceRouteImport } from './routes/_authenticated/patient/adherence'
 import { Route as AuthenticatedPatientAlertsRouteImport } from './routes/_authenticated/patient/alerts'
@@ -133,6 +134,12 @@ const AuthenticatedDoctorReportsRoute =
   AuthenticatedDoctorReportsRouteImport.update({
     id: '/doctor/reports',
     path: '/doctor/reports',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDoctorSettingsRoute =
+  AuthenticatedDoctorSettingsRouteImport.update({
+    id: '/doctor/settings',
+    path: '/doctor/settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDoctorSosRoute = AuthenticatedDoctorSosRouteImport.update({
@@ -253,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/doctor/notes': typeof AuthenticatedDoctorNotesRoute
   '/doctor/profile': typeof AuthenticatedDoctorProfileRoute
   '/doctor/reports': typeof AuthenticatedDoctorReportsRoute
+  '/doctor/settings': typeof AuthenticatedDoctorSettingsRoute
   '/doctor/sos': typeof AuthenticatedDoctorSosRoute
   '/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/patient/alerts': typeof AuthenticatedPatientAlertsRoute
@@ -287,6 +295,7 @@ export interface FileRoutesByTo {
   '/doctor/notes': typeof AuthenticatedDoctorNotesRoute
   '/doctor/profile': typeof AuthenticatedDoctorProfileRoute
   '/doctor/reports': typeof AuthenticatedDoctorReportsRoute
+  '/doctor/settings': typeof AuthenticatedDoctorSettingsRoute
   '/doctor/sos': typeof AuthenticatedDoctorSosRoute
   '/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/patient/alerts': typeof AuthenticatedPatientAlertsRoute
@@ -323,6 +332,7 @@ export interface FileRoutesById {
   '/_authenticated/doctor/notes': typeof AuthenticatedDoctorNotesRoute
   '/_authenticated/doctor/profile': typeof AuthenticatedDoctorProfileRoute
   '/_authenticated/doctor/reports': typeof AuthenticatedDoctorReportsRoute
+  '/_authenticated/doctor/settings': typeof AuthenticatedDoctorSettingsRoute
   '/_authenticated/doctor/sos': typeof AuthenticatedDoctorSosRoute
   '/_authenticated/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/_authenticated/patient/alerts': typeof AuthenticatedPatientAlertsRoute
@@ -359,6 +369,7 @@ export interface FileRouteTypes {
     | '/doctor/notes'
     | '/doctor/profile'
     | '/doctor/reports'
+    | '/doctor/settings'
     | '/doctor/sos'
     | '/patient/adherence'
     | '/patient/alerts'
@@ -393,6 +404,7 @@ export interface FileRouteTypes {
     | '/doctor/notes'
     | '/doctor/profile'
     | '/doctor/reports'
+    | '/doctor/settings'
     | '/doctor/sos'
     | '/patient/adherence'
     | '/patient/alerts'
@@ -428,6 +440,7 @@ export interface FileRouteTypes {
     | '/_authenticated/doctor/notes'
     | '/_authenticated/doctor/profile'
     | '/_authenticated/doctor/reports'
+    | '/_authenticated/doctor/settings'
     | '/_authenticated/doctor/sos'
     | '/_authenticated/patient/adherence'
     | '/_authenticated/patient/alerts'
@@ -567,6 +580,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDoctorReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/doctor/settings': {
+      id: '/_authenticated/doctor/settings'
+      path: '/doctor/settings'
+      fullPath: '/doctor/settings'
+      preLoaderRoute: typeof AuthenticatedDoctorSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/doctor/sos': {
       id: '/_authenticated/doctor/sos'
       path: '/doctor/sos'
@@ -703,6 +723,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDoctorNotesRoute: typeof AuthenticatedDoctorNotesRoute
   AuthenticatedDoctorProfileRoute: typeof AuthenticatedDoctorProfileRoute
   AuthenticatedDoctorReportsRoute: typeof AuthenticatedDoctorReportsRoute
+  AuthenticatedDoctorSettingsRoute: typeof AuthenticatedDoctorSettingsRoute
   AuthenticatedDoctorSosRoute: typeof AuthenticatedDoctorSosRoute
   AuthenticatedPatientAdherenceRoute: typeof AuthenticatedPatientAdherenceRoute
   AuthenticatedPatientAlertsRoute: typeof AuthenticatedPatientAlertsRoute
@@ -736,6 +757,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDoctorNotesRoute: AuthenticatedDoctorNotesRoute,
   AuthenticatedDoctorProfileRoute: AuthenticatedDoctorProfileRoute,
   AuthenticatedDoctorReportsRoute: AuthenticatedDoctorReportsRoute,
+  AuthenticatedDoctorSettingsRoute: AuthenticatedDoctorSettingsRoute,
   AuthenticatedDoctorSosRoute: AuthenticatedDoctorSosRoute,
   AuthenticatedPatientAdherenceRoute: AuthenticatedPatientAdherenceRoute,
   AuthenticatedPatientAlertsRoute: AuthenticatedPatientAlertsRoute,
