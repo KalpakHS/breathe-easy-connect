@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedPatientAdherenceRouteImport } from './routes/_authenticated/patient/adherence'
 import { Route as AuthenticatedPatientDashboardRouteImport } from './routes/_authenticated/patient/dashboard'
 import { Route as AuthenticatedPatientMonitoringRouteImport } from './routes/_authenticated/patient/monitoring'
 import { Route as AuthenticatedPatientNebulizationRouteImport } from './routes/_authenticated/patient/nebulization'
@@ -31,6 +32,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPatientAdherenceRoute =
+  AuthenticatedPatientAdherenceRouteImport.update({
+    id: '/patient/adherence',
+    path: '/patient/adherence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPatientDashboardRoute =
   AuthenticatedPatientDashboardRouteImport.update({
     id: '/patient/dashboard',
@@ -59,6 +66,7 @@ const AuthenticatedPatientNebulizerRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
   '/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
   '/patient/nebulization': typeof AuthenticatedPatientNebulizationRoute
@@ -67,6 +75,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
   '/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
   '/patient/nebulization': typeof AuthenticatedPatientNebulizationRoute
@@ -77,6 +86,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/_authenticated/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
   '/_authenticated/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
   '/_authenticated/patient/nebulization': typeof AuthenticatedPatientNebulizationRoute
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/patient/adherence'
     | '/patient/dashboard'
     | '/patient/monitoring'
     | '/patient/nebulization'
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/patient/adherence'
     | '/patient/dashboard'
     | '/patient/monitoring'
     | '/patient/nebulization'
@@ -104,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/patient/adherence'
     | '/_authenticated/patient/dashboard'
     | '/_authenticated/patient/monitoring'
     | '/_authenticated/patient/nebulization'
@@ -139,6 +152,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/patient/adherence': {
+      id: '/_authenticated/patient/adherence'
+      path: '/patient/adherence'
+      fullPath: '/patient/adherence'
+      preLoaderRoute: typeof AuthenticatedPatientAdherenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/patient/dashboard': {
       id: '/_authenticated/patient/dashboard'
       path: '/patient/dashboard'
@@ -171,6 +191,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedPatientAdherenceRoute: typeof AuthenticatedPatientAdherenceRoute
   AuthenticatedPatientDashboardRoute: typeof AuthenticatedPatientDashboardRoute
   AuthenticatedPatientMonitoringRoute: typeof AuthenticatedPatientMonitoringRoute
   AuthenticatedPatientNebulizationRoute: typeof AuthenticatedPatientNebulizationRoute
@@ -178,6 +199,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedPatientAdherenceRoute: AuthenticatedPatientAdherenceRoute,
   AuthenticatedPatientDashboardRoute: AuthenticatedPatientDashboardRoute,
   AuthenticatedPatientMonitoringRoute: AuthenticatedPatientMonitoringRoute,
   AuthenticatedPatientNebulizationRoute: AuthenticatedPatientNebulizationRoute,
