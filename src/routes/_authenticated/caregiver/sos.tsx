@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createFileRoute as _unused } from "@tanstack/react-router";
 import { CaregiverPage } from "@/components/smartneb/caregiver-layout";
 import { SOSPanel } from "@/components/smartneb/sos-panel";
 import { useSignedIn } from "@/components/smartneb/use-signed-in";
