@@ -31,6 +31,7 @@ export type DoctorCarePlanRow = {
   instructions: string | null;
   start_date: string;
   end_date: string | null;
+  time_slots: string[];
   status: string;
   doctor_id: string | null;
   mine: boolean;
@@ -265,6 +266,7 @@ export const listDoctorCarePlans = createServerFn({ method: "GET" })
       instructions: row.instructions,
       start_date: row.start_date,
       end_date: row.end_date,
+      time_slots: Array.isArray(row.time_slots) ? (row.time_slots as string[]) : [],
       status: row.status,
       doctor_id: row.doctor_id,
       mine: Boolean(doctorId) && row.doctor_id === doctorId,
@@ -367,6 +369,7 @@ const editSchema = z.object({
   instructions: z.string().max(1000).optional().nullable(),
   startDate: z.string().min(8),
   endDate: z.string().min(8).optional().nullable(),
+  timeSlots: z.array(z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)).max(12).optional(),
 });
 
 export type CarePlanEditInput = z.infer<typeof editSchema>;
@@ -386,6 +389,7 @@ export const updateCarePlanDetails = createServerFn({ method: "POST" })
         instructions: data.instructions ?? null,
         start_date: data.startDate,
         end_date: data.endDate ?? null,
+        ...(data.timeSlots ? { time_slots: data.timeSlots } : {}),
       })
       .eq("id", data.planId)
       .select("id")

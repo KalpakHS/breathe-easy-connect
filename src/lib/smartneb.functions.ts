@@ -317,14 +317,19 @@ export const updateSession = createServerFn({ method: "POST" })
         status: data.action === "complete" ? "completed" : ratio >= 0.5 ? "partial" : "missed",
         completion_ratio: Number(ratio.toFixed(2)),
       });
-      await supabase.from("notifications").insert({
-        user_id: userId,
-        patient_id: session.patient_id,
-        type: data.action === "complete" ? "session_completed" : "session_stopped",
-        title:
-          data.action === "complete" ? "Nebulization session completed" : "Session ended early",
-        body: `${session.medication ?? "Therapy"} · ${Math.round(data.elapsedSeconds / 60)} min recorded`,
-      });
+      const { insertNotifications, careTeamUserIds } = await import("./notify.server");
+      const team = await careTeamUserIds(session.patient_id);
+      const detail = `${session.medication ?? "Therapy"} · ${Math.round(data.elapsedSeconds / 60)} min recorded`;
+      await insertNotifications(
+        team.all.map((id) => ({
+          user_id: id,
+          patient_id: session.patient_id,
+          type: data.action === "complete" ? "session_completed" : "session_stopped",
+          title:
+            data.action === "complete" ? "Nebulization session completed" : "Session ended early",
+          body: detail,
+        })),
+      );
       await supabase.from("audit_logs").insert({
         actor_id: userId,
         action: `session.${data.action}`,
@@ -609,6 +614,18 @@ export const markNotificationRead = createServerFn({ method: "POST" })
       .update({ read_at: new Date().toISOString() })
       .eq("id", data.id)
       .eq("user_id", context.userId);
+    return { ok: true };
+  });
+
+export const markAllNotificationsRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { error } = await context.supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("user_id", context.userId)
+      .is("read_at", null);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 

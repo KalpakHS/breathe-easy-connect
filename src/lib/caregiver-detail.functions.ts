@@ -37,6 +37,7 @@ export type CarePlanRow = {
   instructions: string | null;
   start_date: string;
   end_date: string | null;
+  time_slots: string[];
   status: string;
   doctorName: string | null;
 };
@@ -185,6 +186,7 @@ export const getCarePatientDetail = createServerFn({ method: "GET" })
         instructions: row.instructions,
         start_date: row.start_date,
         end_date: row.end_date,
+        time_slots: Array.isArray(row.time_slots) ? (row.time_slots as string[]) : [],
         status: row.status,
         doctorName: row.doctors?.full_name ?? null,
       })),
@@ -262,6 +264,7 @@ export const listCareCarePlans = createServerFn({ method: "GET" })
       instructions: row.instructions,
       start_date: row.start_date,
       end_date: row.end_date,
+      time_slots: Array.isArray(row.time_slots) ? (row.time_slots as string[]) : [],
       status: row.status,
       doctorName: row.doctors?.full_name ?? null,
     }));

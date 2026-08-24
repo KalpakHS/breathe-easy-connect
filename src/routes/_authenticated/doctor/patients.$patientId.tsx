@@ -33,6 +33,7 @@ import {
 import { DoctorPage } from "@/components/smartneb/doctor-layout";
 import { SOSPanel } from "@/components/smartneb/sos-panel";
 import { useSignedIn } from "@/components/smartneb/use-signed-in";
+import { TimeSlotsField } from "@/components/smartneb/time-slots-field";
 import { EmptyState, ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { StatusBadge, VitalCard, freshness, type VitalStatus } from "@/components/smartneb/vitals";
 import { TrendChart } from "@/components/smartneb/charts";
@@ -679,6 +680,11 @@ function CarePlanList({ patientId }: { patientId: string }) {
                 {plan.duration_minutes} min · {plan.frequency_per_day}x daily · from {plan.start_date}
                 {plan.end_date ? ` to ${plan.end_date}` : ""}
               </p>
+              {plan.time_slots?.length ? (
+                <p className="text-xs text-muted-foreground">
+                  Times: {plan.time_slots.join(" · ")}
+                </p>
+              ) : null}
               {plan.instructions ? (
                 <p className="mt-2 text-sm text-muted-foreground">{plan.instructions}</p>
               ) : null}
@@ -732,6 +738,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
     instructions: "",
     startDate: today(),
     endDate: "",
+    timeSlots: [] as string[],
   });
 
   const create = useMutation({
@@ -746,6 +753,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
           instructions: form.instructions.trim() || undefined,
           startDate: form.startDate,
           endDate: form.endDate || null,
+          timeSlots: form.timeSlots,
           publish: true,
         },
       }),
@@ -843,6 +851,12 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
               />
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <TimeSlotsField
+              value={form.timeSlots}
+              onChange={(t) => setForm((f) => ({ ...f, timeSlots: t }))}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="instructions">Instructions</Label>

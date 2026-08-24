@@ -136,8 +136,14 @@ export const respondToSOS = createServerFn({ method: "POST" })
       supabase.from("patients").select("user_id").eq("id", event.patient_id).maybeSingle(),
     ]);
 
+    const { insertNotifications, careTeamUserIds } = await import("./notify.server");
+    const team = await careTeamUserIds(event.patient_id, [userId]);
+    const verb = data.action === "resolve" ? "resolved" : "acknowledged";
+    const who = responder?.full_name ?? "A care team member";
+
+    const rows: { user_id: string; patient_id: string; type: string; title: string; body: string }[] = [];
     if (patient?.user_id) {
-      await supabase.from("notifications").insert({
+      rows.push({
         user_id: patient.user_id,
         patient_id: event.patient_id,
         type: "sos",
@@ -145,11 +151,19 @@ export const respondToSOS = createServerFn({ method: "POST" })
           data.action === "resolve"
             ? "Your emergency has been resolved"
             : "Your care team is responding",
-        body: `${responder?.full_name ?? "A care team member"} ${
-          data.action === "resolve" ? "resolved" : "acknowledged"
-        } your SOS.${data.note ? ` Note: ${data.note}` : ""}`,
+        body: `${who} ${verb} your SOS.${data.note ? ` Note: ${data.note}` : ""}`,
       });
     }
+    for (const id of team.clinicianUserIds) {
+      rows.push({
+        user_id: id,
+        patient_id: event.patient_id,
+        type: "sos",
+        title: `SOS ${verb}`,
+        body: `${who} ${verb} an emergency for a patient you support.`,
+      });
+    }
+    await insertNotifications(rows);
 
     await supabase.from("audit_logs").insert({
       actor_id: userId,
