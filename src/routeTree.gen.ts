@@ -22,6 +22,7 @@ import { Route as AuthenticatedPatientNebulizationRouteImport } from './routes/_
 import { Route as AuthenticatedPatientNebulizerRouteImport } from './routes/_authenticated/patient/nebulizer'
 import { Route as AuthenticatedPatientProfileRouteImport } from './routes/_authenticated/patient/profile'
 import { Route as AuthenticatedPatientReportsRouteImport } from './routes/_authenticated/patient/reports'
+import { Route as AuthenticatedPatientSettingsRouteImport } from './routes/_authenticated/patient/settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -97,6 +98,12 @@ const AuthenticatedPatientReportsRoute =
     path: '/patient/reports',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPatientSettingsRoute =
+  AuthenticatedPatientSettingsRouteImport.update({
+    id: '/patient/settings',
+    path: '/patient/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/patient/nebulizer': typeof AuthenticatedPatientNebulizerRoute
   '/patient/profile': typeof AuthenticatedPatientProfileRoute
   '/patient/reports': typeof AuthenticatedPatientReportsRoute
+  '/patient/settings': typeof AuthenticatedPatientSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -125,6 +133,7 @@ export interface FileRoutesByTo {
   '/patient/nebulizer': typeof AuthenticatedPatientNebulizerRoute
   '/patient/profile': typeof AuthenticatedPatientProfileRoute
   '/patient/reports': typeof AuthenticatedPatientReportsRoute
+  '/patient/settings': typeof AuthenticatedPatientSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -141,6 +150,7 @@ export interface FileRoutesById {
   '/_authenticated/patient/nebulizer': typeof AuthenticatedPatientNebulizerRoute
   '/_authenticated/patient/profile': typeof AuthenticatedPatientProfileRoute
   '/_authenticated/patient/reports': typeof AuthenticatedPatientReportsRoute
+  '/_authenticated/patient/settings': typeof AuthenticatedPatientSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/patient/nebulizer'
     | '/patient/profile'
     | '/patient/reports'
+    | '/patient/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/patient/nebulizer'
     | '/patient/profile'
     | '/patient/reports'
+    | '/patient/settings'
   id:
     | '__root__'
     | '/'
@@ -186,6 +198,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patient/nebulizer'
     | '/_authenticated/patient/profile'
     | '/_authenticated/patient/reports'
+    | '/_authenticated/patient/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -287,6 +300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/patient/settings': {
+      id: '/_authenticated/patient/settings'
+      path: '/patient/settings'
+      fullPath: '/patient/settings'
+      preLoaderRoute: typeof AuthenticatedPatientSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -301,6 +321,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPatientNebulizerRoute: typeof AuthenticatedPatientNebulizerRoute
   AuthenticatedPatientProfileRoute: typeof AuthenticatedPatientProfileRoute
   AuthenticatedPatientReportsRoute: typeof AuthenticatedPatientReportsRoute
+  AuthenticatedPatientSettingsRoute: typeof AuthenticatedPatientSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -314,6 +335,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPatientNebulizerRoute: AuthenticatedPatientNebulizerRoute,
   AuthenticatedPatientProfileRoute: AuthenticatedPatientProfileRoute,
   AuthenticatedPatientReportsRoute: AuthenticatedPatientReportsRoute,
+  AuthenticatedPatientSettingsRoute: AuthenticatedPatientSettingsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
