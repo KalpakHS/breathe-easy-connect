@@ -167,7 +167,7 @@ function DoctorDashboard() {
     return [...filtered].sort((a, b) => b.criticalAlerts - a.criticalAlerts || b.activeAlerts - a.activeAlerts);
   }, [roster.data, q]);
 
-  if (me.isLoading) {
+  if (me.isPending) {
     return (
       <div className="p-8">
         <LoadingSkeleton rows={4} />
