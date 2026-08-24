@@ -514,7 +514,7 @@ export const updateDevice = createServerFn({ method: "POST" })
     if (data.firmware) patch["firmware"] = data.firmware;
     if (!Object.keys(patch).length) return { ok: true };
 
-    const { error } = await context.supabase.from("devices").update(patch).eq("id", data.deviceId);
+    const { error } = await context.supabase.from("devices").update(patch as any).eq("id", data.deviceId);
     if (error) throw new Error(error.message);
     await audit(context as Ctx, "device.update", "device", data.deviceId, patch);
     return { ok: true };
@@ -530,7 +530,7 @@ export type AuditRow = {
   actorName: string | null;
   targetType: string | null;
   targetId: string | null;
-  meta: unknown;
+  meta: Record<string, unknown> | null;
   createdAt: string;
 };
 
@@ -558,7 +558,7 @@ export const listAuditLogs = createServerFn({ method: "GET" })
       actorName: r.actor_name ?? (r.actor_id ? (nameBy.get(r.actor_id) ?? null) : null),
       targetType: r.target_type,
       targetId: r.target_id,
-      meta: r.meta,
+      meta: (r.meta ?? null) as Record<string, unknown> | null,
       createdAt: r.created_at,
     }));
   });
