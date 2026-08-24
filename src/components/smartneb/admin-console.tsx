@@ -804,6 +804,8 @@ function AlertsTab({ enabled }: { enabled: boolean }) {
 /* ------------------------------ Audit ------------------------------ */
 
 function AuditTab({ enabled }: { enabled: boolean }) {
+  const [action, setAction] = useState("all");
+  const [term, setTerm] = useState("");
   const logs = useQuery({
     queryKey: ["admin-audit"],
     queryFn: () => listAuditLogs(),
@@ -817,11 +819,47 @@ function AuditTab({ enabled }: { enabled: boolean }) {
   if (!(logs.data ?? []).length)
     return <EmptyState title="No audit activity" description="Administrative actions are recorded here." />;
 
+  const rows = logs.data ?? [];
+  const actions = [...new Set(rows.map((l) => l.action))].sort();
+  const q = term.trim().toLowerCase();
+  const filtered = rows.filter((l) => {
+    if (action !== "all" && l.action !== action) return false;
+    if (!q) return true;
+    return [l.actorName, l.targetType, l.targetId, l.meta]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(q));
+  });
+
   return (
     <div className="panel p-4">
+      <div className="mb-3 flex flex-wrap gap-2">
+        <Input
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          placeholder="Search actor, target id or details…"
+          aria-label="Search audit log"
+          className="max-w-xs"
+        />
+        <Select value={action} onValueChange={setAction}>
+          <SelectTrigger className="w-56" aria-label="Filter by action">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All actions</SelectItem>
+            {actions.map((a) => (
+              <SelectItem key={a} value={a}>
+                {a}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="self-center text-xs text-muted-foreground">
+          {filtered.length} of {rows.length} entries
+        </span>
+      </div>
       <ScrollArea className="max-h-[32rem]">
         <ul className="divide-y pr-2">
-          {(logs.data ?? []).map((l) => (
+          {filtered.map((l) => (
             <li key={l.id} className="py-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{l.action}</Badge>
@@ -835,8 +873,14 @@ function AuditTab({ enabled }: { enabled: boolean }) {
               </p>
             </li>
           ))}
+          {filtered.length === 0 ? (
+            <li className="py-6 text-center text-sm text-muted-foreground">
+              No entries match these filters.
+            </li>
+          ) : null}
         </ul>
       </ScrollArea>
     </div>
   );
 }
+
