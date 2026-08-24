@@ -562,3 +562,50 @@ export const listAuditLogs = createServerFn({ method: "GET" })
       createdAt: r.created_at,
     }));
   });
+
+/* ------------------------------------------------------------------ */
+/* Alert monitoring                                                   */
+/* ------------------------------------------------------------------ */
+
+export type AdminAlertRow = {
+  id: string;
+  patientName: string;
+  mrn: string;
+  type: string;
+  severity: string;
+  status: string;
+  message: string;
+  value: number | null;
+  threshold: number | null;
+  createdAt: string;
+};
+
+export const listAdminAlerts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AdminAlertRow[]> => {
+    await assertStaff(context as Ctx);
+    const { supabase } = context;
+    const { data, error } = await supabase
+      .from("alerts")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    const ids = [...new Set((data ?? []).map((a: any) => a.patient_id))];
+    const { data: patients } = ids.length
+      ? await supabase.from("patients").select("id, full_name, mrn").in("id", ids)
+      : { data: [] as any[] };
+    const by = new Map((patients ?? []).map((p: any) => [p.id, p]));
+    return (data ?? []).map((a: any) => ({
+      id: a.id,
+      patientName: by.get(a.patient_id)?.full_name ?? "Patient",
+      mrn: by.get(a.patient_id)?.mrn ?? "--",
+      type: a.type,
+      severity: a.severity,
+      status: a.status,
+      message: a.message,
+      value: a.value == null ? null : Number(a.value),
+      threshold: a.threshold == null ? null : Number(a.threshold),
+      createdAt: a.created_at,
+    }));
+  });
