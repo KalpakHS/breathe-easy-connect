@@ -53,7 +53,16 @@ export const patientNav: NavItem[] = [
 
 export const doctorNav: NavItem[] = [
   { label: "Clinical Dashboard", to: "/doctor/dashboard", icon: Stethoscope },
+  { label: "My Patients", to: "/doctor/patients", icon: Users },
+  { label: "Alerts", to: "/doctor/alerts", icon: AlertTriangle },
+  { label: "Emergency SOS", to: "/doctor/sos", icon: Siren },
+  { label: "Care Plans", to: "/doctor/care-plans", icon: ClipboardList },
+  { label: "Clinical Notes", to: "/doctor/notes", icon: NotebookPen },
+  { label: "Reports", to: "/doctor/reports", icon: FileText },
+  { label: "Profile", to: "/doctor/profile", icon: User },
+  { label: "Settings", to: "/doctor/settings", icon: Settings },
 ];
+
 
 export const caregiverNav: NavItem[] = [
   { label: "Dashboard", to: "/caregiver/dashboard", icon: HeartHandshake },

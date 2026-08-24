@@ -19,7 +19,14 @@ import { Route as AuthenticatedCaregiverDashboardRouteImport } from './routes/_a
 import { Route as AuthenticatedCaregiverNotesRouteImport } from './routes/_authenticated/caregiver/notes'
 import { Route as AuthenticatedCaregiverProfileRouteImport } from './routes/_authenticated/caregiver/profile'
 import { Route as AuthenticatedCaregiverSosRouteImport } from './routes/_authenticated/caregiver/sos'
+import { Route as AuthenticatedDoctorAlertsRouteImport } from './routes/_authenticated/doctor/alerts'
+import { Route as AuthenticatedDoctorCarePlansRouteImport } from './routes/_authenticated/doctor/care-plans'
 import { Route as AuthenticatedDoctorDashboardRouteImport } from './routes/_authenticated/doctor/dashboard'
+import { Route as AuthenticatedDoctorNotesRouteImport } from './routes/_authenticated/doctor/notes'
+import { Route as AuthenticatedDoctorProfileRouteImport } from './routes/_authenticated/doctor/profile'
+import { Route as AuthenticatedDoctorReportsRouteImport } from './routes/_authenticated/doctor/reports'
+import { Route as AuthenticatedDoctorSettingsRouteImport } from './routes/_authenticated/doctor/settings'
+import { Route as AuthenticatedDoctorSosRouteImport } from './routes/_authenticated/doctor/sos'
 import { Route as AuthenticatedPatientAdherenceRouteImport } from './routes/_authenticated/patient/adherence'
 import { Route as AuthenticatedPatientAlertsRouteImport } from './routes/_authenticated/patient/alerts'
 import { Route as AuthenticatedPatientAssistantRouteImport } from './routes/_authenticated/patient/assistant'
@@ -34,6 +41,8 @@ import { Route as AuthenticatedPatientSettingsRouteImport } from './routes/_auth
 import { Route as AuthenticatedSuperAdminDashboardRouteImport } from './routes/_authenticated/super-admin/dashboard'
 import { Route as AuthenticatedCaregiverPatientsIndexRouteImport } from './routes/_authenticated/caregiver/patients.index'
 import { Route as AuthenticatedCaregiverPatientsPatientIdRouteImport } from './routes/_authenticated/caregiver/patients.$patientId'
+import { Route as AuthenticatedDoctorPatientsIndexRouteImport } from './routes/_authenticated/doctor/patients.index'
+import { Route as AuthenticatedDoctorPatientsPatientIdRouteImport } from './routes/_authenticated/doctor/patients.$patientId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -91,12 +100,53 @@ const AuthenticatedCaregiverSosRoute =
     path: '/caregiver/sos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDoctorAlertsRoute =
+  AuthenticatedDoctorAlertsRouteImport.update({
+    id: '/doctor/alerts',
+    path: '/doctor/alerts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDoctorCarePlansRoute =
+  AuthenticatedDoctorCarePlansRouteImport.update({
+    id: '/doctor/care-plans',
+    path: '/doctor/care-plans',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDoctorDashboardRoute =
   AuthenticatedDoctorDashboardRouteImport.update({
     id: '/doctor/dashboard',
     path: '/doctor/dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDoctorNotesRoute =
+  AuthenticatedDoctorNotesRouteImport.update({
+    id: '/doctor/notes',
+    path: '/doctor/notes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDoctorProfileRoute =
+  AuthenticatedDoctorProfileRouteImport.update({
+    id: '/doctor/profile',
+    path: '/doctor/profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDoctorReportsRoute =
+  AuthenticatedDoctorReportsRouteImport.update({
+    id: '/doctor/reports',
+    path: '/doctor/reports',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDoctorSettingsRoute =
+  AuthenticatedDoctorSettingsRouteImport.update({
+    id: '/doctor/settings',
+    path: '/doctor/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDoctorSosRoute = AuthenticatedDoctorSosRouteImport.update({
+  id: '/doctor/sos',
+  path: '/doctor/sos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPatientAdherenceRoute =
   AuthenticatedPatientAdherenceRouteImport.update({
     id: '/patient/adherence',
@@ -181,6 +231,18 @@ const AuthenticatedCaregiverPatientsPatientIdRoute =
     path: '/caregiver/patients/$patientId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDoctorPatientsIndexRoute =
+  AuthenticatedDoctorPatientsIndexRouteImport.update({
+    id: '/doctor/patients/',
+    path: '/doctor/patients/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDoctorPatientsPatientIdRoute =
+  AuthenticatedDoctorPatientsPatientIdRouteImport.update({
+    id: '/doctor/patients/$patientId',
+    path: '/doctor/patients/$patientId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -192,7 +254,14 @@ export interface FileRoutesByFullPath {
   '/caregiver/notes': typeof AuthenticatedCaregiverNotesRoute
   '/caregiver/profile': typeof AuthenticatedCaregiverProfileRoute
   '/caregiver/sos': typeof AuthenticatedCaregiverSosRoute
+  '/doctor/alerts': typeof AuthenticatedDoctorAlertsRoute
+  '/doctor/care-plans': typeof AuthenticatedDoctorCarePlansRoute
   '/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
+  '/doctor/notes': typeof AuthenticatedDoctorNotesRoute
+  '/doctor/profile': typeof AuthenticatedDoctorProfileRoute
+  '/doctor/reports': typeof AuthenticatedDoctorReportsRoute
+  '/doctor/settings': typeof AuthenticatedDoctorSettingsRoute
+  '/doctor/sos': typeof AuthenticatedDoctorSosRoute
   '/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/patient/alerts': typeof AuthenticatedPatientAlertsRoute
   '/patient/assistant': typeof AuthenticatedPatientAssistantRoute
@@ -206,7 +275,9 @@ export interface FileRoutesByFullPath {
   '/patient/settings': typeof AuthenticatedPatientSettingsRoute
   '/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
   '/caregiver/patients/$patientId': typeof AuthenticatedCaregiverPatientsPatientIdRoute
+  '/doctor/patients/$patientId': typeof AuthenticatedDoctorPatientsPatientIdRoute
   '/caregiver/patients/': typeof AuthenticatedCaregiverPatientsIndexRoute
+  '/doctor/patients/': typeof AuthenticatedDoctorPatientsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -218,7 +289,14 @@ export interface FileRoutesByTo {
   '/caregiver/notes': typeof AuthenticatedCaregiverNotesRoute
   '/caregiver/profile': typeof AuthenticatedCaregiverProfileRoute
   '/caregiver/sos': typeof AuthenticatedCaregiverSosRoute
+  '/doctor/alerts': typeof AuthenticatedDoctorAlertsRoute
+  '/doctor/care-plans': typeof AuthenticatedDoctorCarePlansRoute
   '/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
+  '/doctor/notes': typeof AuthenticatedDoctorNotesRoute
+  '/doctor/profile': typeof AuthenticatedDoctorProfileRoute
+  '/doctor/reports': typeof AuthenticatedDoctorReportsRoute
+  '/doctor/settings': typeof AuthenticatedDoctorSettingsRoute
+  '/doctor/sos': typeof AuthenticatedDoctorSosRoute
   '/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/patient/alerts': typeof AuthenticatedPatientAlertsRoute
   '/patient/assistant': typeof AuthenticatedPatientAssistantRoute
@@ -232,7 +310,9 @@ export interface FileRoutesByTo {
   '/patient/settings': typeof AuthenticatedPatientSettingsRoute
   '/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
   '/caregiver/patients/$patientId': typeof AuthenticatedCaregiverPatientsPatientIdRoute
+  '/doctor/patients/$patientId': typeof AuthenticatedDoctorPatientsPatientIdRoute
   '/caregiver/patients': typeof AuthenticatedCaregiverPatientsIndexRoute
+  '/doctor/patients': typeof AuthenticatedDoctorPatientsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -246,7 +326,14 @@ export interface FileRoutesById {
   '/_authenticated/caregiver/notes': typeof AuthenticatedCaregiverNotesRoute
   '/_authenticated/caregiver/profile': typeof AuthenticatedCaregiverProfileRoute
   '/_authenticated/caregiver/sos': typeof AuthenticatedCaregiverSosRoute
+  '/_authenticated/doctor/alerts': typeof AuthenticatedDoctorAlertsRoute
+  '/_authenticated/doctor/care-plans': typeof AuthenticatedDoctorCarePlansRoute
   '/_authenticated/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
+  '/_authenticated/doctor/notes': typeof AuthenticatedDoctorNotesRoute
+  '/_authenticated/doctor/profile': typeof AuthenticatedDoctorProfileRoute
+  '/_authenticated/doctor/reports': typeof AuthenticatedDoctorReportsRoute
+  '/_authenticated/doctor/settings': typeof AuthenticatedDoctorSettingsRoute
+  '/_authenticated/doctor/sos': typeof AuthenticatedDoctorSosRoute
   '/_authenticated/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/_authenticated/patient/alerts': typeof AuthenticatedPatientAlertsRoute
   '/_authenticated/patient/assistant': typeof AuthenticatedPatientAssistantRoute
@@ -260,7 +347,9 @@ export interface FileRoutesById {
   '/_authenticated/patient/settings': typeof AuthenticatedPatientSettingsRoute
   '/_authenticated/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
   '/_authenticated/caregiver/patients/$patientId': typeof AuthenticatedCaregiverPatientsPatientIdRoute
+  '/_authenticated/doctor/patients/$patientId': typeof AuthenticatedDoctorPatientsPatientIdRoute
   '/_authenticated/caregiver/patients/': typeof AuthenticatedCaregiverPatientsIndexRoute
+  '/_authenticated/doctor/patients/': typeof AuthenticatedDoctorPatientsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -274,7 +363,14 @@ export interface FileRouteTypes {
     | '/caregiver/notes'
     | '/caregiver/profile'
     | '/caregiver/sos'
+    | '/doctor/alerts'
+    | '/doctor/care-plans'
     | '/doctor/dashboard'
+    | '/doctor/notes'
+    | '/doctor/profile'
+    | '/doctor/reports'
+    | '/doctor/settings'
+    | '/doctor/sos'
     | '/patient/adherence'
     | '/patient/alerts'
     | '/patient/assistant'
@@ -288,7 +384,9 @@ export interface FileRouteTypes {
     | '/patient/settings'
     | '/super-admin/dashboard'
     | '/caregiver/patients/$patientId'
+    | '/doctor/patients/$patientId'
     | '/caregiver/patients/'
+    | '/doctor/patients/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -300,7 +398,14 @@ export interface FileRouteTypes {
     | '/caregiver/notes'
     | '/caregiver/profile'
     | '/caregiver/sos'
+    | '/doctor/alerts'
+    | '/doctor/care-plans'
     | '/doctor/dashboard'
+    | '/doctor/notes'
+    | '/doctor/profile'
+    | '/doctor/reports'
+    | '/doctor/settings'
+    | '/doctor/sos'
     | '/patient/adherence'
     | '/patient/alerts'
     | '/patient/assistant'
@@ -314,7 +419,9 @@ export interface FileRouteTypes {
     | '/patient/settings'
     | '/super-admin/dashboard'
     | '/caregiver/patients/$patientId'
+    | '/doctor/patients/$patientId'
     | '/caregiver/patients'
+    | '/doctor/patients'
   id:
     | '__root__'
     | '/'
@@ -327,7 +434,14 @@ export interface FileRouteTypes {
     | '/_authenticated/caregiver/notes'
     | '/_authenticated/caregiver/profile'
     | '/_authenticated/caregiver/sos'
+    | '/_authenticated/doctor/alerts'
+    | '/_authenticated/doctor/care-plans'
     | '/_authenticated/doctor/dashboard'
+    | '/_authenticated/doctor/notes'
+    | '/_authenticated/doctor/profile'
+    | '/_authenticated/doctor/reports'
+    | '/_authenticated/doctor/settings'
+    | '/_authenticated/doctor/sos'
     | '/_authenticated/patient/adherence'
     | '/_authenticated/patient/alerts'
     | '/_authenticated/patient/assistant'
@@ -341,7 +455,9 @@ export interface FileRouteTypes {
     | '/_authenticated/patient/settings'
     | '/_authenticated/super-admin/dashboard'
     | '/_authenticated/caregiver/patients/$patientId'
+    | '/_authenticated/doctor/patients/$patientId'
     | '/_authenticated/caregiver/patients/'
+    | '/_authenticated/doctor/patients/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -422,11 +538,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCaregiverSosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/doctor/alerts': {
+      id: '/_authenticated/doctor/alerts'
+      path: '/doctor/alerts'
+      fullPath: '/doctor/alerts'
+      preLoaderRoute: typeof AuthenticatedDoctorAlertsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/doctor/care-plans': {
+      id: '/_authenticated/doctor/care-plans'
+      path: '/doctor/care-plans'
+      fullPath: '/doctor/care-plans'
+      preLoaderRoute: typeof AuthenticatedDoctorCarePlansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/doctor/dashboard': {
       id: '/_authenticated/doctor/dashboard'
       path: '/doctor/dashboard'
       fullPath: '/doctor/dashboard'
       preLoaderRoute: typeof AuthenticatedDoctorDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/doctor/notes': {
+      id: '/_authenticated/doctor/notes'
+      path: '/doctor/notes'
+      fullPath: '/doctor/notes'
+      preLoaderRoute: typeof AuthenticatedDoctorNotesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/doctor/profile': {
+      id: '/_authenticated/doctor/profile'
+      path: '/doctor/profile'
+      fullPath: '/doctor/profile'
+      preLoaderRoute: typeof AuthenticatedDoctorProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/doctor/reports': {
+      id: '/_authenticated/doctor/reports'
+      path: '/doctor/reports'
+      fullPath: '/doctor/reports'
+      preLoaderRoute: typeof AuthenticatedDoctorReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/doctor/settings': {
+      id: '/_authenticated/doctor/settings'
+      path: '/doctor/settings'
+      fullPath: '/doctor/settings'
+      preLoaderRoute: typeof AuthenticatedDoctorSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/doctor/sos': {
+      id: '/_authenticated/doctor/sos'
+      path: '/doctor/sos'
+      fullPath: '/doctor/sos'
+      preLoaderRoute: typeof AuthenticatedDoctorSosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/patient/adherence': {
@@ -527,6 +692,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCaregiverPatientsPatientIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/doctor/patients/': {
+      id: '/_authenticated/doctor/patients/'
+      path: '/doctor/patients'
+      fullPath: '/doctor/patients/'
+      preLoaderRoute: typeof AuthenticatedDoctorPatientsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/doctor/patients/$patientId': {
+      id: '/_authenticated/doctor/patients/$patientId'
+      path: '/doctor/patients/$patientId'
+      fullPath: '/doctor/patients/$patientId'
+      preLoaderRoute: typeof AuthenticatedDoctorPatientsPatientIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -538,7 +717,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCaregiverNotesRoute: typeof AuthenticatedCaregiverNotesRoute
   AuthenticatedCaregiverProfileRoute: typeof AuthenticatedCaregiverProfileRoute
   AuthenticatedCaregiverSosRoute: typeof AuthenticatedCaregiverSosRoute
+  AuthenticatedDoctorAlertsRoute: typeof AuthenticatedDoctorAlertsRoute
+  AuthenticatedDoctorCarePlansRoute: typeof AuthenticatedDoctorCarePlansRoute
   AuthenticatedDoctorDashboardRoute: typeof AuthenticatedDoctorDashboardRoute
+  AuthenticatedDoctorNotesRoute: typeof AuthenticatedDoctorNotesRoute
+  AuthenticatedDoctorProfileRoute: typeof AuthenticatedDoctorProfileRoute
+  AuthenticatedDoctorReportsRoute: typeof AuthenticatedDoctorReportsRoute
+  AuthenticatedDoctorSettingsRoute: typeof AuthenticatedDoctorSettingsRoute
+  AuthenticatedDoctorSosRoute: typeof AuthenticatedDoctorSosRoute
   AuthenticatedPatientAdherenceRoute: typeof AuthenticatedPatientAdherenceRoute
   AuthenticatedPatientAlertsRoute: typeof AuthenticatedPatientAlertsRoute
   AuthenticatedPatientAssistantRoute: typeof AuthenticatedPatientAssistantRoute
@@ -552,7 +738,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPatientSettingsRoute: typeof AuthenticatedPatientSettingsRoute
   AuthenticatedSuperAdminDashboardRoute: typeof AuthenticatedSuperAdminDashboardRoute
   AuthenticatedCaregiverPatientsPatientIdRoute: typeof AuthenticatedCaregiverPatientsPatientIdRoute
+  AuthenticatedDoctorPatientsPatientIdRoute: typeof AuthenticatedDoctorPatientsPatientIdRoute
   AuthenticatedCaregiverPatientsIndexRoute: typeof AuthenticatedCaregiverPatientsIndexRoute
+  AuthenticatedDoctorPatientsIndexRoute: typeof AuthenticatedDoctorPatientsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -563,7 +751,14 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCaregiverNotesRoute: AuthenticatedCaregiverNotesRoute,
   AuthenticatedCaregiverProfileRoute: AuthenticatedCaregiverProfileRoute,
   AuthenticatedCaregiverSosRoute: AuthenticatedCaregiverSosRoute,
+  AuthenticatedDoctorAlertsRoute: AuthenticatedDoctorAlertsRoute,
+  AuthenticatedDoctorCarePlansRoute: AuthenticatedDoctorCarePlansRoute,
   AuthenticatedDoctorDashboardRoute: AuthenticatedDoctorDashboardRoute,
+  AuthenticatedDoctorNotesRoute: AuthenticatedDoctorNotesRoute,
+  AuthenticatedDoctorProfileRoute: AuthenticatedDoctorProfileRoute,
+  AuthenticatedDoctorReportsRoute: AuthenticatedDoctorReportsRoute,
+  AuthenticatedDoctorSettingsRoute: AuthenticatedDoctorSettingsRoute,
+  AuthenticatedDoctorSosRoute: AuthenticatedDoctorSosRoute,
   AuthenticatedPatientAdherenceRoute: AuthenticatedPatientAdherenceRoute,
   AuthenticatedPatientAlertsRoute: AuthenticatedPatientAlertsRoute,
   AuthenticatedPatientAssistantRoute: AuthenticatedPatientAssistantRoute,
@@ -578,8 +773,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSuperAdminDashboardRoute: AuthenticatedSuperAdminDashboardRoute,
   AuthenticatedCaregiverPatientsPatientIdRoute:
     AuthenticatedCaregiverPatientsPatientIdRoute,
+  AuthenticatedDoctorPatientsPatientIdRoute:
+    AuthenticatedDoctorPatientsPatientIdRoute,
   AuthenticatedCaregiverPatientsIndexRoute:
     AuthenticatedCaregiverPatientsIndexRoute,
+  AuthenticatedDoctorPatientsIndexRoute: AuthenticatedDoctorPatientsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
