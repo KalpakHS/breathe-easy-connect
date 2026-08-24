@@ -27,7 +27,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThemeToggle } from "./theme";
-import { useSignedIn } from "./patient-layout";
+import { useSignedIn } from "./use-signed-in";
 import { cn } from "@/lib/utils";
 
 type NavItem = { label: string; to: string; icon: typeof Activity };

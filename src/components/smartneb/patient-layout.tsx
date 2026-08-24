@@ -1,28 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { getMe, getPatientSnapshot } from "@/lib/smartneb.functions";
 import { AppShell, patientNav } from "./app-shell";
+import { useSignedIn } from "./use-signed-in";
 import { ErrorState, LoadingSkeleton } from "./states";
-
-/** Tracks whether a Supabase session exists so authed queries never fire signed out. */
-export function useSignedIn() {
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
-  useEffect(() => {
-    let active = true;
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (active) setSignedIn(Boolean(session));
-    });
-    void supabase.auth.getSession().then(({ data }) => {
-      if (active) setSignedIn(Boolean(data.session));
-    });
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
-  return signedIn;
-}
 
 export function useMe() {
   const signedIn = useSignedIn();
@@ -91,3 +72,5 @@ export function greeting() {
   if (h < 17) return "Good afternoon";
   return "Good evening";
 }
+
+export { useSignedIn };
