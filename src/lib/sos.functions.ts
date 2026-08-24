@@ -141,7 +141,7 @@ export const respondToSOS = createServerFn({ method: "POST" })
     const verb = data.action === "resolve" ? "resolved" : "acknowledged";
     const who = responder?.full_name ?? "A care team member";
 
-    const rows = [];
+    const rows: { user_id: string; patient_id: string; type: string; title: string; body: string }[] = [];
     if (patient?.user_id) {
       rows.push({
         user_id: patient.user_id,
