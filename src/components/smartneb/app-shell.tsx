@@ -87,7 +87,7 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
   return (
     <nav aria-label="Primary" className="space-y-1">
       {items.map((item) => {
-        const active = pathname === item.to;
+        const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
         return (
           <Link
             key={item.to}
