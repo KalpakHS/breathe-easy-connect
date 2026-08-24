@@ -81,7 +81,7 @@ export const updateAlertThresholds = createServerFn({ method: "POST" })
       action: "alert.thresholds.update",
       target_type: "patient",
       target_id: data.patientId,
-      meta: patch,
+      meta: patch as any,
     });
     return { ok: true };
   });
