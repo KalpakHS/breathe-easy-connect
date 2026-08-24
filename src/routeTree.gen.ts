@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPatientAdherenceRouteImport } from './routes/_authenticated/patient/adherence'
 import { Route as AuthenticatedPatientAlertsRouteImport } from './routes/_authenticated/patient/alerts'
+import { Route as AuthenticatedPatientAssistantRouteImport } from './routes/_authenticated/patient/assistant'
 import { Route as AuthenticatedPatientDashboardRouteImport } from './routes/_authenticated/patient/dashboard'
 import { Route as AuthenticatedPatientHistoryRouteImport } from './routes/_authenticated/patient/history'
 import { Route as AuthenticatedPatientMonitoringRouteImport } from './routes/_authenticated/patient/monitoring'
@@ -45,6 +46,12 @@ const AuthenticatedPatientAlertsRoute =
   AuthenticatedPatientAlertsRouteImport.update({
     id: '/patient/alerts',
     path: '/patient/alerts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatientAssistantRoute =
+  AuthenticatedPatientAssistantRouteImport.update({
+    id: '/patient/assistant',
+    path: '/patient/assistant',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPatientDashboardRoute =
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/patient/alerts': typeof AuthenticatedPatientAlertsRoute
+  '/patient/assistant': typeof AuthenticatedPatientAssistantRoute
   '/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
   '/patient/history': typeof AuthenticatedPatientHistoryRoute
   '/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
@@ -101,6 +109,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/patient/alerts': typeof AuthenticatedPatientAlertsRoute
+  '/patient/assistant': typeof AuthenticatedPatientAssistantRoute
   '/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
   '/patient/history': typeof AuthenticatedPatientHistoryRoute
   '/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
@@ -115,6 +124,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
   '/_authenticated/patient/alerts': typeof AuthenticatedPatientAlertsRoute
+  '/_authenticated/patient/assistant': typeof AuthenticatedPatientAssistantRoute
   '/_authenticated/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
   '/_authenticated/patient/history': typeof AuthenticatedPatientHistoryRoute
   '/_authenticated/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/patient/adherence'
     | '/patient/alerts'
+    | '/patient/assistant'
     | '/patient/dashboard'
     | '/patient/history'
     | '/patient/monitoring'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/patient/adherence'
     | '/patient/alerts'
+    | '/patient/assistant'
     | '/patient/dashboard'
     | '/patient/history'
     | '/patient/monitoring'
@@ -154,6 +166,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/patient/adherence'
     | '/_authenticated/patient/alerts'
+    | '/_authenticated/patient/assistant'
     | '/_authenticated/patient/dashboard'
     | '/_authenticated/patient/history'
     | '/_authenticated/patient/monitoring'
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientAlertsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/patient/assistant': {
+      id: '/_authenticated/patient/assistant'
+      path: '/patient/assistant'
+      fullPath: '/patient/assistant'
+      preLoaderRoute: typeof AuthenticatedPatientAssistantRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/patient/dashboard': {
       id: '/_authenticated/patient/dashboard'
       path: '/patient/dashboard'
@@ -253,6 +273,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedPatientAdherenceRoute: typeof AuthenticatedPatientAdherenceRoute
   AuthenticatedPatientAlertsRoute: typeof AuthenticatedPatientAlertsRoute
+  AuthenticatedPatientAssistantRoute: typeof AuthenticatedPatientAssistantRoute
   AuthenticatedPatientDashboardRoute: typeof AuthenticatedPatientDashboardRoute
   AuthenticatedPatientHistoryRoute: typeof AuthenticatedPatientHistoryRoute
   AuthenticatedPatientMonitoringRoute: typeof AuthenticatedPatientMonitoringRoute
@@ -264,6 +285,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPatientAdherenceRoute: AuthenticatedPatientAdherenceRoute,
   AuthenticatedPatientAlertsRoute: AuthenticatedPatientAlertsRoute,
+  AuthenticatedPatientAssistantRoute: AuthenticatedPatientAssistantRoute,
   AuthenticatedPatientDashboardRoute: AuthenticatedPatientDashboardRoute,
   AuthenticatedPatientHistoryRoute: AuthenticatedPatientHistoryRoute,
   AuthenticatedPatientMonitoringRoute: AuthenticatedPatientMonitoringRoute,
