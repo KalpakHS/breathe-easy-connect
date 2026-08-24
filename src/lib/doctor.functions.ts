@@ -86,7 +86,8 @@ export const listMyPatients = createServerFn({ method: "GET" })
         .order("start_date", { ascending: false }),
     ]);
 
-    const latest = new Map<string, (typeof health.data)[number]>();
+    type HealthRow = NonNullable<typeof health.data>[number];
+    const latest = new Map<string, HealthRow>();
     for (const row of health.data ?? []) {
       if (!latest.has(row.patient_id)) latest.set(row.patient_id, row);
     }
