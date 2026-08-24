@@ -625,7 +625,8 @@ function DevicesTab({ enabled }: { enabled: boolean }) {
             toast.error("Device code must be at least 3 characters.");
             return;
           }
-          create.mutate({ deviceCode: code.trim(), firmware: firmware.trim() || undefined });
+          const fw = firmware.trim();
+          create.mutate({ deviceCode: code.trim(), ...(fw ? { firmware: fw } : {}) });
         }}
       >
         <div className="grid gap-1.5">
