@@ -4,6 +4,16 @@ import { Loader2, Pause, Play, Square } from "lucide-react";
 import { toast } from "sonner";
 import { startSession, updateSession } from "@/lib/smartneb.functions";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { StatusBadge } from "./vitals";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +47,20 @@ type ActiveSession = {
   elapsed_seconds: number;
   medication: string | null;
   dosage: string | null;
+  started_at?: string | null;
+  updated_at?: string | null;
 } | null;
+
+/** Elapsed seconds restored from the database (survives a browser refresh). */
+function restoreElapsed(session: ActiveSession) {
+  if (!session) return 0;
+  const base = session.elapsed_seconds ?? 0;
+  if (session.status !== "running") return base;
+  const marker = session.updated_at ?? session.started_at;
+  if (!marker) return base;
+  const drift = Math.max(0, Math.floor((Date.now() - new Date(marker).getTime()) / 1000));
+  return Math.min(session.prescribed_seconds ?? base + drift, base + drift);
+}
 
 export function NebulizerControl({
   patientId,
@@ -57,9 +80,11 @@ export function NebulizerControl({
   compact?: boolean;
 }) {
   const qc = useQueryClient();
-  const [elapsed, setElapsed] = useState(session?.elapsed_seconds ?? 0);
+  const [elapsed, setElapsed] = useState(() => restoreElapsed(session));
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const prescribed = session?.prescribed_seconds ?? prescribedMinutes * 60;
+  const simulated = !deviceOnline;
 
   const state: NebState = !session
     ? deviceOnline
@@ -76,39 +101,47 @@ export function NebulizerControl({
             : "COMPLETED";
 
   useEffect(() => {
-    setElapsed(session?.elapsed_seconds ?? 0);
-  }, [session?.id, session?.elapsed_seconds]);
+    setElapsed(restoreElapsed(session));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.id, session?.status, session?.elapsed_seconds, session?.updated_at]);
 
-  const start = useMutation({
-    mutationFn: () => startSession({ data: { patientId } }),
-    onSuccess: async (res) => {
-      if (!res.deviceReachable) {
-        toast.error("Command sent, but the device did not respond", {
-          description: `${res.deviceCode ?? "Device"} is not reachable over MQTT. The session is marked as failed until the device confirms.`,
-        });
-        await update.mutateAsync({ action: "stop", elapsedSeconds: 0 });
-        return;
-      }
-      toast.success("Start command sent — waiting for device confirmation");
-      // Device acknowledgement (ESP32 publishes back over MQTT). Simulated ack in demo mode.
-      setTimeout(() => update.mutate({ action: "ack", elapsedSeconds: 0 }), 1200);
+  const update = useMutation({
+    mutationFn: (vars: {
+      action: "ack" | "heartbeat" | "pause" | "resume" | "stop" | "complete";
+      elapsedSeconds: number;
+      sessionId?: string;
+    }) =>
+      updateSession({
+        data: {
+          sessionId: vars.sessionId ?? session?.id ?? "",
+          action: vars.action,
+          elapsedSeconds: vars.elapsedSeconds,
+        },
+      }),
+    onSuccess: (_d, vars) => {
+      if (vars.action === "heartbeat") return;
       void qc.invalidateQueries({ queryKey: ["snapshot", patientId] });
+      void qc.invalidateQueries({ queryKey: ["sessions", patientId] });
+      void qc.invalidateQueries({ queryKey: ["adherence", patientId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const update = useMutation({
-    mutationFn: (vars: {
-      action: "ack" | "pause" | "resume" | "stop" | "complete";
-      elapsedSeconds: number;
-    }) =>
-      updateSession({
-        data: { sessionId: session?.id ?? "", ...vars },
-      }),
-    onSuccess: () => {
+  const start = useMutation({
+    mutationFn: () => startSession({ data: { patientId } }),
+    onSuccess: async (res) => {
+      const newId = res.session.id;
+      if (res.simulated) {
+        toast.warning("Simulated session started", {
+          description:
+            "No hardware acknowledgement — the physical nebulizer was NOT switched on. The session is recorded for software tracking.",
+        });
+      } else {
+        toast.success("Start command sent — waiting for device confirmation");
+      }
+      // Device acknowledgement (ESP32 publishes back over MQTT). Simulated locally when unavailable.
+      await update.mutateAsync({ action: "ack", elapsedSeconds: 0, sessionId: newId });
       void qc.invalidateQueries({ queryKey: ["snapshot", patientId] });
-      void qc.invalidateQueries({ queryKey: ["sessions", patientId] });
-      void qc.invalidateQueries({ queryKey: ["adherence", patientId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -127,6 +160,8 @@ export function NebulizerControl({
           update.mutate({ action: "complete", elapsedSeconds: prescribed });
           return prescribed;
         }
+        // Persist progress so a refresh restores the timer accurately.
+        if (next % 15 === 0) update.mutate({ action: "heartbeat", elapsedSeconds: next });
         return next;
       });
     }, 1000);
@@ -156,7 +191,10 @@ export function NebulizerControl({
             {dosage ? ` · ${dosage}` : ""}
           </p>
         </div>
-        <StatusBadge status={statusTone} label={state.replace("_", " ")} />
+        <div className="flex items-center gap-2">
+          {simulated ? <StatusBadge status="warning" label="SIMULATED" /> : null}
+          <StatusBadge status={statusTone} label={state.replace("_", " ")} />
+        </div>
       </div>
 
       <svg width={size} height={size} role="img" aria-label={`Session progress ${Math.round(pct)}%`}>
@@ -190,7 +228,7 @@ export function NebulizerControl({
 
       <div className="flex flex-wrap items-center justify-center gap-2">
         {state === "READY" || state === "OFF" || state === "COMPLETED" || state === "ERROR" ? (
-          <Button onClick={() => start.mutate()} disabled={start.isPending || !deviceOnline}>
+          <Button onClick={() => setConfirmOpen(true)} disabled={start.isPending}>
             {start.isPending ? (
               <Loader2 className="mr-2 size-4 animate-spin" />
             ) : (
@@ -222,15 +260,42 @@ export function NebulizerControl({
         ) : null}
       </div>
 
-      {!deviceOnline ? (
+      {simulated ? (
         <p className="text-center text-xs text-warn">
-          Device is offline — therapy commands cannot be confirmed by the hardware.
+          Device is offline — running in simulator mode. The session is recorded in your record, but
+          the physical nebulizer is not switched on.
         </p>
       ) : (
         <p className="text-center text-xs text-muted-foreground">
           State reflects the last confirmation received from the device.
         </p>
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Start nebulization session?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {medication ? `${medication}${dosage ? ` · ${dosage}` : ""} — ` : ""}
+              {Math.round(prescribed / 60)} minute session.
+              {simulated
+                ? " Your device is offline, so this runs in simulator mode: the session is recorded, but the physical nebulizer will not be switched on."
+                : " A start command will be sent to your device."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmOpen(false);
+                start.mutate();
+              }}
+            >
+              Start session
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
