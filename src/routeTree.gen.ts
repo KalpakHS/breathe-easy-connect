@@ -12,7 +12,21 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin/dashboard'
+import { Route as AuthenticatedCaregiverDashboardRouteImport } from './routes/_authenticated/caregiver/dashboard'
+import { Route as AuthenticatedDoctorDashboardRouteImport } from './routes/_authenticated/doctor/dashboard'
+import { Route as AuthenticatedPatientAdherenceRouteImport } from './routes/_authenticated/patient/adherence'
+import { Route as AuthenticatedPatientAlertsRouteImport } from './routes/_authenticated/patient/alerts'
+import { Route as AuthenticatedPatientAssistantRouteImport } from './routes/_authenticated/patient/assistant'
 import { Route as AuthenticatedPatientDashboardRouteImport } from './routes/_authenticated/patient/dashboard'
+import { Route as AuthenticatedPatientHistoryRouteImport } from './routes/_authenticated/patient/history'
+import { Route as AuthenticatedPatientMonitoringRouteImport } from './routes/_authenticated/patient/monitoring'
+import { Route as AuthenticatedPatientNebulizationRouteImport } from './routes/_authenticated/patient/nebulization'
+import { Route as AuthenticatedPatientNebulizerRouteImport } from './routes/_authenticated/patient/nebulizer'
+import { Route as AuthenticatedPatientProfileRouteImport } from './routes/_authenticated/patient/profile'
+import { Route as AuthenticatedPatientReportsRouteImport } from './routes/_authenticated/patient/reports'
+import { Route as AuthenticatedPatientSettingsRouteImport } from './routes/_authenticated/patient/settings'
+import { Route as AuthenticatedSuperAdminDashboardRouteImport } from './routes/_authenticated/super-admin/dashboard'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,41 +42,215 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminDashboardRoute =
+  AuthenticatedAdminDashboardRouteImport.update({
+    id: '/admin/dashboard',
+    path: '/admin/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCaregiverDashboardRoute =
+  AuthenticatedCaregiverDashboardRouteImport.update({
+    id: '/caregiver/dashboard',
+    path: '/caregiver/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDoctorDashboardRoute =
+  AuthenticatedDoctorDashboardRouteImport.update({
+    id: '/doctor/dashboard',
+    path: '/doctor/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatientAdherenceRoute =
+  AuthenticatedPatientAdherenceRouteImport.update({
+    id: '/patient/adherence',
+    path: '/patient/adherence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatientAlertsRoute =
+  AuthenticatedPatientAlertsRouteImport.update({
+    id: '/patient/alerts',
+    path: '/patient/alerts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatientAssistantRoute =
+  AuthenticatedPatientAssistantRouteImport.update({
+    id: '/patient/assistant',
+    path: '/patient/assistant',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPatientDashboardRoute =
   AuthenticatedPatientDashboardRouteImport.update({
     id: '/patient/dashboard',
     path: '/patient/dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPatientHistoryRoute =
+  AuthenticatedPatientHistoryRouteImport.update({
+    id: '/patient/history',
+    path: '/patient/history',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatientMonitoringRoute =
+  AuthenticatedPatientMonitoringRouteImport.update({
+    id: '/patient/monitoring',
+    path: '/patient/monitoring',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatientNebulizationRoute =
+  AuthenticatedPatientNebulizationRouteImport.update({
+    id: '/patient/nebulization',
+    path: '/patient/nebulization',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatientNebulizerRoute =
+  AuthenticatedPatientNebulizerRouteImport.update({
+    id: '/patient/nebulizer',
+    path: '/patient/nebulizer',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatientProfileRoute =
+  AuthenticatedPatientProfileRouteImport.update({
+    id: '/patient/profile',
+    path: '/patient/profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatientReportsRoute =
+  AuthenticatedPatientReportsRouteImport.update({
+    id: '/patient/reports',
+    path: '/patient/reports',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatientSettingsRoute =
+  AuthenticatedPatientSettingsRouteImport.update({
+    id: '/patient/settings',
+    path: '/patient/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSuperAdminDashboardRoute =
+  AuthenticatedSuperAdminDashboardRouteImport.update({
+    id: '/super-admin/dashboard',
+    path: '/super-admin/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
+  '/caregiver/dashboard': typeof AuthenticatedCaregiverDashboardRoute
+  '/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
+  '/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
+  '/patient/alerts': typeof AuthenticatedPatientAlertsRoute
+  '/patient/assistant': typeof AuthenticatedPatientAssistantRoute
   '/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
+  '/patient/history': typeof AuthenticatedPatientHistoryRoute
+  '/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
+  '/patient/nebulization': typeof AuthenticatedPatientNebulizationRoute
+  '/patient/nebulizer': typeof AuthenticatedPatientNebulizerRoute
+  '/patient/profile': typeof AuthenticatedPatientProfileRoute
+  '/patient/reports': typeof AuthenticatedPatientReportsRoute
+  '/patient/settings': typeof AuthenticatedPatientSettingsRoute
+  '/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
+  '/caregiver/dashboard': typeof AuthenticatedCaregiverDashboardRoute
+  '/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
+  '/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
+  '/patient/alerts': typeof AuthenticatedPatientAlertsRoute
+  '/patient/assistant': typeof AuthenticatedPatientAssistantRoute
   '/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
+  '/patient/history': typeof AuthenticatedPatientHistoryRoute
+  '/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
+  '/patient/nebulization': typeof AuthenticatedPatientNebulizationRoute
+  '/patient/nebulizer': typeof AuthenticatedPatientNebulizerRoute
+  '/patient/profile': typeof AuthenticatedPatientProfileRoute
+  '/patient/reports': typeof AuthenticatedPatientReportsRoute
+  '/patient/settings': typeof AuthenticatedPatientSettingsRoute
+  '/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
+  '/_authenticated/caregiver/dashboard': typeof AuthenticatedCaregiverDashboardRoute
+  '/_authenticated/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
+  '/_authenticated/patient/adherence': typeof AuthenticatedPatientAdherenceRoute
+  '/_authenticated/patient/alerts': typeof AuthenticatedPatientAlertsRoute
+  '/_authenticated/patient/assistant': typeof AuthenticatedPatientAssistantRoute
   '/_authenticated/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
+  '/_authenticated/patient/history': typeof AuthenticatedPatientHistoryRoute
+  '/_authenticated/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
+  '/_authenticated/patient/nebulization': typeof AuthenticatedPatientNebulizationRoute
+  '/_authenticated/patient/nebulizer': typeof AuthenticatedPatientNebulizerRoute
+  '/_authenticated/patient/profile': typeof AuthenticatedPatientProfileRoute
+  '/_authenticated/patient/reports': typeof AuthenticatedPatientReportsRoute
+  '/_authenticated/patient/settings': typeof AuthenticatedPatientSettingsRoute
+  '/_authenticated/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/patient/dashboard'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/admin/dashboard'
+    | '/caregiver/dashboard'
+    | '/doctor/dashboard'
+    | '/patient/adherence'
+    | '/patient/alerts'
+    | '/patient/assistant'
+    | '/patient/dashboard'
+    | '/patient/history'
+    | '/patient/monitoring'
+    | '/patient/nebulization'
+    | '/patient/nebulizer'
+    | '/patient/profile'
+    | '/patient/reports'
+    | '/patient/settings'
+    | '/super-admin/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/patient/dashboard'
+  to:
+    | '/'
+    | '/auth'
+    | '/admin/dashboard'
+    | '/caregiver/dashboard'
+    | '/doctor/dashboard'
+    | '/patient/adherence'
+    | '/patient/alerts'
+    | '/patient/assistant'
+    | '/patient/dashboard'
+    | '/patient/history'
+    | '/patient/monitoring'
+    | '/patient/nebulization'
+    | '/patient/nebulizer'
+    | '/patient/profile'
+    | '/patient/reports'
+    | '/patient/settings'
+    | '/super-admin/dashboard'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin/dashboard'
+    | '/_authenticated/caregiver/dashboard'
+    | '/_authenticated/doctor/dashboard'
+    | '/_authenticated/patient/adherence'
+    | '/_authenticated/patient/alerts'
+    | '/_authenticated/patient/assistant'
     | '/_authenticated/patient/dashboard'
+    | '/_authenticated/patient/history'
+    | '/_authenticated/patient/monitoring'
+    | '/_authenticated/patient/nebulization'
+    | '/_authenticated/patient/nebulizer'
+    | '/_authenticated/patient/profile'
+    | '/_authenticated/patient/reports'
+    | '/_authenticated/patient/settings'
+    | '/_authenticated/super-admin/dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -94,6 +282,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/dashboard': {
+      id: '/_authenticated/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AuthenticatedAdminDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/caregiver/dashboard': {
+      id: '/_authenticated/caregiver/dashboard'
+      path: '/caregiver/dashboard'
+      fullPath: '/caregiver/dashboard'
+      preLoaderRoute: typeof AuthenticatedCaregiverDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/doctor/dashboard': {
+      id: '/_authenticated/doctor/dashboard'
+      path: '/doctor/dashboard'
+      fullPath: '/doctor/dashboard'
+      preLoaderRoute: typeof AuthenticatedDoctorDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patient/adherence': {
+      id: '/_authenticated/patient/adherence'
+      path: '/patient/adherence'
+      fullPath: '/patient/adherence'
+      preLoaderRoute: typeof AuthenticatedPatientAdherenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patient/alerts': {
+      id: '/_authenticated/patient/alerts'
+      path: '/patient/alerts'
+      fullPath: '/patient/alerts'
+      preLoaderRoute: typeof AuthenticatedPatientAlertsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patient/assistant': {
+      id: '/_authenticated/patient/assistant'
+      path: '/patient/assistant'
+      fullPath: '/patient/assistant'
+      preLoaderRoute: typeof AuthenticatedPatientAssistantRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/patient/dashboard': {
       id: '/_authenticated/patient/dashboard'
       path: '/patient/dashboard'
@@ -101,15 +331,99 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/patient/history': {
+      id: '/_authenticated/patient/history'
+      path: '/patient/history'
+      fullPath: '/patient/history'
+      preLoaderRoute: typeof AuthenticatedPatientHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patient/monitoring': {
+      id: '/_authenticated/patient/monitoring'
+      path: '/patient/monitoring'
+      fullPath: '/patient/monitoring'
+      preLoaderRoute: typeof AuthenticatedPatientMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patient/nebulization': {
+      id: '/_authenticated/patient/nebulization'
+      path: '/patient/nebulization'
+      fullPath: '/patient/nebulization'
+      preLoaderRoute: typeof AuthenticatedPatientNebulizationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patient/nebulizer': {
+      id: '/_authenticated/patient/nebulizer'
+      path: '/patient/nebulizer'
+      fullPath: '/patient/nebulizer'
+      preLoaderRoute: typeof AuthenticatedPatientNebulizerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patient/profile': {
+      id: '/_authenticated/patient/profile'
+      path: '/patient/profile'
+      fullPath: '/patient/profile'
+      preLoaderRoute: typeof AuthenticatedPatientProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patient/reports': {
+      id: '/_authenticated/patient/reports'
+      path: '/patient/reports'
+      fullPath: '/patient/reports'
+      preLoaderRoute: typeof AuthenticatedPatientReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patient/settings': {
+      id: '/_authenticated/patient/settings'
+      path: '/patient/settings'
+      fullPath: '/patient/settings'
+      preLoaderRoute: typeof AuthenticatedPatientSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/super-admin/dashboard': {
+      id: '/_authenticated/super-admin/dashboard'
+      path: '/super-admin/dashboard'
+      fullPath: '/super-admin/dashboard'
+      preLoaderRoute: typeof AuthenticatedSuperAdminDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
+  AuthenticatedCaregiverDashboardRoute: typeof AuthenticatedCaregiverDashboardRoute
+  AuthenticatedDoctorDashboardRoute: typeof AuthenticatedDoctorDashboardRoute
+  AuthenticatedPatientAdherenceRoute: typeof AuthenticatedPatientAdherenceRoute
+  AuthenticatedPatientAlertsRoute: typeof AuthenticatedPatientAlertsRoute
+  AuthenticatedPatientAssistantRoute: typeof AuthenticatedPatientAssistantRoute
   AuthenticatedPatientDashboardRoute: typeof AuthenticatedPatientDashboardRoute
+  AuthenticatedPatientHistoryRoute: typeof AuthenticatedPatientHistoryRoute
+  AuthenticatedPatientMonitoringRoute: typeof AuthenticatedPatientMonitoringRoute
+  AuthenticatedPatientNebulizationRoute: typeof AuthenticatedPatientNebulizationRoute
+  AuthenticatedPatientNebulizerRoute: typeof AuthenticatedPatientNebulizerRoute
+  AuthenticatedPatientProfileRoute: typeof AuthenticatedPatientProfileRoute
+  AuthenticatedPatientReportsRoute: typeof AuthenticatedPatientReportsRoute
+  AuthenticatedPatientSettingsRoute: typeof AuthenticatedPatientSettingsRoute
+  AuthenticatedSuperAdminDashboardRoute: typeof AuthenticatedSuperAdminDashboardRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
+  AuthenticatedCaregiverDashboardRoute: AuthenticatedCaregiverDashboardRoute,
+  AuthenticatedDoctorDashboardRoute: AuthenticatedDoctorDashboardRoute,
+  AuthenticatedPatientAdherenceRoute: AuthenticatedPatientAdherenceRoute,
+  AuthenticatedPatientAlertsRoute: AuthenticatedPatientAlertsRoute,
+  AuthenticatedPatientAssistantRoute: AuthenticatedPatientAssistantRoute,
   AuthenticatedPatientDashboardRoute: AuthenticatedPatientDashboardRoute,
+  AuthenticatedPatientHistoryRoute: AuthenticatedPatientHistoryRoute,
+  AuthenticatedPatientMonitoringRoute: AuthenticatedPatientMonitoringRoute,
+  AuthenticatedPatientNebulizationRoute: AuthenticatedPatientNebulizationRoute,
+  AuthenticatedPatientNebulizerRoute: AuthenticatedPatientNebulizerRoute,
+  AuthenticatedPatientProfileRoute: AuthenticatedPatientProfileRoute,
+  AuthenticatedPatientReportsRoute: AuthenticatedPatientReportsRoute,
+  AuthenticatedPatientSettingsRoute: AuthenticatedPatientSettingsRoute,
+  AuthenticatedSuperAdminDashboardRoute: AuthenticatedSuperAdminDashboardRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

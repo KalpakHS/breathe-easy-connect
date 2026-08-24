@@ -99,12 +99,8 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (snap.isLoading) return <LoadingSkeleton rows={4} />;
-  if (snap.isError || !snap.data)
-    return <ErrorState message={(snap.error as Error)?.message} onRetry={() => snap.refetch()} />;
-
   const { patient, device, health, healthPrev, environment, battery, carePlan, activeSession } =
-    snap.data;
+    snap.data ?? ({} as NonNullable<typeof snap.data>);
   const spo2 = health?.spo2 == null ? null : Number(health.spo2);
   const bpm = health?.bpm == null ? null : Number(health.bpm);
   const temp = health?.body_temperature == null ? null : Number(health.body_temperature);
@@ -135,6 +131,12 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spo2, spo2Threshold]);
+
+  if (snap.isLoading) return <LoadingSkeleton rows={4} />;
+  if (snap.isError || !snap.data)
+    return <ErrorState message={(snap.error as Error)?.message} onRetry={() => snap.refetch()} />;
+
+
 
   return (
     <div className="space-y-6">
