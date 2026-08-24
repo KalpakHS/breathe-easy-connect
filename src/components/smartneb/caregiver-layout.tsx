@@ -66,6 +66,14 @@ function CareIndicators({ patients }: { patients: CaregiverPatientRow[] }) {
   );
 }
 
+/**
+ * Renders a route's render-prop body inside its own component fiber so pages
+ * may safely declare hooks in that callback (hook counts stay per-instance).
+ */
+function PageSlot<T>({ render, ctx }: { render: (ctx: T) => ReactNode; ctx: T }) {
+  return <>{render(ctx)}</>;
+}
+
 /** Shell for every caregiver route: role gate, sidebar, live indicators. */
 export function CaregiverPage({
   title,
@@ -113,7 +121,7 @@ export function CaregiverPage({
       }
     >
       {isCaregiver ? (
-        children({ patients, isLoading: roster.isLoading })
+        <PageSlot render={children} ctx={{ patients, isLoading: roster.isLoading }} />
       ) : (
         <ErrorState message="No caregiver record is linked to this account yet. Ask an administrator to link you to the people you care for." />
       )}

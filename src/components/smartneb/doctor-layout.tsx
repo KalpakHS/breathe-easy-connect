@@ -71,6 +71,14 @@ function DoctorIndicators({ patients }: { patients: DoctorPatientRow[] }) {
   );
 }
 
+/**
+ * Renders a route's render-prop body inside its own component fiber so pages
+ * may safely declare hooks in that callback (hook counts stay per-instance).
+ */
+function PageSlot<T>({ render, ctx }: { render: (ctx: T) => ReactNode; ctx: T }) {
+  return <>{render(ctx)}</>;
+}
+
 /** Shell for every doctor route: role gate, sidebar, live indicators. */
 export function DoctorPage({
   title,
@@ -123,7 +131,7 @@ export function DoctorPage({
       }
     >
       {isDoctor ? (
-        children({ patients, isLoading: roster.isLoading, signedIn })
+        <PageSlot render={children} ctx={{ patients, isLoading: roster.isLoading, signedIn }} />
       ) : (
         <ErrorState message="No clinician record is linked to this account yet. Ask an administrator to link you to your patients." />
       )}
