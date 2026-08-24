@@ -54,6 +54,15 @@ export const caregiverNav: NavItem[] = [
   { label: "Care Dashboard", to: "/caregiver/dashboard", icon: HeartHandshake },
 ];
 
+export const adminNav: NavItem[] = [
+  { label: "Admin Console", to: "/admin/dashboard", icon: ShieldCheck },
+];
+
+export const superAdminNav: NavItem[] = [
+  { label: "Platform Console", to: "/super-admin/dashboard", icon: ShieldCheck },
+];
+
+
 export const roleHome: Record<MeContext["role"], string> = {
   patient: "/patient/dashboard",
   doctor: "/doctor/dashboard",
