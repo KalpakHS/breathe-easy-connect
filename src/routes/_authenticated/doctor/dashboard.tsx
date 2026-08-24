@@ -297,14 +297,18 @@ function RosterCard({
 function PatientWorkspace({
   patient,
   patientId,
+  signedIn,
 }: {
   patient: DoctorPatientRow | null;
   patientId: string;
+  signedIn: boolean;
 }) {
   const snapshot = useQuery({
     queryKey: ["snapshot", patientId],
     queryFn: () => getPatientSnapshot({ data: { patientId } }),
-    refetchInterval: 5_000,
+    enabled: signedIn,
+    retry: false,
+    refetchInterval: signedIn ? 5_000 : false,
   });
 
   const snap = snapshot.data;
