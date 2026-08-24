@@ -1,19 +1,48 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { getMe, getPatientSnapshot } from "@/lib/smartneb.functions";
 import { AppShell, patientNav } from "./app-shell";
 import { ErrorState, LoadingSkeleton } from "./states";
 
+/** Tracks whether a Supabase session exists so authed queries never fire signed out. */
+export function useSignedIn() {
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active) setSignedIn(Boolean(session));
+    });
+    void supabase.auth.getSession().then(({ data }) => {
+      if (active) setSignedIn(Boolean(data.session));
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+  return signedIn;
+}
+
 export function useMe() {
-  return useQuery({ queryKey: ["me"], queryFn: () => getMe(), staleTime: 60_000 });
+  const signedIn = useSignedIn();
+  return useQuery({
+    queryKey: ["me"],
+    queryFn: () => getMe(),
+    staleTime: 60_000,
+    enabled: signedIn === true,
+    retry: false,
+  });
 }
 
 export function useSnapshot(patientId: string | null | undefined, live = true) {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: ["snapshot", patientId],
     queryFn: () => getPatientSnapshot({ data: { patientId: patientId! } }),
-    enabled: Boolean(patientId),
+    enabled: Boolean(patientId) && signedIn === true,
     refetchInterval: live ? 5_000 : false,
+    retry: false,
   });
 }
 
