@@ -233,6 +233,7 @@ export type Database = {
           percentage: number | null
           power: number | null
           recorded_at: string
+          source: string
           voltage: number | null
         }
         Insert: {
@@ -246,6 +247,7 @@ export type Database = {
           percentage?: number | null
           power?: number | null
           recorded_at?: string
+          source?: string
           voltage?: number | null
         }
         Update: {
@@ -259,6 +261,7 @@ export type Database = {
           percentage?: number | null
           power?: number | null
           recorded_at?: string
+          source?: string
           voltage?: number | null
         }
         Relationships: [
@@ -669,6 +672,7 @@ export type Database = {
           patient_id: string
           recorded_at: string
           simulated: boolean
+          source: string
         }
         Insert: {
           ambient_temperature?: number | null
@@ -679,6 +683,7 @@ export type Database = {
           patient_id: string
           recorded_at?: string
           simulated?: boolean
+          source?: string
         }
         Update: {
           ambient_temperature?: number | null
@@ -689,6 +694,7 @@ export type Database = {
           patient_id?: string
           recorded_at?: string
           simulated?: boolean
+          source?: string
         }
         Relationships: [
           {
@@ -757,6 +763,7 @@ export type Database = {
           id: number
           patient_id: string
           recorded_at: string
+          source: string
           spo2: number | null
         }
         Insert: {
@@ -766,6 +773,7 @@ export type Database = {
           id?: number
           patient_id: string
           recorded_at?: string
+          source?: string
           spo2?: number | null
         }
         Update: {
@@ -775,6 +783,7 @@ export type Database = {
           id?: number
           patient_id?: string
           recorded_at?: string
+          source?: string
           spo2?: number | null
         }
         Relationships: [

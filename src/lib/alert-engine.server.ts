@@ -54,9 +54,12 @@ export function evaluatePatient(input: {
   device: { id: string; status: string; last_seen_at: string | null } | null;
   health: { bpm: unknown; spo2: unknown; body_temperature: unknown; recorded_at: string } | null;
   battery: { percentage: unknown; recorded_at: string } | null;
+  /** False when the device registry could not be read; avoids false "no device" alerts. */
+  deviceRegistryKnown?: boolean;
   now: number;
 }): EvaluatedAlert[] {
   const { patient: p, device, health, battery, now } = input;
+  const deviceRegistryKnown = input.deviceRegistryKnown !== false;
   if (p.alerts_enabled === false) return [];
 
   const out: EvaluatedAlert[] = [];
@@ -194,7 +197,7 @@ export function evaluatePatient(input: {
             : `Device offline: no telemetry for ${minutes} minutes (limit ${limit}).`,
       });
     }
-  } else {
+  } else if (deviceRegistryKnown) {
     out.push({
       ...base,
       type: "device_missing",
@@ -243,10 +246,13 @@ export async function runAlertEngine(admin: any, patientIds?: string[]): Promise
     .is("deleted_at", null);
   if (patientIds?.length) query = query.in("id", patientIds);
 
-  const [{ data: patients }, { data: devices }] = await Promise.all([
+  const [{ data: patients }, deviceQuery] = await Promise.all([
     query,
     admin.from("devices").select("id, patient_id, status, last_seen_at"),
   ]);
+  const devices = deviceQuery.data;
+  // A failed registry read must not look like "patient has no device".
+  const deviceRegistryKnown = !deviceQuery.error && Array.isArray(devices);
 
   const rows: PatientRow[] = patients ?? [];
   const deviceBy = new Map<string, any>();
@@ -286,6 +292,7 @@ export async function runAlertEngine(admin: any, patientIds?: string[]): Promise
     const candidates = evaluatePatient({
       patient,
       device: deviceBy.get(patient.id) ?? null,
+      deviceRegistryKnown,
       health: health.data ?? null,
       battery: battery.data ?? null,
       now,
