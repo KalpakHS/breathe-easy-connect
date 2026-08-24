@@ -27,6 +27,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThemeToggle } from "./theme";
+import { useSignedIn } from "./use-signed-in";
 import { cn } from "@/lib/utils";
 
 type NavItem = { label: string; to: string; icon: typeof Activity };
@@ -107,10 +108,13 @@ function Brand() {
 }
 
 function NotificationBell() {
+  const signedIn = useSignedIn();
   const { data } = useQuery({
     queryKey: ["notifications"],
     queryFn: () => listNotifications(),
-    refetchInterval: 30_000,
+    enabled: signedIn === true,
+    retry: false,
+    refetchInterval: signedIn === true ? 30_000 : false,
   });
   const unread = (data ?? []).filter((n) => !n.read_at).length;
 

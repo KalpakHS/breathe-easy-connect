@@ -2,18 +2,28 @@ import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMe, getPatientSnapshot } from "@/lib/smartneb.functions";
 import { AppShell, patientNav } from "./app-shell";
+import { useSignedIn } from "./use-signed-in";
 import { ErrorState, LoadingSkeleton } from "./states";
 
 export function useMe() {
-  return useQuery({ queryKey: ["me"], queryFn: () => getMe(), staleTime: 60_000 });
+  const signedIn = useSignedIn();
+  return useQuery({
+    queryKey: ["me"],
+    queryFn: () => getMe(),
+    staleTime: 60_000,
+    enabled: signedIn === true,
+    retry: false,
+  });
 }
 
 export function useSnapshot(patientId: string | null | undefined, live = true) {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: ["snapshot", patientId],
     queryFn: () => getPatientSnapshot({ data: { patientId: patientId! } }),
-    enabled: Boolean(patientId),
+    enabled: Boolean(patientId) && signedIn === true,
     refetchInterval: live ? 5_000 : false,
+    retry: false,
   });
 }
 
@@ -30,14 +40,14 @@ export function PatientPage({
 }) {
   const me = useMe();
 
-  if (me.isLoading) {
+  if (me.isPending) {
     return (
       <div className="p-8">
         <LoadingSkeleton rows={4} />
       </div>
     );
   }
-  if (me.isError || !me.data) {
+  if (me.isError) {
     return (
       <div className="p-8">
         <ErrorState message={(me.error as Error)?.message} onRetry={() => me.refetch()} />
@@ -62,3 +72,5 @@ export function greeting() {
   if (h < 17) return "Good afternoon";
   return "Good evening";
 }
+
+export { useSignedIn };

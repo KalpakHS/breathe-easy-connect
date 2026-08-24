@@ -143,7 +143,7 @@ function CaregiverDashboard() {
     );
   }, [roster.data, q]);
 
-  if (me.isLoading) {
+  if (me.isPending) {
     return (
       <div className="p-8">
         <LoadingSkeleton rows={4} />
