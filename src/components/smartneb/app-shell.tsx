@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -109,6 +109,7 @@ function Brand() {
 
 function NotificationBell() {
   const signedIn = useSignedIn();
+  const queryClient = useQueryClient();
   const { data } = useQuery({
     queryKey: ["notifications"],
     queryFn: () => listNotifications(),
@@ -116,6 +117,22 @@ function NotificationBell() {
     retry: false,
     refetchInterval: signedIn === true ? 30_000 : false,
   });
+
+  useEffect(() => {
+    if (signedIn !== true) return;
+    const channel = supabase
+      .channel("notification-bell-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications" },
+        () => void queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [queryClient, signedIn]);
+
   const unread = (data ?? []).filter((n) => !n.read_at).length;
 
   return (
