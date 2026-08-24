@@ -1074,10 +1074,6 @@ export type Database = {
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       owns_patient: { Args: { _patient_id: string }; Returns: boolean }
-      trigger_patient_sos: {
-        Args: { _patient_id: string; _source?: string }
-        Returns: Json
-      }
     }
     Enums: {
       adherence_status: "completed" | "partial" | "missed" | "scheduled"
