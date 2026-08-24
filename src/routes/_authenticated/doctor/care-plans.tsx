@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { TimeSlotsField } from "@/components/smartneb/time-slots-field";
 import {
   Dialog,
   DialogContent,
@@ -316,6 +317,13 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
               />
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <TimeSlotsField
+              id="edit-times"
+              value={form.timeSlots}
+              onChange={(t) => setForm((f) => ({ ...f, timeSlots: t }))}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="edit-instructions">Instructions</Label>
