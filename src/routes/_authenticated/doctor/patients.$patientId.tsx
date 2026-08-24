@@ -120,8 +120,9 @@ function DoctorPatientDetailPage() {
       subtitle={
         detail.data
           ? `${detail.data.patient.mrn} · ${detail.data.patient.condition ?? "No condition recorded"}`
-          : undefined
+          : "Loading patient record"
       }
+
       actions={
         <Button asChild variant="outline" size="sm">
           <Link to="/doctor/patients">
