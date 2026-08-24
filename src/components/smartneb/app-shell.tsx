@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   AlertTriangle,
@@ -26,7 +26,12 @@ import {
   Wind,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { listNotifications, type MeContext } from "@/lib/smartneb.functions";
+import {
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  type MeContext,
+} from "@/lib/smartneb.functions";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -139,6 +144,7 @@ function Brand() {
 function NotificationBell() {
   const signedIn = useSignedIn();
   const queryClient = useQueryClient();
+  const [unreadOnly, setUnreadOnly] = useState(false);
   const { data } = useQuery({
     queryKey: ["notifications"],
     queryFn: () => listNotifications(),
@@ -147,22 +153,43 @@ function NotificationBell() {
     refetchInterval: signedIn === true ? 30_000 : false,
   });
 
+  const invalidate = () => void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+
+  const readOne = useMutation({
+    mutationFn: (id: string) => markNotificationRead({ data: { id } }),
+    onSuccess: invalidate,
+  });
+  const readAll = useMutation({
+    mutationFn: () => markAllNotificationsRead(),
+    onSuccess: invalidate,
+  });
+
   useEffect(() => {
     if (signedIn !== true) return;
     const channel = supabase
       .channel("notification-bell-live")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications" },
-        () => void queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+        { event: "*", schema: "public", table: "notifications" },
+        () => invalidate(),
       )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryClient, signedIn]);
 
-  const unread = (data ?? []).filter((n) => !n.read_at).length;
+  const items = data ?? [];
+  const unread = items.filter((n) => !n.read_at).length;
+  const visible = unreadOnly ? items.filter((n) => !n.read_at) : items;
+
+  const tone = (type: string) =>
+    type === "sos" || type.includes("critical")
+      ? "bg-critical"
+      : type.includes("warning") || type === "alert"
+        ? "bg-warning"
+        : "bg-primary";
 
   return (
     <Popover>
@@ -179,21 +206,64 @@ function NotificationBell() {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
-        <p className="border-b px-4 py-3 font-display text-sm font-semibold">Notifications</p>
+        <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
+          <p className="font-display text-sm font-semibold">
+            Notifications{unread > 0 ? ` (${unread})` : ""}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-xs"
+              onClick={() => setUnreadOnly((v) => !v)}
+            >
+              {unreadOnly ? "All" : "Unread"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-xs"
+              disabled={unread === 0 || readAll.isPending}
+              onClick={() => readAll.mutate()}
+            >
+              Mark all read
+            </Button>
+          </div>
+        </div>
         <ScrollArea className="max-h-80">
-          {(data ?? []).length === 0 ? (
+          {visible.length === 0 ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">You are all caught up.</p>
           ) : (
             <ul className="divide-y">
-              {(data ?? []).map((n) => (
-                <li key={n.id} className="px-4 py-3">
-                  <p className="text-sm font-medium">{n.title}</p>
-                  {n.body ? (
-                    <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p>
-                  ) : null}
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {new Date(n.created_at).toLocaleString()}
-                  </p>
+              {visible.map((n) => (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex w-full gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/60",
+                      !n.read_at && "bg-muted/30",
+                    )}
+                    onClick={() => {
+                      if (!n.read_at) readOne.mutate(n.id);
+                    }}
+                  >
+                    <span
+                      className={cn(
+                        "mt-1.5 size-2 shrink-0 rounded-full",
+                        n.read_at ? "bg-transparent" : tone(n.type),
+                      )}
+                      aria-hidden
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium">{n.title}</span>
+                      {n.body ? (
+                        <span className="mt-0.5 block text-xs text-muted-foreground">{n.body}</span>
+                      ) : null}
+                      <span className="mt-1 block text-[11px] text-muted-foreground">
+                        {new Date(n.created_at).toLocaleString()}
+                      </span>
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
