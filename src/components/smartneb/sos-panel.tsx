@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Siren } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ export function useSOSEvents({
   includeResolved?: boolean;
 }) {
   const qc = useQueryClient();
+  const instanceId = useId();
   const key = ["sos-events", patientId ?? "all", includeResolved] as const;
 
   const query = useQuery({
@@ -35,7 +36,7 @@ export function useSOSEvents({
   useEffect(() => {
     if (!enabled) return;
     const channel = supabase
-      .channel(`sos-stream-${patientId ?? "all"}`)
+      .channel(`sos-stream-${patientId ?? "all"}-${instanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "sos_events" }, () => {
         void qc.invalidateQueries({ queryKey: ["sos-events"] });
       })
@@ -43,7 +44,7 @@ export function useSOSEvents({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [enabled, patientId, qc]);
+  }, [enabled, patientId, qc, instanceId]);
 
   return query;
 }
