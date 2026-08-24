@@ -43,6 +43,7 @@ import { Route as AuthenticatedCaregiverPatientsIndexRouteImport } from './route
 import { Route as AuthenticatedCaregiverPatientsPatientIdRouteImport } from './routes/_authenticated/caregiver/patients.$patientId'
 import { Route as AuthenticatedDoctorPatientsIndexRouteImport } from './routes/_authenticated/doctor/patients.index'
 import { Route as AuthenticatedDoctorPatientsPatientIdRouteImport } from './routes/_authenticated/doctor/patients.$patientId'
+import { Route as ApiPublicCronEvaluateAlertsRouteImport } from './routes/api/public/cron/evaluate-alerts'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -243,6 +244,12 @@ const AuthenticatedDoctorPatientsPatientIdRoute =
     path: '/doctor/patients/$patientId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicCronEvaluateAlertsRoute =
+  ApiPublicCronEvaluateAlertsRouteImport.update({
+    id: '/api/public/cron/evaluate-alerts',
+    path: '/api/public/cron/evaluate-alerts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
   '/caregiver/patients/$patientId': typeof AuthenticatedCaregiverPatientsPatientIdRoute
   '/doctor/patients/$patientId': typeof AuthenticatedDoctorPatientsPatientIdRoute
+  '/api/public/cron/evaluate-alerts': typeof ApiPublicCronEvaluateAlertsRoute
   '/caregiver/patients/': typeof AuthenticatedCaregiverPatientsIndexRoute
   '/doctor/patients/': typeof AuthenticatedDoctorPatientsIndexRoute
 }
@@ -311,6 +319,7 @@ export interface FileRoutesByTo {
   '/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
   '/caregiver/patients/$patientId': typeof AuthenticatedCaregiverPatientsPatientIdRoute
   '/doctor/patients/$patientId': typeof AuthenticatedDoctorPatientsPatientIdRoute
+  '/api/public/cron/evaluate-alerts': typeof ApiPublicCronEvaluateAlertsRoute
   '/caregiver/patients': typeof AuthenticatedCaregiverPatientsIndexRoute
   '/doctor/patients': typeof AuthenticatedDoctorPatientsIndexRoute
 }
@@ -348,6 +357,7 @@ export interface FileRoutesById {
   '/_authenticated/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
   '/_authenticated/caregiver/patients/$patientId': typeof AuthenticatedCaregiverPatientsPatientIdRoute
   '/_authenticated/doctor/patients/$patientId': typeof AuthenticatedDoctorPatientsPatientIdRoute
+  '/api/public/cron/evaluate-alerts': typeof ApiPublicCronEvaluateAlertsRoute
   '/_authenticated/caregiver/patients/': typeof AuthenticatedCaregiverPatientsIndexRoute
   '/_authenticated/doctor/patients/': typeof AuthenticatedDoctorPatientsIndexRoute
 }
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/super-admin/dashboard'
     | '/caregiver/patients/$patientId'
     | '/doctor/patients/$patientId'
+    | '/api/public/cron/evaluate-alerts'
     | '/caregiver/patients/'
     | '/doctor/patients/'
   fileRoutesByTo: FileRoutesByTo
@@ -420,6 +431,7 @@ export interface FileRouteTypes {
     | '/super-admin/dashboard'
     | '/caregiver/patients/$patientId'
     | '/doctor/patients/$patientId'
+    | '/api/public/cron/evaluate-alerts'
     | '/caregiver/patients'
     | '/doctor/patients'
   id:
@@ -456,6 +468,7 @@ export interface FileRouteTypes {
     | '/_authenticated/super-admin/dashboard'
     | '/_authenticated/caregiver/patients/$patientId'
     | '/_authenticated/doctor/patients/$patientId'
+    | '/api/public/cron/evaluate-alerts'
     | '/_authenticated/caregiver/patients/'
     | '/_authenticated/doctor/patients/'
   fileRoutesById: FileRoutesById
@@ -464,6 +477,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicCronEvaluateAlertsRoute: typeof ApiPublicCronEvaluateAlertsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -706,6 +720,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDoctorPatientsPatientIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/cron/evaluate-alerts': {
+      id: '/api/public/cron/evaluate-alerts'
+      path: '/api/public/cron/evaluate-alerts'
+      fullPath: '/api/public/cron/evaluate-alerts'
+      preLoaderRoute: typeof ApiPublicCronEvaluateAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -787,6 +808,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicCronEvaluateAlertsRoute: ApiPublicCronEvaluateAlertsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
