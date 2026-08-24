@@ -617,12 +617,18 @@ export const updateProfile = createServerFn({ method: "POST" })
         .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, string | boolean> = {};
-    if (data.full_name !== undefined) patch["full_name"] = data.full_name;
-    if (data.phone !== undefined) patch["phone"] = data.phone;
-    if (data.theme !== undefined) patch["theme"] = data.theme;
-    if (data.voice_alerts !== undefined) patch["voice_alerts"] = data.voice_alerts;
-    if (data.notify_email !== undefined) patch["notify_email"] = data.notify_email;
+    const patch: {
+      full_name?: string;
+      phone?: string;
+      theme?: string;
+      voice_alerts?: boolean;
+      notify_email?: boolean;
+    } = {};
+    if (data.full_name !== undefined) patch.full_name = data.full_name;
+    if (data.phone !== undefined) patch.phone = data.phone;
+    if (data.theme !== undefined) patch.theme = data.theme;
+    if (data.voice_alerts !== undefined) patch.voice_alerts = data.voice_alerts;
+    if (data.notify_email !== undefined) patch.notify_email = data.notify_email;
     const { error } = await context.supabase
       .from("profiles")
       .update(patch)
