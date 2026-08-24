@@ -250,13 +250,14 @@ export const startSession = createServerFn({ method: "POST" })
     return {
       session,
       deviceReachable: Boolean(device?.mqtt_connected),
+      simulated: !device?.mqtt_connected,
       deviceCode: device?.device_code ?? null,
     };
   });
 
 const sessionUpdate = z.object({
   sessionId: z.string().uuid(),
-  action: z.enum(["ack", "pause", "resume", "stop", "complete"]),
+  action: z.enum(["ack", "heartbeat", "pause", "resume", "stop", "complete"]),
   elapsedSeconds: z.number().int().min(0).max(60 * 60 * 4),
 });
 
@@ -274,6 +275,7 @@ export const updateSession = createServerFn({ method: "POST" })
 
     const statusMap = {
       ack: "running",
+      heartbeat: "running",
       pause: "paused",
       resume: "running",
       stop: "stopped",
@@ -294,7 +296,7 @@ export const updateSession = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    if (data.action !== "ack") {
+    if (data.action !== "ack" && data.action !== "heartbeat") {
       await supabase.from("device_commands").insert({
         device_id: session.device_id,
         patient_id: session.patient_id,
