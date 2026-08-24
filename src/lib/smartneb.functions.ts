@@ -694,74 +694,134 @@ export const updateThresholds = createServerFn({ method: "POST" })
 
 export const buildReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { patientId: string; days: number }) =>
-    patientInput.extend({ days: z.number().int().min(1).max(180) }).parse(d),
+  .inputValidator((d: { patientId: string; days: number; format?: string }) =>
+    patientInput
+      .extend({
+        days: z.number().int().min(1).max(180),
+        format: z.enum(["pdf", "csv", "json"]).optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const since = new Date(Date.now() - data.days * 86_400_000).toISOString();
 
-    const [patient, device, plan, sessions, adherence, alerts, health] = await Promise.all([
-      supabase.from("patients").select("*").eq("id", data.patientId).maybeSingle(),
-      supabase.from("devices").select("*").eq("patient_id", data.patientId).maybeSingle(),
-      supabase
-        .from("care_plans")
-        .select("*, doctors(full_name, specialty)")
-        .eq("patient_id", data.patientId)
-        .eq("status", "published")
-        .order("start_date", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("nebulization_sessions")
-        .select("*")
-        .eq("patient_id", data.patientId)
-        .gte("started_at", since)
-        .order("started_at", { ascending: false }),
-      supabase
-        .from("adherence_records")
-        .select("*")
-        .eq("patient_id", data.patientId)
-        .gte("scheduled_for", since.slice(0, 10)),
-      supabase
-        .from("alerts")
-        .select("*")
-        .eq("patient_id", data.patientId)
-        .gte("created_at", since)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("health_telemetry")
-        .select("bpm, spo2, body_temperature")
-        .eq("patient_id", data.patientId)
-        .gte("recorded_at", since)
-        .limit(3000),
-    ]);
+    // RLS + can_view_patient guarantee no cross-patient exposure.
+    const { data: allowed } = await supabase.rpc("can_view_patient", {
+      _patient_id: data.patientId,
+    });
+    if (!allowed) throw new Error("You are not authorized to report on this patient.");
+
+    const [patient, device, plan, sessions, adherence, alerts, health, env, battery, sos, refills] =
+      await Promise.all([
+        supabase.from("patients").select("*").eq("id", data.patientId).maybeSingle(),
+        supabase.from("devices").select("*").eq("patient_id", data.patientId).maybeSingle(),
+        supabase
+          .from("care_plans")
+          .select("*, doctors(full_name, specialty)")
+          .eq("patient_id", data.patientId)
+          .eq("status", "published")
+          .order("start_date", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("nebulization_sessions")
+          .select("*")
+          .eq("patient_id", data.patientId)
+          .gte("started_at", since)
+          .order("started_at", { ascending: false }),
+        supabase
+          .from("adherence_records")
+          .select("*")
+          .eq("patient_id", data.patientId)
+          .gte("scheduled_for", since.slice(0, 10)),
+        supabase
+          .from("alerts")
+          .select("*")
+          .eq("patient_id", data.patientId)
+          .gte("created_at", since)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("health_telemetry")
+          .select("bpm, spo2, body_temperature, recorded_at")
+          .eq("patient_id", data.patientId)
+          .gte("recorded_at", since)
+          .order("recorded_at", { ascending: false })
+          .limit(3000),
+        supabase
+          .from("environmental_telemetry")
+          .select("ambient_temperature, humidity, aqi, recorded_at")
+          .eq("patient_id", data.patientId)
+          .gte("recorded_at", since)
+          .order("recorded_at", { ascending: false })
+          .limit(1500),
+        supabase
+          .from("battery_telemetry")
+          .select("percentage, voltage, current, cell_temperature, charging, recorded_at")
+          .eq("patient_id", data.patientId)
+          .gte("recorded_at", since)
+          .order("recorded_at", { ascending: false })
+          .limit(1500),
+        supabase
+          .from("sos_events")
+          .select("*")
+          .eq("patient_id", data.patientId)
+          .gte("created_at", since)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("fluid_refills")
+          .select("*")
+          .eq("patient_id", data.patientId)
+          .gte("created_at", since)
+          .order("created_at", { ascending: false }),
+      ]);
 
     const vitals = health.data ?? [];
     const avg = (key: "bpm" | "spo2" | "body_temperature") => {
-      const nums = vitals.map((v) => Number(v[key])).filter((n) => Number.isFinite(n));
+      const nums = vitals.map((v: any) => Number(v[key])).filter((n) => Number.isFinite(n));
       return nums.length ? Number((nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1)) : null;
     };
     const min = (key: "spo2") => {
-      const nums = vitals.map((v) => Number(v[key])).filter((n) => Number.isFinite(n));
+      const nums = vitals.map((v: any) => Number(v[key])).filter((n) => Number.isFinite(n));
       return nums.length ? Math.min(...nums) : null;
     };
+    const max = (key: "bpm" | "body_temperature") => {
+      const nums = vitals.map((v: any) => Number(v[key])).filter((n) => Number.isFinite(n));
+      return nums.length ? Math.max(...nums) : null;
+    };
 
+    const adherenceRows = adherence.data ?? [];
     const payload = {
       generatedAt: new Date().toISOString(),
       rangeDays: data.days,
+      rangeStart: since,
       patient: patient.data,
       device: device.data,
       carePlan: plan.data,
       sessions: sessions.data ?? [],
-      adherence: adherence.data ?? [],
+      adherence: adherenceRows,
+      adherenceSummary: {
+        scheduled: adherenceRows.length,
+        completed: adherenceRows.filter((a: any) => a.status === "completed").length,
+        partial: adherenceRows.filter((a: any) => a.status === "partial").length,
+        missed: adherenceRows.filter((a: any) => a.status === "missed").length,
+      },
       alerts: alerts.data ?? [],
+      sos: sos.data ?? [],
+      refills: refills.data ?? [],
+      series: {
+        health: vitals,
+        environment: env.data ?? [],
+        battery: battery.data ?? [],
+      },
       vitals: {
         samples: vitals.length,
         avgBpm: avg("bpm"),
+        maxBpm: max("bpm"),
         avgSpo2: avg("spo2"),
         minSpo2: min("spo2"),
         avgTemp: avg("body_temperature"),
+        maxTemp: max("body_temperature"),
       },
     };
 
@@ -769,7 +829,7 @@ export const buildReport = createServerFn({ method: "POST" })
       patient_id: data.patientId,
       requested_by: userId,
       kind: "clinical",
-      format: "pdf",
+      format: data.format ?? "pdf",
       range_start: since,
       range_end: new Date().toISOString(),
       payload,
@@ -779,10 +839,12 @@ export const buildReport = createServerFn({ method: "POST" })
       action: "report.generate",
       target_type: "patient",
       target_id: data.patientId,
+      meta: { days: data.days, format: data.format ?? "pdf" },
     });
 
     return payload;
   });
+
 
 /* ------------------------------------------------------------------ */
 /* Device simulator (labelled, dev/demo telemetry source)             */
