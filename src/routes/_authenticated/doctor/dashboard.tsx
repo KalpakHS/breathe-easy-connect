@@ -95,10 +95,30 @@ function DoctorDashboard() {
   const [selected, setSelected] = useState<string | null>(null);
   const [q, setQ] = useState("");
 
+  const [signedIn, setSignedIn] = useState(true);
+
+  // Stop polling/refetching the moment the session goes away, otherwise
+  // protected server functions are called without a bearer token.
+  useEffect(() => {
+    let active = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (active) setSignedIn(Boolean(data.session));
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setSignedIn(Boolean(session));
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
   const roster = useQuery({
     queryKey: ["doctor-patients"],
     queryFn: () => listMyPatients(),
-    refetchInterval: 15_000,
+    enabled: signedIn,
+    retry: false,
+    refetchInterval: signedIn ? 15_000 : false,
   });
 
   useEffect(() => {
@@ -107,6 +127,7 @@ function DoctorDashboard() {
 
   // Live database stream: any new vitals, alert or session pushes a refresh.
   useEffect(() => {
+    if (!signedIn) return;
     const channel = supabase
       .channel("doctor-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "health_telemetry" }, () => {
@@ -129,7 +150,7 @@ function DoctorDashboard() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, signedIn]);
 
   const patients = useMemo(() => {
     const list = roster.data ?? [];
@@ -212,6 +233,7 @@ function DoctorDashboard() {
           {selected ? (
             <PatientWorkspace
               key={selected}
+              signedIn={signedIn}
               patient={patients.find((p) => p.id === selected) ?? null}
               patientId={selected}
             />
@@ -276,14 +298,18 @@ function RosterCard({
 function PatientWorkspace({
   patient,
   patientId,
+  signedIn,
 }: {
   patient: DoctorPatientRow | null;
   patientId: string;
+  signedIn: boolean;
 }) {
   const snapshot = useQuery({
     queryKey: ["snapshot", patientId],
     queryFn: () => getPatientSnapshot({ data: { patientId } }),
-    refetchInterval: 5_000,
+    enabled: signedIn,
+    retry: false,
+    refetchInterval: signedIn ? 5_000 : false,
   });
 
   const snap = snapshot.data;
