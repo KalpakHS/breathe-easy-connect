@@ -59,6 +59,7 @@ export type DoctorReportRow = {
   range_end: string | null;
   created_at: string;
   mine: boolean;
+  payload: any;
   summary: {
     samples: number | null;
     avgSpo2: number | null;
@@ -343,6 +344,7 @@ export const listDoctorReports = createServerFn({ method: "GET" })
         range_end: r.range_end,
         created_at: r.created_at,
         mine: r.requested_by === userId,
+        payload,
         summary: {
           samples: payload?.vitals?.samples ?? null,
           avgSpo2: payload?.vitals?.avgSpo2 ?? null,

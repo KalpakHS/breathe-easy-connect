@@ -1,12 +1,19 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
-import { Bot, Send, User } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bot, MessageSquarePlus, Send, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
-import { askAssistant } from "@/lib/smartneb.functions";
+import {
+  askAssistantPersistent,
+  deleteConversation,
+  getConversation,
+  listConversations,
+} from "@/lib/assistant.functions";
+import { DISCLAIMER } from "@/lib/assistant.constants";
 import { PatientPage } from "@/components/smartneb/patient-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Route = createFileRoute("/_authenticated/patient/assistant")({
   head: () => ({
@@ -14,7 +21,8 @@ export const Route = createFileRoute("/_authenticated/patient/assistant")({
       { title: "AI Assistant — SmartNeb" },
       {
         name: "description",
-        content: "Ask questions about your therapy, adherence and vitals with an AI assistant scoped to your data.",
+        content:
+          "Ask questions about your therapy, adherence and vitals with an AI assistant scoped to your data.",
       },
       { property: "og:title", content: "AI Assistant — SmartNeb" },
       { property: "og:description", content: "Understand your therapy data in plain language." },
@@ -38,98 +46,197 @@ const SUGGESTIONS = [
 
 type Msg = { role: "user" | "assistant"; content: string };
 
+const GREETING: Msg = {
+  role: "assistant",
+  content:
+    "Hi — I can explain your vitals, adherence and care plan. I can't diagnose or change your prescription; contact your clinician for medical decisions.",
+};
+
 function AssistantBody({ patientId }: { patientId: string }) {
-  const [messages, setMessages] = useState<Msg[]>([
-    {
-      role: "assistant",
-      content:
-        "Hi — I can explain your vitals, adherence and care plan. I can't diagnose or change your prescription; contact your clinician for medical decisions.",
-    },
-  ]);
+  const qc = useQueryClient();
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [pendingUser, setPendingUser] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
 
+  const conversations = useQuery({
+    queryKey: ["ai-conversations"],
+    queryFn: () => listConversations(),
+    retry: false,
+  });
+
+  const thread = useQuery({
+    queryKey: ["ai-conversation", conversationId],
+    queryFn: () => getConversation({ data: { conversationId: conversationId as string } }),
+    enabled: Boolean(conversationId),
+    retry: false,
+  });
+
   const ask = useMutation({
-    mutationFn: (question: string) => askAssistant({ data: { question, patientId } }),
+    mutationFn: (question: string) =>
+      askAssistantPersistent({
+        data: {
+          question,
+          patientId,
+          ...(conversationId ? { conversationId } : {}),
+        },
+      }),
     onSuccess: (res) => {
-      setMessages((m) => [...m, { role: "assistant", content: res.answer }]);
-      setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      setConversationId(res.conversationId);
+      setPendingUser([]);
+      void qc.invalidateQueries({ queryKey: ["ai-conversations"] });
+      void qc.invalidateQueries({ queryKey: ["ai-conversation", res.conversationId] });
     },
     onError: (e: Error) => {
+      setPendingUser([]);
       toast.error(e.message);
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", content: "I couldn't answer that right now. Please try again." },
-      ]);
     },
   });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteConversation({ data: { conversationId: id } }),
+    onSuccess: (_r, id) => {
+      if (id === conversationId) setConversationId(null);
+      void qc.invalidateQueries({ queryKey: ["ai-conversations"] });
+      toast.success("Conversation deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const messages: Msg[] = [
+    ...(conversationId ? [] : [GREETING]),
+    ...((thread.data ?? []).map((m) => ({ role: m.role, content: m.content })) as Msg[]),
+    ...pendingUser,
+  ];
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, ask.isPending]);
 
   const send = (text: string) => {
     const q = text.trim();
     if (!q || ask.isPending) return;
-    setMessages((m) => [...m, { role: "user", content: q }]);
+    setPendingUser([{ role: "user", content: q }]);
     setInput("");
     ask.mutate(q);
-    setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
   return (
-    <div className="panel flex h-[70vh] flex-col p-5">
-      <div className="flex-1 space-y-4 overflow-y-auto pr-2">
-        {messages.map((m, i) => (
-          <div key={i} className={m.role === "user" ? "flex justify-end" : "flex gap-3"}>
-            {m.role === "assistant" ? (
-              <span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                <Bot className="size-4" />
-              </span>
-            ) : null}
-            <div
-              className={
-                m.role === "user"
-                  ? "max-w-[80%] rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground"
-                  : "max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-bl-sm border bg-surface-2 px-4 py-2.5 text-sm"
-              }
-            >
-              {m.content}
-            </div>
-            {m.role === "user" ? (
-              <span className="ml-3 mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                <User className="size-4" />
-              </span>
-            ) : null}
-          </div>
-        ))}
-        {ask.isPending ? (
-          <p className="text-sm text-muted-foreground">Assistant is thinking…</p>
-        ) : null}
-        <div ref={endRef} />
-      </div>
-
-      <div className="mt-4 space-y-3 border-t pt-4">
-        <div className="flex flex-wrap gap-2">
-          {SUGGESTIONS.map((s) => (
-            <Button key={s} size="sm" variant="outline" onClick={() => send(s)} disabled={ask.isPending}>
-              {s}
-            </Button>
-          ))}
-        </div>
-        <form
-          className="flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            send(input);
+    <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+      <aside className="panel flex max-h-[70vh] flex-col p-3">
+        <Button
+          variant="outline"
+          size="sm"
+          className="mb-3 w-full"
+          onClick={() => {
+            setConversationId(null);
+            setPendingUser([]);
           }}
         >
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about your therapy…"
-            aria-label="Ask the assistant"
-          />
-          <Button type="submit" disabled={ask.isPending}>
-            <Send className="size-4" />
-          </Button>
-        </form>
+          <MessageSquarePlus className="mr-2 size-4" aria-hidden /> New conversation
+        </Button>
+        <ScrollArea className="min-h-0 flex-1">
+          <ul className="space-y-1">
+            {(conversations.data ?? []).length === 0 ? (
+              <li className="px-2 py-3 text-xs text-muted-foreground">No saved conversations yet.</li>
+            ) : null}
+            {(conversations.data ?? []).map((c) => (
+              <li key={c.id} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConversationId(c.id);
+                    setPendingUser([]);
+                  }}
+                  className={`flex-1 truncate rounded-md px-2 py-2 text-left text-xs transition-colors ${
+                    c.id === conversationId
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "hover:bg-muted"
+                  }`}
+                >
+                  {c.title}
+                  <span className="block text-[10px] text-muted-foreground">
+                    {new Date(c.createdAt).toLocaleDateString()}
+                  </span>
+                </button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label={`Delete conversation ${c.title}`}
+                  onClick={() => remove.mutate(c.id)}
+                >
+                  <Trash2 className="size-3.5" aria-hidden />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </ScrollArea>
+      </aside>
+
+      <div className="panel flex h-[70vh] flex-col p-5">
+        <div className="flex-1 space-y-4 overflow-y-auto pr-2">
+          {messages.map((m, i) => (
+            <div key={i} className={m.role === "user" ? "flex justify-end" : "flex gap-3"}>
+              {m.role === "assistant" ? (
+                <span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <Bot className="size-4" />
+                </span>
+              ) : null}
+              <div
+                className={
+                  m.role === "user"
+                    ? "max-w-[80%] rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground"
+                    : "max-w-[80%] rounded-2xl rounded-bl-sm border bg-surface-2 px-4 py-2.5 text-sm whitespace-pre-wrap"
+                }
+              >
+                {m.content}
+              </div>
+              {m.role === "user" ? (
+                <span className="mt-1 ml-3 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                  <User className="size-4" />
+                </span>
+              ) : null}
+            </div>
+          ))}
+          {ask.isPending ? (
+            <p className="text-sm text-muted-foreground">Assistant is thinking…</p>
+          ) : null}
+          <div ref={endRef} />
+        </div>
+
+        <div className="mt-4 space-y-3 border-t pt-4">
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTIONS.map((s) => (
+              <Button
+                key={s}
+                size="sm"
+                variant="outline"
+                onClick={() => send(s)}
+                disabled={ask.isPending}
+              >
+                {s}
+              </Button>
+            ))}
+          </div>
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              send(input);
+            }}
+          >
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about your therapy…"
+              aria-label="Ask the assistant"
+            />
+            <Button type="submit" disabled={ask.isPending} aria-label="Send question">
+              <Send className="size-4" />
+            </Button>
+          </form>
+          <p className="text-[11px] text-muted-foreground">{DISCLAIMER}</p>
+        </div>
       </div>
     </div>
   );

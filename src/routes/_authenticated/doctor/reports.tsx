@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, FileText } from "lucide-react";
+import { FileDown, FileSpreadsheet, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { listDoctorReports } from "@/lib/doctor-detail.functions";
 import { buildReport } from "@/lib/smartneb.functions";
+import { exportReportCSV, exportReportPDF, type SmartNebReport } from "@/lib/report-export";
 import { DoctorPage } from "@/components/smartneb/doctor-layout";
 import { EmptyState, ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { Badge } from "@/components/ui/badge";
@@ -171,9 +172,16 @@ function DoctorReportsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => downloadReport(r.id, r.patientName)}
+                          onClick={() => exportReport(r.payload, "pdf")}
                         >
-                          <Download className="mr-2 size-3.5" aria-hidden /> Download
+                          <FileDown className="mr-2 size-3.5" aria-hidden /> PDF
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => exportReport(r.payload, "csv")}
+                        >
+                          <FileSpreadsheet className="mr-2 size-3.5" aria-hidden /> CSV
                         </Button>
                       </div>
                     </div>
@@ -198,18 +206,15 @@ function DoctorReportsPage() {
   );
 }
 
-async function downloadReport(reportId: string, patientName: string) {
+function exportReport(payload: unknown, format: "pdf" | "csv") {
+  if (!payload || typeof payload !== "object") {
+    toast.error("This report has no stored payload to export.");
+    return;
+  }
   try {
-    const rows = await listDoctorReports();
-    const report = rows.find((r) => r.id === reportId);
-    if (!report) throw new Error("Report not found");
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `smartneb-report-${patientName.replace(/\s+/g, "-").toLowerCase()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const report = payload as SmartNebReport;
+    if (format === "pdf") exportReportPDF(report);
+    else exportReportCSV(report);
   } catch (e) {
     toast.error((e as Error).message);
   }

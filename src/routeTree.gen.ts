@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin/dashboard'
 import { Route as AuthenticatedCaregiverAlertsRouteImport } from './routes/_authenticated/caregiver/alerts'
 import { Route as AuthenticatedCaregiverCarePlansRouteImport } from './routes/_authenticated/caregiver/care-plans'
@@ -43,6 +44,7 @@ import { Route as AuthenticatedCaregiverPatientsIndexRouteImport } from './route
 import { Route as AuthenticatedCaregiverPatientsPatientIdRouteImport } from './routes/_authenticated/caregiver/patients.$patientId'
 import { Route as AuthenticatedDoctorPatientsIndexRouteImport } from './routes/_authenticated/doctor/patients.index'
 import { Route as AuthenticatedDoctorPatientsPatientIdRouteImport } from './routes/_authenticated/doctor/patients.$patientId'
+import { Route as ApiPublicCronEvaluateAlertsRouteImport } from './routes/api/public/cron/evaluate-alerts'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -56,6 +58,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminDashboardRoute =
@@ -243,10 +250,17 @@ const AuthenticatedDoctorPatientsPatientIdRoute =
     path: '/doctor/patients/$patientId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicCronEvaluateAlertsRoute =
+  ApiPublicCronEvaluateAlertsRouteImport.update({
+    id: '/api/public/cron/evaluate-alerts',
+    path: '/api/public/cron/evaluate-alerts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/caregiver/alerts': typeof AuthenticatedCaregiverAlertsRoute
   '/caregiver/care-plans': typeof AuthenticatedCaregiverCarePlansRoute
@@ -276,12 +290,14 @@ export interface FileRoutesByFullPath {
   '/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
   '/caregiver/patients/$patientId': typeof AuthenticatedCaregiverPatientsPatientIdRoute
   '/doctor/patients/$patientId': typeof AuthenticatedDoctorPatientsPatientIdRoute
+  '/api/public/cron/evaluate-alerts': typeof ApiPublicCronEvaluateAlertsRoute
   '/caregiver/patients/': typeof AuthenticatedCaregiverPatientsIndexRoute
   '/doctor/patients/': typeof AuthenticatedDoctorPatientsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/caregiver/alerts': typeof AuthenticatedCaregiverAlertsRoute
   '/caregiver/care-plans': typeof AuthenticatedCaregiverCarePlansRoute
@@ -311,6 +327,7 @@ export interface FileRoutesByTo {
   '/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
   '/caregiver/patients/$patientId': typeof AuthenticatedCaregiverPatientsPatientIdRoute
   '/doctor/patients/$patientId': typeof AuthenticatedDoctorPatientsPatientIdRoute
+  '/api/public/cron/evaluate-alerts': typeof ApiPublicCronEvaluateAlertsRoute
   '/caregiver/patients': typeof AuthenticatedCaregiverPatientsIndexRoute
   '/doctor/patients': typeof AuthenticatedDoctorPatientsIndexRoute
 }
@@ -319,6 +336,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/caregiver/alerts': typeof AuthenticatedCaregiverAlertsRoute
   '/_authenticated/caregiver/care-plans': typeof AuthenticatedCaregiverCarePlansRoute
@@ -348,6 +366,7 @@ export interface FileRoutesById {
   '/_authenticated/super-admin/dashboard': typeof AuthenticatedSuperAdminDashboardRoute
   '/_authenticated/caregiver/patients/$patientId': typeof AuthenticatedCaregiverPatientsPatientIdRoute
   '/_authenticated/doctor/patients/$patientId': typeof AuthenticatedDoctorPatientsPatientIdRoute
+  '/api/public/cron/evaluate-alerts': typeof ApiPublicCronEvaluateAlertsRoute
   '/_authenticated/caregiver/patients/': typeof AuthenticatedCaregiverPatientsIndexRoute
   '/_authenticated/doctor/patients/': typeof AuthenticatedDoctorPatientsIndexRoute
 }
@@ -356,6 +375,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/admin/dashboard'
     | '/caregiver/alerts'
     | '/caregiver/care-plans'
@@ -385,12 +405,14 @@ export interface FileRouteTypes {
     | '/super-admin/dashboard'
     | '/caregiver/patients/$patientId'
     | '/doctor/patients/$patientId'
+    | '/api/public/cron/evaluate-alerts'
     | '/caregiver/patients/'
     | '/doctor/patients/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/admin/dashboard'
     | '/caregiver/alerts'
     | '/caregiver/care-plans'
@@ -420,6 +442,7 @@ export interface FileRouteTypes {
     | '/super-admin/dashboard'
     | '/caregiver/patients/$patientId'
     | '/doctor/patients/$patientId'
+    | '/api/public/cron/evaluate-alerts'
     | '/caregiver/patients'
     | '/doctor/patients'
   id:
@@ -427,6 +450,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/reset-password'
     | '/_authenticated/admin/dashboard'
     | '/_authenticated/caregiver/alerts'
     | '/_authenticated/caregiver/care-plans'
@@ -456,6 +480,7 @@ export interface FileRouteTypes {
     | '/_authenticated/super-admin/dashboard'
     | '/_authenticated/caregiver/patients/$patientId'
     | '/_authenticated/doctor/patients/$patientId'
+    | '/api/public/cron/evaluate-alerts'
     | '/_authenticated/caregiver/patients/'
     | '/_authenticated/doctor/patients/'
   fileRoutesById: FileRoutesById
@@ -464,6 +489,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicCronEvaluateAlertsRoute: typeof ApiPublicCronEvaluateAlertsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -487,6 +514,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/dashboard': {
@@ -706,6 +740,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDoctorPatientsPatientIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/cron/evaluate-alerts': {
+      id: '/api/public/cron/evaluate-alerts'
+      path: '/api/public/cron/evaluate-alerts'
+      fullPath: '/api/public/cron/evaluate-alerts'
+      preLoaderRoute: typeof ApiPublicCronEvaluateAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -787,6 +828,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicCronEvaluateAlertsRoute: ApiPublicCronEvaluateAlertsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
