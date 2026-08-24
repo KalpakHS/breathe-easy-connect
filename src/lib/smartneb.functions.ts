@@ -296,7 +296,7 @@ export const updateSession = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    if (data.action !== "ack") {
+    if (data.action !== "ack" && data.action !== "heartbeat") {
       await supabase.from("device_commands").insert({
         device_id: session.device_id,
         patient_id: session.patient_id,
