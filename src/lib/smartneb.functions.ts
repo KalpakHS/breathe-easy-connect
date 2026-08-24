@@ -462,54 +462,79 @@ export const triggerSOS = createServerFn({ method: "POST" })
     const { data: owns } = await supabase.rpc("owns_patient", { _patient_id: data.patientId });
     if (!owns) throw new Error("Only the patient can trigger their own SOS.");
 
-    const { data: vitals } = await supabase
+    // Recipient discovery and notification creation must not depend on the
+    // patient's RLS visibility into staff records. Ownership is verified
+    // above, then the trusted server client resolves the actual assignments.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: vitals, error: vitalsError } = await supabaseAdmin
       .from("health_telemetry")
       .select("bpm, spo2, body_temperature, recorded_at")
       .eq("patient_id", data.patientId)
       .order("recorded_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+    if (vitalsError) throw new Error(vitalsError.message);
 
-    const { data: sos, error } = await supabase
+    const { data: sos, error } = await supabaseAdmin
       .from("sos_events")
       .insert({ patient_id: data.patientId, source: data.source ?? "manual", vitals })
       .select()
       .single();
     if (error) throw new Error(error.message);
 
-    const [{ data: docs }, { data: cares }] = await Promise.all([
-      supabase
+    const [docsResult, caresResult, patientResult, deviceResult] = await Promise.all([
+      supabaseAdmin
         .from("doctor_patient_assignments")
         .select("doctors(user_id)")
         .eq("patient_id", data.patientId),
-      supabase
+      supabaseAdmin
         .from("caregiver_patient_assignments")
         .select("caregivers(user_id)")
         .eq("patient_id", data.patientId),
+      supabaseAdmin.from("patients").select("full_name").eq("id", data.patientId).single(),
+      supabaseAdmin
+        .from("devices")
+        .select("device_code, status")
+        .eq("patient_id", data.patientId)
+        .order("last_seen_at", { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
+    const assignmentError = docsResult.error ?? caresResult.error;
+    if (assignmentError) throw new Error(assignmentError.message);
+
     const recipients = [
-      ...(docs ?? []).map((d) => (d.doctors as { user_id: string | null } | null)?.user_id),
-      ...(cares ?? []).map((c) => (c.caregivers as { user_id: string | null } | null)?.user_id),
-    ].filter((v): v is string => Boolean(v));
+      ...(docsResult.data ?? []).map(
+        (d) => (d.doctors as { user_id: string | null } | null)?.user_id,
+      ),
+      ...(caresResult.data ?? []).map(
+        (c) => (c.caregivers as { user_id: string | null } | null)?.user_id,
+      ),
+    ].filter((value, index, all): value is string => Boolean(value) && all.indexOf(value) === index);
 
     if (recipients.length) {
-      await supabase.from("notifications").insert(
+      const device = deviceResult.data;
+      const { error: notificationError } = await supabaseAdmin.from("notifications").insert(
         recipients.map((uid) => ({
           user_id: uid,
           patient_id: data.patientId,
           type: "sos",
-          title: "Emergency SOS triggered",
-          body: `SpO2 ${vitals?.spo2 ?? "--"}% · HR ${vitals?.bpm ?? "--"} bpm`,
+          title: `Emergency SOS: ${patientResult.data?.full_name ?? "Patient"}`,
+          body: `SpO2 ${vitals?.spo2 ?? "--"}% · HR ${vitals?.bpm ?? "--"} bpm · Device ${device?.device_code ?? "unassigned"} (${device?.status ?? "unknown"})`,
         })),
       );
+      if (notificationError) throw new Error(notificationError.message);
     }
 
-    await supabase.from("audit_logs").insert({
+    const { error: auditError } = await supabaseAdmin.from("audit_logs").insert({
       actor_id: userId,
       action: "sos.trigger",
       target_type: "sos_event",
       target_id: sos.id,
+      meta: { patient_id: data.patientId, notified: recipients.length },
     });
+    if (auditError) throw new Error(auditError.message);
 
     return { sos, notified: recipients.length };
   });
