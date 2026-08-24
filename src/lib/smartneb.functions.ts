@@ -16,6 +16,7 @@ export type MeContext = {
   patientId: string | null;
   doctorId: string | null;
   caregiverId: string | null;
+  isActive: boolean;
 };
 
 /* ------------------------------------------------------------------ */
@@ -46,6 +47,7 @@ export const getMe = createServerFn({ method: "GET" })
       patientId: patient.data?.id ?? null,
       doctorId: doctor.data?.id ?? null,
       caregiverId: caregiver.data?.id ?? null,
+      isActive: profile.data?.is_active !== false,
     };
   });
 
