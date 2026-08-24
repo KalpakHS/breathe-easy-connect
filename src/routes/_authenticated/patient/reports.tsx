@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
-import { FileDown, Printer } from "lucide-react";
+import { FileDown, FileSpreadsheet, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { buildReport } from "@/lib/smartneb.functions";
+import { exportReportCSV, exportReportPDF, type SmartNebReport } from "@/lib/report-export";
 import { PatientPage } from "@/components/smartneb/patient-layout";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/smartneb/states";
@@ -71,11 +72,17 @@ function ReportsBody({ patientId }: { patientId: string }) {
           </Button>
           {report ? (
             <>
-              <Button variant="outline" onClick={() => window.print()}>
-                <Printer className="mr-2 size-4" /> Print / PDF
+              <Button variant="outline" onClick={() => exportReportPDF(report as SmartNebReport)}>
+                <FileDown className="mr-2 size-4" /> PDF
               </Button>
-              <Button variant="outline" onClick={download}>
-                <FileDown className="mr-2 size-4" /> Export data
+              <Button variant="outline" onClick={() => exportReportCSV(report as SmartNebReport)}>
+                <FileSpreadsheet className="mr-2 size-4" /> CSV
+              </Button>
+              <Button variant="outline" onClick={() => window.print()}>
+                <Printer className="mr-2 size-4" /> Print
+              </Button>
+              <Button variant="ghost" onClick={download}>
+                Raw JSON
               </Button>
             </>
           ) : null}
