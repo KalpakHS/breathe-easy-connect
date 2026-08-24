@@ -292,6 +292,7 @@ export type Database = {
           patient_id: string
           start_date: string
           status: Database["public"]["Enums"]["care_plan_status"]
+          time_slots: string[]
           updated_at: string
         }
         Insert: {
@@ -307,6 +308,7 @@ export type Database = {
           patient_id: string
           start_date?: string
           status?: Database["public"]["Enums"]["care_plan_status"]
+          time_slots?: string[]
           updated_at?: string
         }
         Update: {
@@ -322,6 +324,7 @@ export type Database = {
           patient_id?: string
           start_date?: string
           status?: Database["public"]["Enums"]["care_plan_status"]
+          time_slots?: string[]
           updated_at?: string
         }
         Relationships: [
@@ -904,8 +907,11 @@ export type Database = {
       }
       patients: {
         Row: {
+          alerts_enabled: boolean
+          battery_low_threshold: number
           bpm_high_threshold: number
           bpm_low_threshold: number
+          bpm_low_warn: number
           condition: string | null
           created_at: string
           date_of_birth: string | null
@@ -913,6 +919,7 @@ export type Database = {
           full_name: string
           id: string
           mrn: string
+          offline_after_minutes: number
           sex: string | null
           spo2_threshold: number
           temp_threshold: number
@@ -920,8 +927,11 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          alerts_enabled?: boolean
+          battery_low_threshold?: number
           bpm_high_threshold?: number
           bpm_low_threshold?: number
+          bpm_low_warn?: number
           condition?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -929,6 +939,7 @@ export type Database = {
           full_name: string
           id?: string
           mrn: string
+          offline_after_minutes?: number
           sex?: string | null
           spo2_threshold?: number
           temp_threshold?: number
@@ -936,8 +947,11 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          alerts_enabled?: boolean
+          battery_low_threshold?: number
           bpm_high_threshold?: number
           bpm_low_threshold?: number
+          bpm_low_warn?: number
           condition?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -945,6 +959,7 @@ export type Database = {
           full_name?: string
           id?: string
           mrn?: string
+          offline_after_minutes?: number
           sex?: string | null
           spo2_threshold?: number
           temp_threshold?: number
