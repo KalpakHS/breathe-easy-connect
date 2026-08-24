@@ -150,7 +150,7 @@ function DoctorDashboard() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, signedIn]);
 
   const patients = useMemo(() => {
     const list = roster.data ?? [];
