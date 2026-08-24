@@ -45,7 +45,7 @@ function ProfileBody({ patientId }: { patientId: string }) {
   }, [profile.data]);
 
   const save = useMutation({
-    mutationFn: () => updateProfile({ data: { fullName, phone } }),
+    mutationFn: () => updateProfile({ data: { full_name: fullName, phone } }),
     onSuccess: () => {
       toast.success("Profile saved");
       void qc.invalidateQueries({ queryKey: ["profile"] });
@@ -93,8 +93,7 @@ function ProfileBody({ patientId }: { patientId: string }) {
           {[
             ["MRN", patient?.mrn],
             ["Condition", patient?.condition],
-            ["Emergency contact", patient?.emergency_contact_name],
-            ["Emergency phone", patient?.emergency_contact_phone],
+            ["Date of birth", patient?.date_of_birth],
             ["Device", device?.device_code],
             ["Firmware", device?.firmware],
           ].map(([k, v]) => (
