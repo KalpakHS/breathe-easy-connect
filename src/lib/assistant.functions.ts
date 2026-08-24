@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { DISCLAIMER, MAX_PER_HOUR } from "./assistant.constants";
 
 /**
  * Persistent, RBAC-scoped AI assistant.
@@ -10,10 +11,6 @@ import { z } from "zod";
  * - The model is read-only: it can never write to clinical tables.
  */
 
-const MAX_PER_HOUR = 30;
-
-export const DISCLAIMER =
-  "SmartNeb Assistant provides general information from your recorded data only. It is not a medical diagnosis. Contact your care team for clinical decisions, and call emergency services for urgent symptoms.";
 
 export type AiMessage = { id: string; role: "user" | "assistant"; content: string; createdAt: string };
 export type AiConversation = { id: string; title: string; createdAt: string };
