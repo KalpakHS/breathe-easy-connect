@@ -59,14 +59,14 @@ export function PatientPage({
 }) {
   const me = useMe();
 
-  if (me.isLoading) {
+  if (me.isPending) {
     return (
       <div className="p-8">
         <LoadingSkeleton rows={4} />
       </div>
     );
   }
-  if (me.isError || !me.data) {
+  if (me.isError) {
     return (
       <div className="p-8">
         <ErrorState message={(me.error as Error)?.message} onRetry={() => me.refetch()} />
