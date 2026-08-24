@@ -24,6 +24,7 @@ import {
   type DoctorPatientRow,
 } from "@/lib/doctor.functions";
 import { AppShell, doctorNav } from "@/components/smartneb/app-shell";
+import { SOSPanel } from "@/components/smartneb/sos-panel";
 import { useMe } from "@/components/smartneb/patient-layout";
 import { EmptyState, ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { StatusBadge, VitalCard, freshness, type VitalStatus } from "@/components/smartneb/vitals";
@@ -194,6 +195,8 @@ function DoctorDashboard() {
       {!me.data.doctorId ? (
         <ErrorState message="No clinician record is linked to this account yet. Ask an administrator to link you." />
       ) : (
+        <div className="space-y-6">
+        <SOSPanel enabled={signedIn} title="Emergency SOS — assigned patients" />
         <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
           <section className="panel flex max-h-[calc(100vh-11rem)] flex-col p-4">
             <div className="flex items-center gap-2">
@@ -240,6 +243,7 @@ function DoctorDashboard() {
           ) : (
             <EmptyState title="Select a patient" description="Pick a patient to review live vitals." />
           )}
+        </div>
         </div>
       )}
     </AppShell>

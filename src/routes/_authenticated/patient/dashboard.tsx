@@ -26,6 +26,18 @@ import { ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { SOSPanel } from "@/components/smartneb/sos-panel";
 
 export const Route = createFileRoute("/_authenticated/patient/dashboard")({
   head: () => ({
@@ -92,10 +104,12 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
 
   const sos = useMutation({
     mutationFn: () => triggerSOS({ data: { patientId, source: "manual" } }),
-    onSuccess: (res) =>
+    onSuccess: (res) => {
       toast.error("Emergency SOS sent", {
         description: `${res.notified} care team member(s) notified with your latest vitals.`,
-      }),
+      });
+      void qc.invalidateQueries({ queryKey: ["sos-events"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -158,9 +172,33 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
               Simulated device feed
             </Label>
           </div>
-          <Button variant="destructive" onClick={() => sos.mutate()} disabled={sos.isPending}>
-            <Siren className="mr-2 size-4" /> Emergency SOS
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={sos.isPending}>
+                <Siren className="mr-2 size-4" /> Emergency SOS
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Send an emergency SOS?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your assigned doctor and caregiver are alerted immediately with your latest
+                  vitals (SpO₂ {spo2 ?? "--"}%, heart rate {bpm ?? "--"} bpm, temperature{" "}
+                  {temp ?? "--"} °C), device status and the current time. Only use this in a real
+                  emergency. If you are in immediate danger, also call local emergency services.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-critical text-critical-foreground hover:bg-critical/90"
+                  onClick={() => sos.mutate()}
+                >
+                  Yes, send SOS now
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </section>
 
@@ -330,6 +368,13 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           </ul>
         )}
       </section>
+
+      <SOSPanel
+        patientId={patientId}
+        canRespond={false}
+        includeResolved
+        title="My emergency SOS history"
+      />
     </div>
   );
 }

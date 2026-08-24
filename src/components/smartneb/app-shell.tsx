@@ -10,6 +10,7 @@ import {
   CalendarCheck,
   FileText,
   Gauge as GaugeIcon,
+  HeartHandshake,
   History,
   LayoutDashboard,
   LogOut,
@@ -46,6 +47,10 @@ export const patientNav: NavItem[] = [
 
 export const doctorNav: NavItem[] = [
   { label: "Clinical Dashboard", to: "/doctor/dashboard", icon: Stethoscope },
+];
+
+export const caregiverNav: NavItem[] = [
+  { label: "Care Dashboard", to: "/caregiver/dashboard", icon: HeartHandshake },
 ];
 
 export const roleHome: Record<MeContext["role"], string> = {
