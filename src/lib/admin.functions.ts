@@ -530,7 +530,7 @@ export type AuditRow = {
   actorName: string | null;
   targetType: string | null;
   targetId: string | null;
-  meta: Record<string, unknown> | null;
+  meta: string | null;
   createdAt: string;
 };
 
@@ -558,7 +558,7 @@ export const listAuditLogs = createServerFn({ method: "GET" })
       actorName: r.actor_name ?? (r.actor_id ? (nameBy.get(r.actor_id) ?? null) : null),
       targetType: r.target_type,
       targetId: r.target_id,
-      meta: (r.meta ?? null) as Record<string, unknown> | null,
+      meta: r.meta ? JSON.stringify(r.meta) : null,
       createdAt: r.created_at,
     }));
   });

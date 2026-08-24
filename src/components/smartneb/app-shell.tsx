@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   Settings,
+  ShieldCheck,
   Stethoscope,
   User,
   Wind,
