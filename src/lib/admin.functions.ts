@@ -366,7 +366,7 @@ export const setAssignment = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertStaff(context as Ctx);
-    const { supabase } = context;
+    const supabase = context.supabase as any;
     const table =
       data.kind === "doctor" ? "doctor_patient_assignments" : "caregiver_patient_assignments";
     const column = data.kind === "doctor" ? "doctor_id" : "caregiver_id";
@@ -392,6 +392,7 @@ export const setAssignment = createServerFn({ method: "POST" })
         .eq(column, data.staffId);
       if (error) throw new Error(error.message);
     }
+
 
     await audit(context as Ctx, `assignment.${data.action}`, data.kind, data.staffId, {
       patient_id: data.patientId,
