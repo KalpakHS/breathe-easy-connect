@@ -52,7 +52,13 @@ export const doctorNav: NavItem[] = [
 ];
 
 export const caregiverNav: NavItem[] = [
-  { label: "Care Dashboard", to: "/caregiver/dashboard", icon: HeartHandshake },
+  { label: "Dashboard", to: "/caregiver/dashboard", icon: HeartHandshake },
+  { label: "My Patients", to: "/caregiver/patients", icon: Users },
+  { label: "Alerts", to: "/caregiver/alerts", icon: AlertTriangle },
+  { label: "Emergency SOS", to: "/caregiver/sos", icon: Siren },
+  { label: "Care Plans", to: "/caregiver/care-plans", icon: ClipboardList },
+  { label: "Notes", to: "/caregiver/notes", icon: NotebookPen },
+  { label: "Profile", to: "/caregiver/profile", icon: User },
 ];
 
 export const adminNav: NavItem[] = [
