@@ -680,6 +680,11 @@ function CarePlanList({ patientId }: { patientId: string }) {
                 {plan.duration_minutes} min · {plan.frequency_per_day}x daily · from {plan.start_date}
                 {plan.end_date ? ` to ${plan.end_date}` : ""}
               </p>
+              {plan.time_slots?.length ? (
+                <p className="text-xs text-muted-foreground">
+                  Times: {plan.time_slots.join(" · ")}
+                </p>
+              ) : null}
               {plan.instructions ? (
                 <p className="mt-2 text-sm text-muted-foreground">{plan.instructions}</p>
               ) : null}
