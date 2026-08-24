@@ -275,6 +275,7 @@ export const updateSession = createServerFn({ method: "POST" })
 
     const statusMap = {
       ack: "running",
+      heartbeat: "running",
       pause: "paused",
       resume: "running",
       stop: "stopped",
