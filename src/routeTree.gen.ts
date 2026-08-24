@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPatientDashboardRouteImport } from './routes/_authenticated/patient/dashboard'
 import { Route as AuthenticatedPatientMonitoringRouteImport } from './routes/_authenticated/patient/monitoring'
+import { Route as AuthenticatedPatientNebulizerRouteImport } from './routes/_authenticated/patient/nebulizer'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -41,18 +42,26 @@ const AuthenticatedPatientMonitoringRoute =
     path: '/patient/monitoring',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPatientNebulizerRoute =
+  AuthenticatedPatientNebulizerRouteImport.update({
+    id: '/patient/nebulizer',
+    path: '/patient/nebulizer',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
   '/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
+  '/patient/nebulizer': typeof AuthenticatedPatientNebulizerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
   '/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
+  '/patient/nebulizer': typeof AuthenticatedPatientNebulizerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,12 +70,23 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/patient/dashboard': typeof AuthenticatedPatientDashboardRoute
   '/_authenticated/patient/monitoring': typeof AuthenticatedPatientMonitoringRoute
+  '/_authenticated/patient/nebulizer': typeof AuthenticatedPatientNebulizerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/patient/dashboard' | '/patient/monitoring'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/patient/dashboard'
+    | '/patient/monitoring'
+    | '/patient/nebulizer'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/patient/dashboard' | '/patient/monitoring'
+  to:
+    | '/'
+    | '/auth'
+    | '/patient/dashboard'
+    | '/patient/monitoring'
+    | '/patient/nebulizer'
   id:
     | '__root__'
     | '/'
@@ -74,6 +94,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/patient/dashboard'
     | '/_authenticated/patient/monitoring'
+    | '/_authenticated/patient/nebulizer'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,17 +140,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientMonitoringRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/patient/nebulizer': {
+      id: '/_authenticated/patient/nebulizer'
+      path: '/patient/nebulizer'
+      fullPath: '/patient/nebulizer'
+      preLoaderRoute: typeof AuthenticatedPatientNebulizerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedPatientDashboardRoute: typeof AuthenticatedPatientDashboardRoute
   AuthenticatedPatientMonitoringRoute: typeof AuthenticatedPatientMonitoringRoute
+  AuthenticatedPatientNebulizerRoute: typeof AuthenticatedPatientNebulizerRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPatientDashboardRoute: AuthenticatedPatientDashboardRoute,
   AuthenticatedPatientMonitoringRoute: AuthenticatedPatientMonitoringRoute,
+  AuthenticatedPatientNebulizerRoute: AuthenticatedPatientNebulizerRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
