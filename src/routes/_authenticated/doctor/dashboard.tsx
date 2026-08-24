@@ -1,16 +1,677 @@
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { RolePlaceholder } from "@/components/smartneb/role-placeholder";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Activity,
+  AlertTriangle,
+  ClipboardPlus,
+  HeartPulse,
+  NotebookPen,
+  Search,
+  Thermometer,
+  Wind,
+} from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { getPatientSnapshot } from "@/lib/smartneb.functions";
+import {
+  addClinicalNote,
+  createCarePlan,
+  listCarePlans,
+  listClinicalNotes,
+  listMyPatients,
+  setCarePlanStatus,
+  type DoctorPatientRow,
+} from "@/lib/doctor.functions";
+import { AppShell, doctorNav } from "@/components/smartneb/app-shell";
+import { useMe } from "@/components/smartneb/patient-layout";
+import { EmptyState, ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
+import { StatusBadge, VitalCard, freshness, type VitalStatus } from "@/components/smartneb/vitals";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/doctor/dashboard")({
   head: () => ({
     meta: [
-      { title: "doctor dashboard — SmartNeb" },
-      { name: "description", content: "SmartNeb doctor workspace for connected respiratory therapy oversight." },
-      { property: "og:title", content: "doctor dashboard — SmartNeb" },
-      { property: "og:description", content: "SmartNeb doctor workspace." },
+      { title: "Clinical Dashboard — SmartNeb" },
+      {
+        name: "description",
+        content:
+          "Monitor assigned respiratory patients in real time, review live vitals and publish nebulization care plans.",
+      },
+      { property: "og:title", content: "Clinical Dashboard — SmartNeb" },
+      {
+        property: "og:description",
+        content: "Live vitals, adherence and care plan management for assigned patients.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => <RolePlaceholder role="doctor" />,
+  component: DoctorDashboard,
 });
+
+function spo2Status(v: number | null, min: number): VitalStatus {
+  if (v == null) return "unknown";
+  if (v < min - 3) return "critical";
+  if (v < min) return "warning";
+  return "normal";
+}
+function bpmStatus(v: number | null, low: number, high: number): VitalStatus {
+  if (v == null) return "unknown";
+  if (v < low - 10 || v > high + 15) return "critical";
+  if (v < low || v > high) return "warning";
+  return "normal";
+}
+function tempStatus(v: number | null, max: number): VitalStatus {
+  if (v == null) return "unknown";
+  if (v > max + 1) return "critical";
+  if (v > max) return "warning";
+  return "normal";
+}
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function DoctorDashboard() {
+  const me = useMe();
+  const queryClient = useQueryClient();
+  const [selected, setSelected] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+
+  const roster = useQuery({
+    queryKey: ["doctor-patients"],
+    queryFn: () => listMyPatients(),
+    refetchInterval: 15_000,
+  });
+
+  useEffect(() => {
+    if (!selected && roster.data?.length) setSelected(roster.data[0]!.id);
+  }, [roster.data, selected]);
+
+  // Live database stream: any new vitals, alert or session pushes a refresh.
+  useEffect(() => {
+    const channel = supabase
+      .channel("doctor-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "health_telemetry" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["doctor-patients"] });
+        queryClient.invalidateQueries({ queryKey: ["snapshot"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "alerts" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["doctor-patients"] });
+        queryClient.invalidateQueries({ queryKey: ["snapshot"] });
+      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "nebulization_sessions" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["doctor-patients"] });
+          queryClient.invalidateQueries({ queryKey: ["snapshot"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  const patients = useMemo(() => {
+    const list = roster.data ?? [];
+    const needle = q.trim().toLowerCase();
+    const filtered = needle
+      ? list.filter(
+          (p) =>
+            p.full_name.toLowerCase().includes(needle) ||
+            p.mrn.toLowerCase().includes(needle) ||
+            (p.condition ?? "").toLowerCase().includes(needle),
+        )
+      : list;
+    return [...filtered].sort((a, b) => b.criticalAlerts - a.criticalAlerts || b.activeAlerts - a.activeAlerts);
+  }, [roster.data, q]);
+
+  if (me.isLoading) {
+    return (
+      <div className="p-8">
+        <LoadingSkeleton rows={4} />
+      </div>
+    );
+  }
+  if (me.isError || !me.data) {
+    return (
+      <div className="p-8">
+        <ErrorState message={(me.error as Error)?.message} onRetry={() => me.refetch()} />
+      </div>
+    );
+  }
+
+  const critical = (roster.data ?? []).reduce((n, p) => n + p.criticalAlerts, 0);
+  const inTherapy = (roster.data ?? []).filter((p) => p.sessionStatus === "running").length;
+
+  return (
+    <AppShell
+      me={me.data}
+      nav={doctorNav}
+      title="Clinical Dashboard"
+      subtitle={`${roster.data?.length ?? 0} assigned patients · ${critical} critical alerts · ${inTherapy} in therapy`}
+    >
+      {!me.data.doctorId ? (
+        <ErrorState message="No clinician record is linked to this account yet. Ask an administrator to link you." />
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+          <section className="panel flex max-h-[calc(100vh-11rem)] flex-col p-4">
+            <div className="flex items-center gap-2">
+              <Search className="size-4 text-muted-foreground" aria-hidden />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search name, MRN or condition"
+                aria-label="Search patients"
+                className="h-9"
+              />
+            </div>
+            <ScrollArea className="mt-3 flex-1">
+              {roster.isLoading ? (
+                <LoadingSkeleton rows={4} />
+              ) : patients.length === 0 ? (
+                <EmptyState
+                  title="No assigned patients"
+                  description="Patients assigned to you by an administrator appear here."
+                />
+              ) : (
+                <ul className="space-y-2 pr-2">
+                  {patients.map((p) => (
+                    <li key={p.id}>
+                      <RosterCard
+                        patient={p}
+                        active={p.id === selected}
+                        onSelect={() => setSelected(p.id)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </ScrollArea>
+          </section>
+
+          {selected ? (
+            <PatientWorkspace
+              key={selected}
+              patient={patients.find((p) => p.id === selected) ?? null}
+              patientId={selected}
+            />
+          ) : (
+            <EmptyState title="Select a patient" description="Pick a patient to review live vitals." />
+          )}
+        </div>
+      )}
+    </AppShell>
+  );
+}
+
+function RosterCard({
+  patient,
+  active,
+  onSelect,
+}: {
+  patient: DoctorPatientRow;
+  active: boolean;
+  onSelect: () => void;
+}) {
+  const s = spo2Status(patient.spo2, patient.spo2_threshold);
+  const fresh = freshness(patient.recordedAt);
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-current={active ? "true" : undefined}
+      className={cn(
+        "w-full rounded-xl border p-3 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        active ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/50",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{patient.full_name}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {patient.mrn} · {patient.condition ?? "No condition recorded"}
+          </p>
+        </div>
+        <StatusBadge status={s} />
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span className="tabular-nums">SpO₂ {patient.spo2 ?? "--"}%</span>
+        <span className="tabular-nums">HR {patient.bpm ?? "--"}</span>
+        <span>{fresh.text}</span>
+        {patient.sessionStatus === "running" ? (
+          <Badge variant="secondary" className="gap-1">
+            <Wind className="size-3" /> In therapy
+          </Badge>
+        ) : null}
+        {patient.activeAlerts > 0 ? (
+          <Badge variant="destructive" className="gap-1">
+            <AlertTriangle className="size-3" /> {patient.activeAlerts}
+          </Badge>
+        ) : null}
+      </div>
+    </button>
+  );
+}
+
+function PatientWorkspace({
+  patient,
+  patientId,
+}: {
+  patient: DoctorPatientRow | null;
+  patientId: string;
+}) {
+  const snapshot = useQuery({
+    queryKey: ["snapshot", patientId],
+    queryFn: () => getPatientSnapshot({ data: { patientId } }),
+    refetchInterval: 5_000,
+  });
+
+  const snap = snapshot.data;
+  const p = snap?.patient;
+  const spo2 = snap?.health?.spo2 == null ? null : Number(snap.health.spo2);
+  const bpm = snap?.health?.bpm == null ? null : Number(snap.health.bpm);
+  const temp =
+    snap?.health?.body_temperature == null ? null : Number(snap.health.body_temperature);
+  const prevSpo2 = snap?.healthPrev?.spo2 == null ? null : Number(snap.healthPrev.spo2);
+  const prevBpm = snap?.healthPrev?.bpm == null ? null : Number(snap.healthPrev.bpm);
+  const fresh = freshness(snap?.health?.recorded_at, Date.now());
+
+  const spo2Min = Number(p?.spo2_threshold ?? patient?.spo2_threshold ?? 92);
+  const bpmLow = Number(p?.bpm_low_threshold ?? patient?.bpm_low_threshold ?? 55);
+  const bpmHigh = Number(p?.bpm_high_threshold ?? patient?.bpm_high_threshold ?? 120);
+  const tempMax = Number(p?.temp_threshold ?? patient?.temp_threshold ?? 38);
+
+  return (
+    <section className="space-y-6">
+      <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
+        <div className="min-w-0">
+          <h2 className="font-display text-xl font-semibold">
+            {p?.full_name ?? patient?.full_name ?? "Patient"}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {p?.mrn ?? patient?.mrn} · {p?.condition ?? "No condition recorded"} ·{" "}
+            {patient?.deviceCode ?? "No device"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <StatusBadge
+            status={fresh.stale ? "unknown" : "normal"}
+            label={fresh.stale ? `Stale · ${fresh.text}` : `Live · ${fresh.text}`}
+          />
+          <CarePlanDialog patientId={patientId} />
+        </div>
+      </div>
+
+      {snapshot.isLoading ? (
+        <LoadingSkeleton rows={3} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <VitalCard
+            label="Oxygen saturation"
+            value={spo2 ?? null}
+            unit="%"
+            status={spo2Status(spo2, spo2Min)}
+            trend={spo2 != null && prevSpo2 != null ? spo2 - prevSpo2 : null}
+            hint={`Threshold ${spo2Min}%`}
+            icon={<Activity className="size-4" aria-hidden />}
+          />
+          <VitalCard
+            label="Heart rate"
+            value={bpm ?? null}
+            unit="bpm"
+            status={bpmStatus(bpm, bpmLow, bpmHigh)}
+            trend={bpm != null && prevBpm != null ? bpm - prevBpm : null}
+            hint={`Range ${bpmLow}-${bpmHigh}`}
+            icon={<HeartPulse className="size-4" aria-hidden />}
+          />
+          <VitalCard
+            label="Body temperature"
+            value={temp == null ? null : temp.toFixed(1)}
+            unit="°C"
+            status={tempStatus(temp, tempMax)}
+            hint={`Max ${tempMax}°C`}
+            icon={<Thermometer className="size-4" aria-hidden />}
+          />
+        </div>
+      )}
+
+      {(snap?.activeAlerts ?? []).length > 0 ? (
+        <div className="panel p-5">
+          <h3 className="font-display text-sm font-semibold">Active alerts</h3>
+          <ul className="mt-3 space-y-2">
+            {(snap?.activeAlerts ?? []).map((a) => (
+              <li
+                key={a.id}
+                className="flex items-start justify-between gap-3 rounded-lg border p-3 text-sm"
+              >
+                <span>{a.message}</span>
+                <StatusBadge
+                  status={a.severity === "critical" ? "critical" : a.severity === "warning" ? "warning" : "normal"}
+                  label={a.severity}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <Tabs defaultValue="plans">
+        <TabsList>
+          <TabsTrigger value="plans">Care plans</TabsTrigger>
+          <TabsTrigger value="notes">Clinical notes</TabsTrigger>
+        </TabsList>
+        <TabsContent value="plans" className="mt-4">
+          <CarePlanList patientId={patientId} />
+        </TabsContent>
+        <TabsContent value="notes" className="mt-4">
+          <NotesPanel patientId={patientId} />
+        </TabsContent>
+      </Tabs>
+    </section>
+  );
+}
+
+function CarePlanList({ patientId }: { patientId: string }) {
+  const queryClient = useQueryClient();
+  const plans = useQuery({
+    queryKey: ["care-plans", patientId],
+    queryFn: () => listCarePlans({ data: { patientId } }),
+  });
+  const status = useMutation({
+    mutationFn: (v: { planId: string; status: "published" | "paused" | "ended" }) =>
+      setCarePlanStatus({ data: v }),
+    onSuccess: () => {
+      toast.success("Care plan updated");
+      void queryClient.invalidateQueries({ queryKey: ["care-plans", patientId] });
+      void queryClient.invalidateQueries({ queryKey: ["snapshot", patientId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (plans.isLoading) return <LoadingSkeleton rows={3} />;
+  if (!plans.data?.length)
+    return (
+      <EmptyState
+        title="No care plans yet"
+        description="Create a nebulization plan to define medication, dosage and daily frequency."
+      />
+    );
+
+  return (
+    <ul className="space-y-3">
+      {plans.data.map((plan) => (
+        <li key={plan.id} className="panel p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-display text-sm font-semibold">
+                {plan.medication} · {plan.dosage}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {plan.duration_minutes} min · {plan.frequency_per_day}x daily · from{" "}
+                {plan.start_date}
+                {plan.end_date ? ` to ${plan.end_date}` : ""}
+              </p>
+              {plan.instructions ? (
+                <p className="mt-2 text-sm text-muted-foreground">{plan.instructions}</p>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={plan.status === "published" ? "default" : "secondary"}>
+                {plan.status}
+              </Badge>
+              {plan.status !== "published" ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => status.mutate({ planId: plan.id, status: "published" })}
+                >
+                  Publish
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => status.mutate({ planId: plan.id, status: "paused" })}
+                >
+                  Pause
+                </Button>
+              )}
+              {plan.status !== "ended" ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => status.mutate({ planId: plan.id, status: "ended" })}
+                >
+                  End
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function CarePlanDialog({ patientId }: { patientId: string }) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    medication: "",
+    dosage: "",
+    durationMinutes: 10,
+    frequencyPerDay: 2,
+    instructions: "",
+    startDate: today(),
+    endDate: "",
+  });
+
+  const create = useMutation({
+    mutationFn: () =>
+      createCarePlan({
+        data: {
+          patientId,
+          medication: form.medication.trim(),
+          dosage: form.dosage.trim(),
+          durationMinutes: Number(form.durationMinutes),
+          frequencyPerDay: Number(form.frequencyPerDay),
+          instructions: form.instructions.trim() || undefined,
+          startDate: form.startDate,
+          endDate: form.endDate || null,
+          publish: true,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Care plan published to the patient");
+      setOpen(false);
+      setForm((f) => ({ ...f, medication: "", dosage: "", instructions: "" }));
+      void queryClient.invalidateQueries({ queryKey: ["care-plans", patientId] });
+      void queryClient.invalidateQueries({ queryKey: ["snapshot", patientId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <ClipboardPlus className="mr-2 size-4" /> New care plan
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Create nebulization care plan</DialogTitle>
+          <DialogDescription>
+            The patient is notified as soon as the plan is published.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!form.medication.trim() || !form.dosage.trim()) {
+              toast.error("Medication and dosage are required");
+              return;
+            }
+            create.mutate();
+          }}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="medication">Medication</Label>
+              <Input
+                id="medication"
+                value={form.medication}
+                onChange={(e) => setForm({ ...form, medication: e.target.value })}
+                placeholder="Salbutamol"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="dosage">Dosage</Label>
+              <Input
+                id="dosage"
+                value={form.dosage}
+                onChange={(e) => setForm({ ...form, dosage: e.target.value })}
+                placeholder="2.5 mg / 2.5 mL"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Input
+                id="duration"
+                type="number"
+                min={1}
+                max={120}
+                value={form.durationMinutes}
+                onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="frequency">Doses per day</Label>
+              <Input
+                id="frequency"
+                type="number"
+                min={1}
+                max={12}
+                value={form.frequencyPerDay}
+                onChange={(e) => setForm({ ...form, frequencyPerDay: Number(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="start">Start date</Label>
+              <Input
+                id="start"
+                type="date"
+                value={form.startDate}
+                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="end">End date (optional)</Label>
+              <Input
+                id="end"
+                type="date"
+                value={form.endDate}
+                onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="instructions">Instructions</Label>
+            <Textarea
+              id="instructions"
+              rows={3}
+              value={form.instructions}
+              onChange={(e) => setForm({ ...form, instructions: e.target.value })}
+              placeholder="Sit upright, breathe slowly through the mouthpiece..."
+            />
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={create.isPending}>
+              {create.isPending ? "Publishing..." : "Publish plan"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NotesPanel({ patientId }: { patientId: string }) {
+  const queryClient = useQueryClient();
+  const [note, setNote] = useState("");
+  const notes = useQuery({
+    queryKey: ["clinical-notes", patientId],
+    queryFn: () => listClinicalNotes({ data: { patientId } }),
+  });
+  const add = useMutation({
+    mutationFn: () => addClinicalNote({ data: { patientId, note: note.trim() } }),
+    onSuccess: () => {
+      setNote("");
+      toast.success("Note saved");
+      void queryClient.invalidateQueries({ queryKey: ["clinical-notes", patientId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="panel space-y-3 p-4">
+        <Label htmlFor="clinical-note" className="flex items-center gap-2">
+          <NotebookPen className="size-4" aria-hidden /> Add clinical note
+        </Label>
+        <Textarea
+          id="clinical-note"
+          rows={3}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Observation, therapy response, follow-up plan..."
+        />
+        <Button
+          size="sm"
+          disabled={note.trim().length < 2 || add.isPending}
+          onClick={() => add.mutate()}
+        >
+          {add.isPending ? "Saving..." : "Save note"}
+        </Button>
+      </div>
+
+      {notes.isLoading ? (
+        <LoadingSkeleton rows={2} />
+      ) : !notes.data?.length ? (
+        <EmptyState title="No clinical notes" description="Notes you write appear here." />
+      ) : (
+        <ul className="space-y-2">
+          {notes.data.map((n) => (
+            <li key={n.id} className="panel p-4">
+              <p className="text-sm whitespace-pre-wrap">{n.note}</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {new Date(n.created_at).toLocaleString()}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
