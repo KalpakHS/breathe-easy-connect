@@ -156,8 +156,8 @@ export function AppShell({
   me: MeContext;
   nav: NavItem[];
   title: string;
-  subtitle?: string;
-  actions?: ReactNode;
+  subtitle?: string | undefined;
+  actions?: ReactNode | undefined;
   children: ReactNode;
 }) {
   const navigate = useNavigate();
