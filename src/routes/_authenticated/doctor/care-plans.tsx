@@ -125,6 +125,11 @@ function DoctorCarePlansPage() {
                           {plan.start_date}
                           {plan.end_date ? ` to ${plan.end_date}` : ""}
                         </p>
+                        {plan.time_slots?.length ? (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Times: {plan.time_slots.join(" · ")}
+                          </p>
+                        ) : null}
                         {plan.instructions ? (
                           <p className="mt-2 text-sm text-muted-foreground">{plan.instructions}</p>
                         ) : null}
@@ -192,6 +197,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
     instructions: "",
     startDate: "",
     endDate: "",
+    timeSlots: [] as string[],
   });
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
 
@@ -205,6 +211,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
       instructions: plan.instructions ?? "",
       startDate: plan.start_date,
       endDate: plan.end_date ?? "",
+      timeSlots: plan.time_slots ?? [],
     });
   }
 
@@ -220,6 +227,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
           instructions: form.instructions.trim() || null,
           startDate: form.startDate,
           endDate: form.endDate || null,
+          timeSlots: form.timeSlots,
         },
       }),
     onSuccess: () => {

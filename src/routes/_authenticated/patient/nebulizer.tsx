@@ -82,6 +82,12 @@ function NebulizerBody({ patientId }: { patientId: string }) {
                 ["Dosage", carePlan.dosage],
                 ["Duration", `${carePlan.duration_minutes} min`],
                 ["Frequency", `${carePlan.frequency_per_day}× per day`],
+                [
+                  "Scheduled times",
+                  (carePlan as { time_slots?: string[] | null }).time_slots?.length
+                    ? (carePlan as { time_slots?: string[] }).time_slots!.join(" · ")
+                    : "Flexible",
+                ],
               ].map(([k, v]) => (
                 <div key={String(k)} className="rounded-lg border bg-surface-2 p-4">
                   <dt className="text-xs text-muted-foreground">{k}</dt>

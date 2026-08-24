@@ -80,6 +80,12 @@ function CarePlansPage() {
                     </div>
                   ))}
                 </dl>
+                {plan.time_slots?.length ? (
+                  <p className="mt-3 text-sm">
+                    <span className="text-muted-foreground">Scheduled times: </span>
+                    <span className="font-medium">{plan.time_slots.join(" · ")}</span>
+                  </p>
+                ) : null}
                 {plan.instructions ? (
                   <p className="mt-3 text-sm text-muted-foreground">{plan.instructions}</p>
                 ) : null}
