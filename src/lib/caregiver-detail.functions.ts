@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAssigned, assignedPatientIds } from "./caregiver-access";
 
 export type CaregiverNoteRow = {
   id: string;
@@ -69,42 +70,6 @@ export type CarePatientDetail = {
   activeSession: { id: string; status: string; started_at: string } | null;
   carePlans: CarePlanRow[];
   doctors: { full_name: string; specialty: string }[];
-};
-
-/** Throws unless the signed-in caregiver is assigned to this patient. */
-const assertAssigned = async (
-  supabase: Awaited<ReturnType<typeof requireSupabaseAuth.client>> extends never ? never : any,
-  userId: string,
-  patientId: string,
-): Promise<{ caregiverId: string; relation: string | null }> => {
-  const { data: caregiver } = await supabase
-    .from("caregivers")
-    .select("id, relation")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!caregiver) throw new Error("No caregiver record is linked to this account.");
-  const { data: link } = await supabase
-    .from("caregiver_patient_assignments")
-    .select("id")
-    .eq("caregiver_id", caregiver.id)
-    .eq("patient_id", patientId)
-    .maybeSingle();
-  if (!link) throw new Error("You are not assigned to this patient.");
-  return { caregiverId: caregiver.id, relation: caregiver.relation ?? null };
-};
-
-const assignedPatientIds = async (supabase: any, userId: string): Promise<string[]> => {
-  const { data: caregiver } = await supabase
-    .from("caregivers")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!caregiver) return [];
-  const { data } = await supabase
-    .from("caregiver_patient_assignments")
-    .select("patient_id")
-    .eq("caregiver_id", caregiver.id);
-  return (data ?? []).map((r: { patient_id: string }) => r.patient_id);
 };
 
 export const getCarePatientDetail = createServerFn({ method: "GET" })
