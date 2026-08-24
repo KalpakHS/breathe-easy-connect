@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   Settings,
+  ShieldCheck,
   Stethoscope,
   User,
   Wind,
@@ -53,6 +54,15 @@ export const doctorNav: NavItem[] = [
 export const caregiverNav: NavItem[] = [
   { label: "Care Dashboard", to: "/caregiver/dashboard", icon: HeartHandshake },
 ];
+
+export const adminNav: NavItem[] = [
+  { label: "Admin Console", to: "/admin/dashboard", icon: ShieldCheck },
+];
+
+export const superAdminNav: NavItem[] = [
+  { label: "Platform Console", to: "/super-admin/dashboard", icon: ShieldCheck },
+];
+
 
 export const roleHome: Record<MeContext["role"], string> = {
   patient: "/patient/dashboard",
@@ -201,8 +211,26 @@ export function AppShell({
     navigate({ to: "/auth", replace: true });
   }
 
+  if (me.isActive === false) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div className="panel w-full max-w-md space-y-4 p-8 text-center">
+          <h1 className="font-display text-xl font-semibold">Account deactivated</h1>
+          <p className="text-sm text-muted-foreground">
+            Your SmartNeb access has been suspended by an administrator. Contact your care
+            organisation to restore access.
+          </p>
+          <Button variant="outline" className="w-full" onClick={signOut}>
+            <LogOut className="mr-2 size-3.5" /> Sign out
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
+
       <div className="mx-auto flex w-full max-w-[1600px]">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-4 lg:flex">
           <Brand />
