@@ -46,6 +46,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState("patient");
+  const [mode, setMode] = useState<"signin" | "forgot">("signin");
 
   async function routeByRole() {
     const me = await getMe();
@@ -72,8 +73,39 @@ function AuthPage() {
     await routeByRole();
   }
 
+  async function sendReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Enter your account email first");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Password reset link sent — check your inbox.");
+    setMode("signin");
+  }
+
+  function passwordProblem(value: string) {
+    if (value.length < 8) return "Password must be at least 8 characters.";
+    if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value))
+      return "Password must contain both letters and numbers.";
+    return null;
+  }
+
   async function signUp(e: React.FormEvent) {
     e.preventDefault();
+    const problem = passwordProblem(password);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -143,7 +175,7 @@ function AuthPage() {
             </TabsList>
 
             <TabsContent value="signin" className="mt-6">
-              <form onSubmit={signIn} className="space-y-4">
+              <form onSubmit={mode === "forgot" ? sendReset : signIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -155,21 +187,34 @@ function AuthPage() {
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
+                {mode === "signin" ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    We will email you a secure link to choose a new password.
+                  </p>
+                )}
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-                  Sign in
+                  {mode === "forgot" ? "Send reset link" : "Sign in"}
                 </Button>
+                <button
+                  type="button"
+                  className="w-full text-xs text-muted-foreground underline-offset-4 hover:underline"
+                  onClick={() => setMode(mode === "forgot" ? "signin" : "forgot")}
+                >
+                  {mode === "forgot" ? "Back to sign in" : "Forgot your password?"}
+                </button>
               </form>
             </TabsContent>
 
