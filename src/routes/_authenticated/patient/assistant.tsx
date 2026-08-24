@@ -8,8 +8,8 @@ import {
   deleteConversation,
   getConversation,
   listConversations,
-  DISCLAIMER,
 } from "@/lib/assistant.functions";
+import { DISCLAIMER } from "@/lib/assistant.constants";
 import { PatientPage } from "@/components/smartneb/patient-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
