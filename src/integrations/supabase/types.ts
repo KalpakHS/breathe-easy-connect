@@ -341,6 +341,51 @@ export type Database = {
           },
         ]
       }
+      caregiver_notes: {
+        Row: {
+          author_id: string | null
+          caregiver_id: string | null
+          created_at: string
+          id: string
+          note: string
+          patient_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          caregiver_id?: string | null
+          created_at?: string
+          id?: string
+          note: string
+          patient_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          caregiver_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string
+          patient_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_notes_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "caregivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caregiver_notes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caregiver_patient_assignments: {
         Row: {
           caregiver_id: string

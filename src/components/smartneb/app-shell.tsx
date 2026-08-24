@@ -8,7 +8,11 @@ import {
   BookOpenCheck,
   Bot,
   CalendarCheck,
+  ClipboardList,
   FileText,
+  NotebookPen,
+  Siren,
+  Users,
   Gauge as GaugeIcon,
   HeartHandshake,
   History,
@@ -52,7 +56,13 @@ export const doctorNav: NavItem[] = [
 ];
 
 export const caregiverNav: NavItem[] = [
-  { label: "Care Dashboard", to: "/caregiver/dashboard", icon: HeartHandshake },
+  { label: "Dashboard", to: "/caregiver/dashboard", icon: HeartHandshake },
+  { label: "My Patients", to: "/caregiver/patients", icon: Users },
+  { label: "Alerts", to: "/caregiver/alerts", icon: AlertTriangle },
+  { label: "Emergency SOS", to: "/caregiver/sos", icon: Siren },
+  { label: "Care Plans", to: "/caregiver/care-plans", icon: ClipboardList },
+  { label: "Notes", to: "/caregiver/notes", icon: NotebookPen },
+  { label: "Profile", to: "/caregiver/profile", icon: User },
 ];
 
 export const adminNav: NavItem[] = [
@@ -77,7 +87,7 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
   return (
     <nav aria-label="Primary" className="space-y-1">
       {items.map((item) => {
-        const active = pathname === item.to;
+        const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
         return (
           <Link
             key={item.to}
