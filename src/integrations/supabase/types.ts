@@ -915,6 +915,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          is_active: boolean
           notify_email: boolean
           phone: string | null
           theme: string
@@ -927,6 +928,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id: string
+          is_active?: boolean
           notify_email?: boolean
           phone?: string | null
           theme?: string
@@ -939,6 +941,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          is_active?: boolean
           notify_email?: boolean
           phone?: string | null
           theme?: string
