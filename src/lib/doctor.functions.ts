@@ -154,6 +154,7 @@ const carePlanSchema = z.object({
   instructions: z.string().max(1000).optional(),
   startDate: z.string().min(8),
   endDate: z.string().min(8).optional().nullable(),
+  timeSlots: z.array(z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)).max(12).optional(),
   publish: z.boolean().optional(),
 });
 
@@ -181,6 +182,7 @@ export const createCarePlan = createServerFn({ method: "POST" })
         instructions: data.instructions ?? null,
         start_date: data.startDate,
         end_date: data.endDate ?? null,
+        time_slots: data.timeSlots ?? [],
         status,
       })
       .select()
@@ -193,14 +195,24 @@ export const createCarePlan = createServerFn({ method: "POST" })
       .eq("id", data.patientId)
       .maybeSingle();
 
-    if (status === "published" && patient?.user_id) {
-      await supabase.from("notifications").insert({
-        user_id: patient.user_id,
-        patient_id: data.patientId,
-        type: "care_plan",
-        title: "New therapy plan published",
-        body: `${data.medication} ${data.dosage} · ${data.durationMinutes} min, ${data.frequencyPerDay}x daily`,
-      });
+    if (status === "published") {
+      const { insertNotifications, careTeamUserIds } = await import("./notify.server");
+      const team = await careTeamUserIds(data.patientId, [userId]);
+      const summary = `${data.medication} ${data.dosage} · ${data.durationMinutes} min, ${data.frequencyPerDay}x daily${
+        data.timeSlots?.length ? ` at ${data.timeSlots.join(", ")}` : ""
+      }`;
+      await insertNotifications(
+        team.all.map((id) => ({
+          user_id: id,
+          patient_id: data.patientId,
+          type: "care_plan",
+          title:
+            id === team.patientUserId
+              ? "New therapy plan published"
+              : `New therapy plan for ${patient?.full_name ?? "a patient"}`,
+          body: summary,
+        })),
+      );
     }
 
     await supabase.from("audit_logs").insert({
