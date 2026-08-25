@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.smartneb.app.data.remote.SupabaseManager
 import com.smartneb.app.data.repository.SmartNebRepository
-import io.github.jan.supabase.gotrue.gotrue
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.gotrue.providers.builtin.Email
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -45,18 +48,18 @@ class AuthViewModel : ViewModel() {
             _error.value = null
             try {
                 // Call Supabase GoTrue Auth
-                val authResult = SupabaseManager.client.gotrue.loginWith(
-                    email = _email.value,
-                    password = _password.value
-                )
+                SupabaseManager.client.auth.signInWith(Email, config = {
+                    this.email = _email.value
+                    this.password = _password.value
+                })
                 
                 // Fetch logged-in user profile role
-                val user = SupabaseManager.client.gotrue.currentUserOrNull()
+                val user = SupabaseManager.client.auth.currentUserOrNull()
                 if (user != null) {
                     val profile = repository.getMe(user.id)
                     if (!profile.is_active) {
                         _error.value = "Your account is deactivated. Contact Admin."
-                        SupabaseManager.client.gotrue.logout()
+                        SupabaseManager.client.auth.signOut()
                     } else {
                         val role = repository.getRole(user.id)
                         _authSuccess.value = role ?: "patient"
@@ -78,15 +81,14 @@ class AuthViewModel : ViewModel() {
             _error.value = null
             try {
                 // SignUp using metadata mapping (role, full_name)
-                val user = SupabaseManager.client.gotrue.signUpWith(
-                    email = _email.value,
-                    password = _password.value
-                ) {
-                    userMetadata {
+                SupabaseManager.client.auth.signUpWith(Email, config = {
+                    this.email = _email.value
+                    this.password = _password.value
+                    this.data = buildJsonObject {
                         put("full_name", _fullName.value)
                         put("role", _selectedRole.value)
                     }
-                }
+                })
                 
                 // Supabase trigger automatically populates profiles and user_roles tables.
                 _error.value = "Signup successful. Verify your email to activate."

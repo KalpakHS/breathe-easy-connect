@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.graphics.Color
 import com.smartneb.app.R
 import com.smartneb.app.data.model.AuditLog
 import com.smartneb.app.data.model.Device

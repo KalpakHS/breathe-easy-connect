@@ -5,8 +5,6 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
-import io.github.jan.supabase.postgrest.Postgrest
-import io.github.jan.supabase.gotrue.GoTrue
 import io.github.jan.supabase.realtime.Realtime
 
 class SmartNebApplication : Application(), Configuration.Provider {
@@ -18,9 +16,8 @@ class SmartNebApplication : Application(), Configuration.Provider {
         WorkManager.initialize(this, workManagerConfiguration)
     }
 
-    override fun getWorkManagerConfiguration(): Configuration {
-        return Configuration.Builder()
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
             .setMinimumLoggingLevel(android.util.Log.INFO)
             .build()
-    }
 }

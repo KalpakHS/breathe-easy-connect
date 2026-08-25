@@ -22,6 +22,7 @@ import androidx.navigation.NavController
 import com.smartneb.app.R
 import com.smartneb.app.data.model.Report
 import com.smartneb.app.data.repository.SmartNebRepository
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

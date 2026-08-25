@@ -20,6 +20,8 @@ import com.smartneb.app.R
 import com.smartneb.app.data.model.Device
 import com.smartneb.app.data.model.NebulizationSession
 import com.smartneb.app.data.repository.SmartNebRepository
+import com.smartneb.app.presentation.theme.CriticalRed
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -178,7 +180,7 @@ class NebulizerViewModel : ViewModel() {
             // Plays dual tone (880Hz -> 1174Hz equivalent sine)
             val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
             toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 200) // first beep
-            delay(300)
+            Thread.sleep(300)
             toneGen.startTone(ToneGenerator.TONE_PROP_ACK, 250) // completion beep
         } catch (e: Exception) {
             // fallback if tone generator fails

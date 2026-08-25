@@ -6,10 +6,10 @@ import androidx.security.crypto.MasterKeys
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
-import io.github.jan.supabase.gotrue.GoTrue
+import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.gotrue.SessionStatus
-import io.github.jan.supabase.gotrue.gotrue
+import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -23,7 +23,7 @@ object SupabaseManager {
     lateinit var client: SupabaseClient
         private set
 
-    private val _sessionState = MutableStateFlow<SessionStatus>(SessionStatus.NotAuthenticated)
+    private val _sessionState = MutableStateFlow<SessionStatus>(SessionStatus.NotAuthenticated(isSignOut = false))
     val sessionState: StateFlow<SessionStatus> = _sessionState
 
     fun initialize(context: Context) {
@@ -41,7 +41,7 @@ object SupabaseManager {
             supabaseKey = SUPABASE_ANON_KEY
         ) {
             install(Postgrest)
-            install(GoTrue) {
+            install(Auth) {
                 // Persistent token handling
                 // Persist session tokens using Android EncryptedSharedPreferences
                 val savedAccessToken = encryptedPrefs.getString("access_token", null)
@@ -54,7 +54,7 @@ object SupabaseManager {
         }
 
         // Listen for session updates and save tokens in secure storage
-        client.gotrue.sessionStatus.let { statusFlow ->
+        client.auth.sessionStatus.let { statusFlow ->
             // In a coroutine, tokens are stored securely upon successful status change
         }
     }

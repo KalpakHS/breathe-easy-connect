@@ -21,7 +21,7 @@ import com.smartneb.app.presentation.doctor.DoctorPatientDetailScreen
 import com.smartneb.app.presentation.caregiver.CaregiverDashboardScreen
 import com.smartneb.app.presentation.admin.AdminDashboardScreen
 import com.smartneb.app.presentation.theme.SmartNebTheme
-import io.github.jan.supabase.gotrue.gotrue
+import io.github.jan.supabase.gotrue.auth
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     
                     // Enforce Initial Start Route based on session status
-                    val currentUser = SupabaseManager.client.gotrue.currentUserOrNull()
+                    val currentUser = SupabaseManager.client.auth.currentUserOrNull()
                     val startRoute = if (currentUser != null) Screen.PatientDashboard.route else Screen.Auth.route
 
                     NavHost(
@@ -49,29 +49,29 @@ class MainActivity : ComponentActivity() {
                         
                         // Patient Screens
                         composable(Screen.PatientDashboard.route) {
-                            val user = SupabaseManager.client.gotrue.currentUserOrNull()
+                            val user = SupabaseManager.client.auth.currentUserOrNull()
                             PatientDashboardScreen(navController, user?.id ?: "")
                         }
                         composable(Screen.PatientNebulizer.route) {
-                            val user = SupabaseManager.client.gotrue.currentUserOrNull()
+                            val user = SupabaseManager.client.auth.currentUserOrNull()
                             NebulizerScreen(navController, user?.id ?: "")
                         }
                         composable(Screen.PatientAssistant.route) {
-                            val user = SupabaseManager.client.gotrue.currentUserOrNull()
+                            val user = SupabaseManager.client.auth.currentUserOrNull()
                             AssistantScreen(navController, user?.id ?: "")
                         }
                         composable(Screen.PatientReports.route) {
-                            val user = SupabaseManager.client.gotrue.currentUserOrNull()
+                            val user = SupabaseManager.client.auth.currentUserOrNull()
                             ReportsScreen(navController, user?.id ?: "")
                         }
                         composable(Screen.PatientSettings.route) {
-                            val user = SupabaseManager.client.gotrue.currentUserOrNull()
+                            val user = SupabaseManager.client.auth.currentUserOrNull()
                             SettingsScreen(navController, user?.id ?: "")
                         }
 
                         // Doctor Screens
                         composable(Screen.DoctorDashboard.route) {
-                            val user = SupabaseManager.client.gotrue.currentUserOrNull()
+                            val user = SupabaseManager.client.auth.currentUserOrNull()
                             DoctorDashboardScreen(navController, user?.id ?: "")
                         }
                         composable(Screen.DoctorPatientDetail.route) { backStackEntry ->
@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
 
                         // Caregiver Screens
                         composable(Screen.CaregiverDashboard.route) {
-                            val user = SupabaseManager.client.gotrue.currentUserOrNull()
+                            val user = SupabaseManager.client.auth.currentUserOrNull()
                             CaregiverDashboardScreen(navController, user?.id ?: "")
                         }
 

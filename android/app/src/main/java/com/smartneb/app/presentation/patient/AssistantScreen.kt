@@ -24,6 +24,8 @@ import androidx.navigation.NavController
 import com.smartneb.app.R
 import com.smartneb.app.data.model.AIMessage
 import com.smartneb.app.data.repository.SmartNebRepository
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.postgrest
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -91,7 +93,7 @@ class AssistantViewModel : ViewModel() {
             try {
                 // Call server proxy using user token headers
                 val response = client.post("https://xaotsjwxodtnobilpmah.supabase.co/functions/v1/gemini-assistant") {
-                    header("Authorization", "Bearer ${repository.supabase.gotrue.currentAccessTokenOrNull()}")
+                    header("Authorization", "Bearer ${repository.supabase.auth.currentSessionOrNull()?.accessToken}")
                     setBody(mapOf("question" to text))
                 }
                 
@@ -179,7 +181,7 @@ fun AssistantScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(messages) { msg ->
-                    val alignment = if (msg.role == "user") Alignment.End else Alignment.Start
+                    val alignment = if (msg.role == "user") Alignment.CenterEnd else Alignment.CenterStart
                     val bubbleColor = if (msg.role == "user") MaterialTheme.colorScheme.primary else Color.LightGray
                     val textColor = if (msg.role == "user") Color.White else Color.Black
                     

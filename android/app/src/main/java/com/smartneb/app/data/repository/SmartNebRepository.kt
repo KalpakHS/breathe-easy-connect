@@ -3,8 +3,11 @@ package com.smartneb.app.data.repository
 import com.smartneb.app.data.model.*
 import com.smartneb.app.data.remote.SupabaseManager
 import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.gotrue.gotrue
+import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.realtime.realtime
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.postgresChangeFlow
+import io.github.jan.supabase.realtime.decodeRecord
 import io.github.jan.supabase.realtime.PostgresAction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -12,7 +15,7 @@ import java.time.Instant
 
 class SmartNebRepository {
 
-    private val supabase get() = SupabaseManager.client
+    val supabase get() = SupabaseManager.client
 
     /* ------------------------------------------------------------------ */
     /* Identity & Role Management                                         */
@@ -96,7 +99,7 @@ class SmartNebRepository {
                     eq("patient_id", patientId)
                 }
                 order("recorded_at", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
-                limit(limit)
+                limit(limit.toLong())
             }
             .decodeList<HealthTelemetry>()
     }
@@ -342,13 +345,13 @@ class SmartNebRepository {
 
     fun subscribeToVitals(patientId: String): Flow<HealthTelemetry> {
         val channel = supabase.realtime.channel("patient-vitals-$patientId")
-        val vitalsFlow = channel.postgresChangeFlow<HealthTelemetry>(schema = "public") {
+        val vitalsFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "health_telemetry"
             filter = "patient_id=eq.$patientId"
         }.map { changeAction ->
             when (changeAction) {
-                is PostgresAction.Insert -> changeAction.record
-                is PostgresAction.Update -> changeAction.record
+                is PostgresAction.Insert -> changeAction.decodeRecord<HealthTelemetry>()
+                is PostgresAction.Update -> changeAction.decodeRecord<HealthTelemetry>()
                 else -> throw IllegalStateException("Unsupported realtime database change action")
             }
         }
