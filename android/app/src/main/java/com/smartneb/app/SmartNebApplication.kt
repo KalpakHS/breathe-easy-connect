@@ -11,9 +11,6 @@ class SmartNebApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        
-        // Initialize WorkManager configuration
-        WorkManager.initialize(this, workManagerConfiguration)
     }
 
     override val workManagerConfiguration: Configuration
