@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import { ingestDeviceTelemetry, raiseAlert, triggerSOS } from "@/lib/smartneb.functions";
 import { useDeviceTelemetry } from "@/hooks/use-device-telemetry";
-import { PatientPage, greeting, useSnapshot } from "@/components/smartneb/patient-layout";
+import { PatientPage, greetingKey, useSnapshot } from "@/components/smartneb/patient-layout";
 import { freshness, StatusBadge, VitalCard, type VitalStatus } from "@/components/smartneb/vitals";
 import { NebulizerControl } from "@/components/smartneb/nebulizer-control";
 import { ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
@@ -190,7 +190,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
       <section className="panel grid-mesh flex flex-wrap items-center justify-between gap-4 p-6">
         <div>
           <h2 className="font-display text-2xl font-semibold">
-            {greeting()}, {patient?.full_name ?? fullName}
+            {t(greetingKey())}, {patient?.full_name ?? fullName}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">{liveText}</p>
         </div>

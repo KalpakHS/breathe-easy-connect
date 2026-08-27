@@ -97,6 +97,8 @@ export const hi_patient: Record<string, string> = {
   "patient.dashboard.activeAlerts": "सक्रिय अलर्ट",
   "patient.dashboard.noActiveAlerts": "कोई सक्रिय अलर्ट नहीं। सभी रीडिंग सामान्य सीमा में हैं।",
   "patient.dashboard.sosHistoryTitle": "मेरा आपातकालीन SOS इतिहास",
+  "patient.dashboard.sosSentTitle": "आपातकालीन SOS भेजा गया",
+  "patient.dashboard.sosSentDesc": "{count} केयर टीम सदस्य(यों) को आपके नवीनतम वाइटल्स के साथ सूचित किया गया।",
 
   "patient.adherence.subtitle": "पिछले 30 दिनों में आपकी चिकित्सा निरंतरता",
   "patient.adherence.score": "अनुपालन स्कोर",
