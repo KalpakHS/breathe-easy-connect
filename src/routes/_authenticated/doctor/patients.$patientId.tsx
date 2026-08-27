@@ -218,31 +218,31 @@ function Workspace({
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <VitalCard
-          label="Oxygen saturation"
+          label={t("doctor.vitals.oxygenSaturation")}
           value={spo2 ?? null}
           unit="%"
           status={spo2Status(spo2, p.spo2_threshold)}
-          hint={`Threshold ${p.spo2_threshold}%`}
+          hint={t("doctor.vitals.threshold", { value: p.spo2_threshold })}
           icon={<Activity className="size-4" aria-hidden />}
         />
         <VitalCard
-          label="Heart rate"
+          label={t("doctor.vitals.heartRate")}
           value={bpm ?? null}
           unit="bpm"
           status={bpmStatus(bpm, p.bpm_low_threshold, p.bpm_high_threshold)}
-          hint={`Range ${p.bpm_low_threshold}-${p.bpm_high_threshold}`}
+          hint={t("doctor.vitals.range", { low: p.bpm_low_threshold, high: p.bpm_high_threshold })}
           icon={<HeartPulse className="size-4" aria-hidden />}
         />
         <VitalCard
-          label="Body temperature"
+          label={t("doctor.vitals.bodyTemperature")}
           value={temp == null ? null : temp.toFixed(1)}
           unit="°C"
           status={tempStatus(temp, p.temp_threshold)}
-          hint={`Max ${p.temp_threshold}°C`}
+          hint={t("doctor.vitals.max", { value: p.temp_threshold })}
           icon={<Thermometer className="size-4" aria-hidden />}
         />
         <VitalCard
-          label="Device battery"
+          label={t("doctor.vitals.deviceBattery")}
           value={detail.battery?.percentage ?? null}
           unit="%"
           status={
@@ -254,34 +254,38 @@ function Workspace({
                   ? "warning"
                   : "normal"
           }
-          hint={detail.battery?.charging ? "Charging" : "On battery"}
+          hint={detail.battery?.charging ? t("doctor.vitals.charging") : t("doctor.vitals.onBattery")}
           icon={<BatteryCharging className="size-4" aria-hidden />}
         />
       </div>
 
       <section className="panel p-5">
-        <h3 className="font-display text-sm font-semibold">Device status</h3>
+        <h3 className="font-display text-sm font-semibold">{t("doctor.workspace.deviceStatus")}</h3>
         <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-4">
           <div className="rounded-lg border bg-surface-2 p-3">
-            <dt className="text-muted-foreground">Connectivity</dt>
+            <dt className="text-muted-foreground">{t("doctor.workspace.connectivity")}</dt>
             <dd className="mt-1 font-medium">
               {detail.device
-                ? `${detail.device.status} · MQTT ${detail.device.mqtt_connected ? "up" : "down"} · cloud ${detail.device.cloud_connected ? "up" : "down"}`
-                : "No device assigned"}
+                ? t("doctor.workspace.connectivityValue", {
+                    status: detail.device.status,
+                    mqtt: detail.device.mqtt_connected ? t("doctor.workspace.up") : t("doctor.workspace.down"),
+                    cloud: detail.device.cloud_connected ? t("doctor.workspace.up") : t("doctor.workspace.down"),
+                  })
+                : t("doctor.workspace.noDeviceAssigned")}
             </dd>
           </div>
           <div className="rounded-lg border bg-surface-2 p-3">
-            <dt className="text-muted-foreground">Nebulizer</dt>
+            <dt className="text-muted-foreground">{t("doctor.workspace.nebulizer")}</dt>
             <dd className="mt-1 font-medium">{detail.device?.nebulizer_state ?? "—"}</dd>
           </div>
           <div className="rounded-lg border bg-surface-2 p-3">
-            <dt className="text-muted-foreground">Chamber fluid</dt>
+            <dt className="text-muted-foreground">{t("doctor.workspace.chamberFluid")}</dt>
             <dd className="mt-1 font-medium tabular-nums">
               {detail.device ? `${Math.round(detail.device.fluid_level)}%` : "—"}
             </dd>
           </div>
           <div className="rounded-lg border bg-surface-2 p-3">
-            <dt className="text-muted-foreground">Last seen</dt>
+            <dt className="text-muted-foreground">{t("doctor.workspace.lastSeen")}</dt>
             <dd className="mt-1 font-medium">
               {detail.device?.last_seen_at
                 ? new Date(detail.device.last_seen_at).toLocaleString()
@@ -295,17 +299,17 @@ function Workspace({
         patientId={patientId}
         enabled={signedIn}
         includeResolved
-        title="Emergency SOS history"
+        title={t("doctor.sos.emergencyHistory")}
       />
 
       <Tabs defaultValue="trends">
         <TabsList className="flex-wrap">
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-          <TabsTrigger value="alerts">Alerts</TabsTrigger>
-          <TabsTrigger value="plans">Care plans</TabsTrigger>
-          <TabsTrigger value="adherence">Adherence</TabsTrigger>
-          <TabsTrigger value="notes">Clinical notes</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="trends">{t("doctor.tabs.trends")}</TabsTrigger>
+          <TabsTrigger value="alerts">{t("doctor.tabs.alerts")}</TabsTrigger>
+          <TabsTrigger value="plans">{t("doctor.tabs.carePlans")}</TabsTrigger>
+          <TabsTrigger value="adherence">{t("doctor.tabs.adherence")}</TabsTrigger>
+          <TabsTrigger value="notes">{t("doctor.tabs.clinicalNotes")}</TabsTrigger>
+          <TabsTrigger value="reports">{t("doctor.tabs.reports")}</TabsTrigger>
         </TabsList>
         <TabsContent value="trends" className="mt-4">
           <TrendsPanel patientId={patientId} signedIn={signedIn} />
@@ -328,13 +332,14 @@ function Workspace({
       </Tabs>
 
       <p className="text-xs text-muted-foreground">
-        SmartNeb is a monitoring aid and does not replace professional medical judgment.
+        {t("app.disclaimer")}
       </p>
     </div>
   );
 }
 
 function TrendsPanel({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const [minutes, setMinutes] = useState(1440);
   const series = useQuery({
     queryKey: ["doctor-series", patientId, minutes],
@@ -355,10 +360,10 @@ function TrendsPanel({ patientId, signedIn }: { patientId: string; signedIn: boo
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         {[
-          [60, "1h"],
-          [360, "6h"],
-          [1440, "24h"],
-          [10080, "7d"],
+          [60, t("time.range.1h")],
+          [360, t("time.range.6h")],
+          [1440, t("time.range.24h")],
+          [10080, t("time.range.7d")],
         ].map(([m, label]) => (
           <Button
             key={String(m)}
@@ -373,11 +378,11 @@ function TrendsPanel({ patientId, signedIn }: { patientId: string; signedIn: boo
       {series.isPending ? (
         <LoadingSkeleton rows={2} />
       ) : health.length === 0 ? (
-        <EmptyState title="No telemetry in range" description="Pick a longer window." />
+        <EmptyState title={t("doctor.trends.noTelemetry")} description={t("doctor.trends.pickLonger")} />
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           <div className="panel p-5">
-            <h4 className="font-display text-sm font-semibold">Oxygen saturation</h4>
+            <h4 className="font-display text-sm font-semibold">{t("doctor.vitals.oxygenSaturation")}</h4>
             <TrendChart
               data={health}
               area
@@ -385,7 +390,7 @@ function TrendsPanel({ patientId, signedIn }: { patientId: string; signedIn: boo
             />
           </div>
           <div className="panel p-5">
-            <h4 className="font-display text-sm font-semibold">Heart rate &amp; temperature</h4>
+            <h4 className="font-display text-sm font-semibold">{t("doctor.trends.heartRateTemp")}</h4>
             <TrendChart
               data={health}
               series={[
@@ -401,6 +406,7 @@ function TrendsPanel({ patientId, signedIn }: { patientId: string; signedIn: boo
 }
 
 function AlertsPanel({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const qc = useQueryClient();
   const alerts = useQuery({
     queryKey: ["doctor-alerts", patientId, true],
@@ -411,7 +417,7 @@ function AlertsPanel({ patientId, signedIn }: { patientId: string; signedIn: boo
   const respond = useMutation({
     mutationFn: (v: { alertId: string; resolve?: boolean }) => acknowledgeAlert({ data: v }),
     onSuccess: () => {
-      toast.success("Alert updated");
+      toast.success(t("doctor.alerts.updated"));
       void qc.invalidateQueries({ queryKey: ["doctor-alerts"] });
       void qc.invalidateQueries({ queryKey: ["doctor-patients"] });
     },
@@ -420,7 +426,7 @@ function AlertsPanel({ patientId, signedIn }: { patientId: string; signedIn: boo
 
   if (alerts.isPending) return <LoadingSkeleton rows={3} />;
   if (!alerts.data?.length)
-    return <EmptyState title="No alerts" description="This patient has stayed within thresholds." />;
+    return <EmptyState title={t("doctor.alerts.noAlerts")} description={t("doctor.alerts.noAlertsDesc")} />;
 
   return (
     <ul className="space-y-2">
@@ -429,8 +435,12 @@ function AlertsPanel({ patientId, signedIn }: { patientId: string; signedIn: boo
           <div className="min-w-0">
             <p className="text-sm font-medium">{a.message}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {a.type} · value {a.value ?? "--"} vs threshold {a.threshold ?? "--"} ·{" "}
-              {new Date(a.created_at).toLocaleString()}
+              {t("doctor.alerts.detailLine", {
+                type: a.type,
+                value: a.value ?? "--",
+                threshold: a.threshold ?? "--",
+                date: new Date(a.created_at).toLocaleString(),
+              })}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -441,12 +451,12 @@ function AlertsPanel({ patientId, signedIn }: { patientId: string; signedIn: boo
             <Badge variant="outline">{a.status}</Badge>
             {a.status === "active" ? (
               <Button size="sm" variant="outline" onClick={() => respond.mutate({ alertId: a.id })}>
-                Acknowledge
+                {t("doctor.alerts.acknowledge")}
               </Button>
             ) : null}
             {a.status !== "resolved" ? (
               <Button size="sm" onClick={() => respond.mutate({ alertId: a.id, resolve: true })}>
-                Resolve
+                {t("doctor.alerts.resolve")}
               </Button>
             ) : null}
           </div>
@@ -457,6 +467,7 @@ function AlertsPanel({ patientId, signedIn }: { patientId: string; signedIn: boo
 }
 
 function AdherencePanel({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const adherence = useQuery({
     queryKey: ["doctor-adherence", patientId],
     queryFn: () => getAdherence({ data: { patientId, days: 30 } }),
@@ -478,9 +489,9 @@ function AdherencePanel({ patientId, signedIn }: { patientId: string; signedIn: 
   return (
     <div className="grid gap-4 xl:grid-cols-2">
       <div className="panel p-5">
-        <h4 className="font-display text-sm font-semibold">Therapy adherence (30 days)</h4>
+        <h4 className="font-display text-sm font-semibold">{t("doctor.adherence.title")}</h4>
         {list.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">No adherence records yet.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("doctor.adherence.noRecords")}</p>
         ) : (
           <ul className="mt-3 space-y-1.5 text-sm">
             {list.slice(0, 15).map((r: any) => (
@@ -503,19 +514,24 @@ function AdherencePanel({ patientId, signedIn }: { patientId: string; signedIn: 
         )}
       </div>
       <div className="panel p-5">
-        <h4 className="font-display text-sm font-semibold">Recent nebulization sessions</h4>
+        <h4 className="font-display text-sm font-semibold">{t("doctor.adherence.recentSessions")}</h4>
         {(sessions.data ?? []).length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">No sessions recorded yet.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("doctor.adherence.noSessions")}</p>
         ) : (
           <ul className="mt-3 space-y-1.5 text-sm">
             {(sessions.data ?? []).map((s: any) => (
               <li key={s.id} className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">
-                  {new Date(s.started_at).toLocaleString()} · {s.medication ?? "—"}
+                  {t("doctor.adherence.sessionLine", {
+                    date: new Date(s.started_at).toLocaleString(),
+                    medication: s.medication ?? "—",
+                  })}
                 </span>
                 <span className="tabular-nums">
-                  {Math.round((s.elapsed_seconds / Math.max(1, s.prescribed_seconds)) * 100)}% ·{" "}
-                  {s.status}
+                  {t("doctor.adherence.sessionProgress", {
+                    percent: Math.round((s.elapsed_seconds / Math.max(1, s.prescribed_seconds)) * 100),
+                    status: s.status,
+                  })}
                 </span>
               </li>
             ))}
@@ -527,6 +543,7 @@ function AdherencePanel({ patientId, signedIn }: { patientId: string; signedIn: 
 }
 
 function NotesPanel({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const qc = useQueryClient();
   const [note, setNote] = useState("");
   const notes = useQuery({
@@ -538,7 +555,7 @@ function NotesPanel({ patientId, signedIn }: { patientId: string; signedIn: bool
   const add = useMutation({
     mutationFn: () => addClinicalNote({ data: { patientId, note: note.trim() } }),
     onSuccess: () => {
-      toast.success("Clinical note saved");
+      toast.success(t("doctor.notes.saved"));
       setNote("");
       void qc.invalidateQueries({ queryKey: ["clinical-notes", patientId] });
       void qc.invalidateQueries({ queryKey: ["doctor-notes"] });
@@ -553,29 +570,29 @@ function NotesPanel({ patientId, signedIn }: { patientId: string; signedIn: bool
         onSubmit={(e) => {
           e.preventDefault();
           if (note.trim().length < 2) {
-            toast.error("Write a note first");
+            toast.error(t("doctor.validation.writeNoteFirst"));
             return;
           }
           add.mutate();
         }}
       >
-        <Label htmlFor="clinical-note">New clinical note</Label>
+        <Label htmlFor="clinical-note">{t("doctor.notes.newNote")}</Label>
         <Textarea
           id="clinical-note"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           rows={3}
-          placeholder="Assessment, plan changes, observations…"
+          placeholder={t("doctor.notes.notePlaceholder")}
         />
         <Button type="submit" size="sm" disabled={add.isPending}>
-          Save note
+          {t("doctor.notes.saveNote")}
         </Button>
       </form>
 
       {notes.isPending ? (
         <LoadingSkeleton rows={2} />
       ) : !notes.data?.length ? (
-        <EmptyState title="No clinical notes" description="Notes you write appear here." />
+        <EmptyState title={t("doctor.notes.emptyTitle")} description={t("doctor.notes.emptyDesc")} />
       ) : (
         <ul className="space-y-2">
           {notes.data.map((n: any) => (
@@ -593,6 +610,7 @@ function NotesPanel({ patientId, signedIn }: { patientId: string; signedIn: bool
 }
 
 function ReportsPanel({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const qc = useQueryClient();
   const [days, setDays] = useState(7);
   const reports = useQuery({
@@ -604,7 +622,7 @@ function ReportsPanel({ patientId, signedIn }: { patientId: string; signedIn: bo
   const generate = useMutation({
     mutationFn: () => buildReport({ data: { patientId, days } }),
     onSuccess: () => {
-      toast.success("Report generated");
+      toast.success(t("doctor.reports.generated"));
       void qc.invalidateQueries({ queryKey: ["doctor-reports"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -614,7 +632,7 @@ function ReportsPanel({ patientId, signedIn }: { patientId: string; signedIn: bo
     <div className="space-y-4">
       <div className="panel flex flex-wrap items-center gap-3 p-4">
         <Label htmlFor="report-days" className="text-sm">
-          Range (days)
+          {t("doctor.reports.rangeDays")}
         </Label>
         <Input
           id="report-days"
@@ -626,7 +644,7 @@ function ReportsPanel({ patientId, signedIn }: { patientId: string; signedIn: bo
           className="h-9 w-24"
         />
         <Button size="sm" disabled={generate.isPending} onClick={() => generate.mutate()}>
-          Generate clinical report
+          {t("doctor.reports.generateClinical")}
         </Button>
       </div>
 
@@ -634,8 +652,8 @@ function ReportsPanel({ patientId, signedIn }: { patientId: string; signedIn: bo
         <LoadingSkeleton rows={2} />
       ) : !reports.data?.length ? (
         <EmptyState
-          title="No reports yet"
-          description="Generate a clinical report to summarise vitals, adherence and alerts."
+          title={t("doctor.reports.emptyTitle")}
+          description={t("doctor.reports.emptyDesc")}
         />
       ) : (
         <ul className="space-y-2">
@@ -643,14 +661,24 @@ function ReportsPanel({ patientId, signedIn }: { patientId: string; signedIn: bo
             <li key={r.id} className="panel px-4 py-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm font-medium">
-                  {r.kind} report · {new Date(r.created_at).toLocaleString()}
+                  {t("doctor.reports.kindLine", {
+                    kind: r.kind,
+                    date: new Date(r.created_at).toLocaleString(),
+                  })}
                 </p>
-                <Badge variant="outline">{r.mine ? "Requested by you" : "Care team"}</Badge>
+                <Badge variant="outline">
+                  {r.mine ? t("doctor.reports.requestedByYou") : t("doctor.reports.careTeam")}
+                </Badge>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {r.summary.samples ?? 0} samples · avg SpO₂ {r.summary.avgSpo2 ?? "--"}% · min{" "}
-                {r.summary.minSpo2 ?? "--"}% · avg HR {r.summary.avgBpm ?? "--"} ·{" "}
-                {r.summary.alerts ?? 0} alerts · {r.summary.sessions ?? 0} sessions
+                {t("doctor.reports.summaryLine", {
+                  samples: r.summary.samples ?? 0,
+                  avgSpo2: r.summary.avgSpo2 ?? "--",
+                  minSpo2: r.summary.minSpo2 ?? "--",
+                  avgBpm: r.summary.avgBpm ?? "--",
+                  alerts: r.summary.alerts ?? 0,
+                  sessions: r.summary.sessions ?? 0,
+                })}
               </p>
             </li>
           ))}
