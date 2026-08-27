@@ -70,6 +70,7 @@ export function NebulizerControl({
   dosage,
   prescribedMinutes,
   compact = false,
+  onRelay,
 }: {
   patientId: string;
   session: ActiveSession;
@@ -78,6 +79,8 @@ export function NebulizerControl({
   dosage?: string | null;
   prescribedMinutes: number;
   compact?: boolean;
+  /** Physical relay actuation on the real device (Firebase → ESP32). */
+  onRelay?: (on: boolean) => Promise<void>;
 }) {
   const qc = useQueryClient();
   const [elapsed, setElapsed] = useState(() => restoreElapsed(session));
