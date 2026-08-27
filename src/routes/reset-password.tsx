@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/reset-password")({
   ssr: false,
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPasswordPage() {
+  const t = useT();
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -43,11 +45,11 @@ function ResetPasswordPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-      toast.error("Password must be at least 8 characters and mix letters and numbers.");
+      toast.error(t("auth.passwordLettersNumbers"));
       return;
     }
     if (password !== confirm) {
-      toast.error("Passwords do not match.");
+      toast.error(t("auth.passwordMismatch"));
       return;
     }
     setBusy(true);
@@ -57,7 +59,7 @@ function ResetPasswordPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Password updated — please sign in.");
+    toast.success(t("auth.passwordUpdated"));
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
@@ -71,12 +73,12 @@ function ResetPasswordPage() {
           </div>
           <span className="font-display text-xl font-semibold">SmartNeb</span>
         </div>
-        <h1 className="mt-6 font-display text-2xl font-semibold">Choose a new password</h1>
+        <h1 className="mt-6 font-display text-2xl font-semibold">{t("auth.resetTitle")}</h1>
 
         {ready ? (
           <form onSubmit={submit} className="mt-6 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="new-password">New password</Label>
+              <Label htmlFor="new-password">{t("auth.newPassword")}</Label>
               <Input
                 id="new-password"
                 type="password"
@@ -87,7 +89,7 @@ function ResetPasswordPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm password</Label>
+              <Label htmlFor="confirm-password">{t("auth.confirmPassword")}</Label>
               <Input
                 id="confirm-password"
                 type="password"
@@ -99,14 +101,11 @@ function ResetPasswordPage() {
             </div>
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? <Loader2 className="mr-2 size-4 animate-spin" aria-hidden /> : null}
-              Update password
+              {t("auth.updatePassword")}
             </Button>
           </form>
         ) : (
-          <p className="mt-6 text-sm text-muted-foreground">
-            Open this page from the password reset link in your email. If the link expired, request a
-            new one from the sign-in page.
-          </p>
+          <p className="mt-6 text-sm text-muted-foreground">{t("auth.resetExpiredBody")}</p>
         )}
       </div>
     </div>

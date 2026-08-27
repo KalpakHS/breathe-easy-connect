@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/caregiver/patients/$patientId")({
   head: () => ({
@@ -73,14 +74,16 @@ function tempStatus(v: number | null, max: number): VitalStatus {
 
 function CarePatientDetailPage() {
   const { patientId } = Route.useParams();
+  const t = useT();
   return (
-    <CaregiverPage title="Patient detail" subtitle="Vitals, therapy, alerts and notes">
+    <CaregiverPage title={t("caregiver.patientDetailTitle")} subtitle={t("caregiver.patientDetailSubtitle")}>
       {() => <DetailBody patientId={patientId} />}
     </CaregiverPage>
   );
 }
 
 function DetailBody({ patientId }: { patientId: string }) {
+  const t = useT();
   const signedIn = useSignedIn() === true;
 
   const detail = useQuery({
@@ -106,16 +109,16 @@ function DetailBody({ patientId }: { patientId: string }) {
         to="/caregiver/patients"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-4" aria-hidden /> Back to my patients
+        <ArrowLeft className="size-4" aria-hidden /> {t("caregiver.backToMyPatients")}
       </Link>
 
       <section className="panel flex flex-wrap items-start justify-between gap-4 p-5">
         <div className="min-w-0">
           <h2 className="font-display text-xl font-semibold">{p.full_name}</h2>
           <p className="text-sm text-muted-foreground">
-            {p.mrn} · {p.condition ?? "No condition recorded"}
-            {d.relation ? ` · your ${d.relation}` : ""}
-            {p.date_of_birth ? ` · DOB ${p.date_of_birth}` : ""}
+            {p.mrn} · {p.condition ?? t("caregiver.noConditionRecorded")}
+            {d.relation ? ` · ${t("caregiver.yourRelation", { relation: d.relation })}` : ""}
+            {p.date_of_birth ? ` · ${t("caregiver.dobLabel", { date: p.date_of_birth })}` : ""}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             {d.contact?.phone ? (
@@ -130,44 +133,44 @@ function DetailBody({ patientId }: { patientId: string }) {
             ) : null}
             {d.doctors.length ? (
               <span>
-                Care doctor: {d.doctors.map((doc) => `${doc.full_name} (${doc.specialty})`).join(", ")}
+                {t("caregiver.careDoctorLabel")}: {d.doctors.map((doc) => `${doc.full_name} (${doc.specialty})`).join(", ")}
               </span>
             ) : null}
           </div>
         </div>
         <StatusBadge
           status={fresh.stale ? "unknown" : "normal"}
-          label={fresh.stale ? `Stale · ${fresh.text}` : `Live · ${fresh.text}`}
+          label={fresh.stale ? t("caregiver.staleLabel", { time: fresh.text }) : t("caregiver.liveLabel", { time: fresh.text })}
         />
       </section>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <VitalCard
-          label="Oxygen saturation"
+          label={t("caregiver.oxygenSaturation")}
           value={d.health?.spo2 ?? null}
           unit="%"
           status={spo2Status(d.health?.spo2 ?? null, p.spo2_threshold)}
-          hint={`Threshold ${p.spo2_threshold}%`}
+          hint={t("caregiver.thresholdHint", { value: `${p.spo2_threshold}%` })}
           icon={<Activity className="size-4" aria-hidden />}
         />
         <VitalCard
-          label="Heart rate"
+          label={t("caregiver.heartRate")}
           value={d.health?.bpm ?? null}
           unit="bpm"
           status={bpmStatus(d.health?.bpm ?? null, p.bpm_low_threshold, p.bpm_high_threshold)}
-          hint={`Range ${p.bpm_low_threshold}-${p.bpm_high_threshold}`}
+          hint={t("caregiver.rangeHint", { value: `${p.bpm_low_threshold}-${p.bpm_high_threshold}` })}
           icon={<HeartPulse className="size-4" aria-hidden />}
         />
         <VitalCard
-          label="Body temperature"
+          label={t("caregiver.bodyTemperature")}
           value={d.health?.body_temperature == null ? null : d.health.body_temperature.toFixed(1)}
           unit="°C"
           status={tempStatus(d.health?.body_temperature ?? null, p.temp_threshold)}
-          hint={`Max ${p.temp_threshold}°C`}
+          hint={t("caregiver.maxHint", { value: `${p.temp_threshold}°C` })}
           icon={<Thermometer className="size-4" aria-hidden />}
         />
         <VitalCard
-          label="Device battery"
+          label={t("caregiver.deviceBattery")}
           value={d.battery?.percentage ?? null}
           unit="%"
           status={
@@ -179,7 +182,7 @@ function DetailBody({ patientId }: { patientId: string }) {
                   ? "warning"
                   : "normal"
           }
-          hint={d.battery?.charging ? "Charging" : fresh.text}
+          hint={d.battery?.charging ? t("caregiver.charging") : fresh.text}
           icon={<BatteryMedium className="size-4" aria-hidden />}
         />
       </div>
@@ -188,39 +191,42 @@ function DetailBody({ patientId }: { patientId: string }) {
         <div className="flex items-center gap-2">
           <Cpu className="size-4 text-primary" aria-hidden />
           <div>
-            <p className="text-sm font-medium">{d.device?.device_code ?? "No device"}</p>
+            <p className="text-sm font-medium">{d.device?.device_code ?? t("caregiver.noDevice")}</p>
             <p className="text-xs text-muted-foreground">
-              Firmware {d.device?.firmware ?? "--"} · last seen {freshness(d.device?.last_seen_at).text}
+              {t("caregiver.firmwareLastSeen", {
+                firmware: d.device?.firmware ?? "--",
+                time: freshness(d.device?.last_seen_at).text,
+              })}
             </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge
             status={d.device?.status === "online" ? "normal" : "critical"}
-            label={d.device?.status === "online" ? "Online" : "Offline"}
+            label={d.device?.status === "online" ? t("status.online") : t("status.offline")}
           />
           <StatusBadge
             status={d.device?.mqtt_connected ? "normal" : "warning"}
-            label={d.device?.mqtt_connected ? "MQTT linked" : "MQTT down"}
+            label={d.device?.mqtt_connected ? t("caregiver.mqttLinked") : t("caregiver.mqttDown")}
           />
           <StatusBadge
             status={d.activeSession?.status === "running" ? "normal" : d.activeSession ? "warning" : "unknown"}
-            label={d.activeSession ? `Therapy ${d.activeSession.status}` : "No active therapy"}
+            label={d.activeSession ? t("caregiver.therapyStatus", { status: d.activeSession.status }) : t("caregiver.noActiveTherapy")}
           />
           <span className="text-xs text-muted-foreground">
-            chamber {Math.round(d.device?.fluid_level ?? 0)}%
+            {t("caregiver.chamberPercent", { value: Math.round(d.device?.fluid_level ?? 0) })}
           </span>
         </div>
       </section>
 
       <Tabs defaultValue="history">
         <TabsList className="flex-wrap">
-          <TabsTrigger value="history">Vitals history</TabsTrigger>
-          <TabsTrigger value="alerts">Alerts</TabsTrigger>
-          <TabsTrigger value="plan">Care plan</TabsTrigger>
-          <TabsTrigger value="adherence">Medication</TabsTrigger>
-          <TabsTrigger value="notes">Caregiver notes</TabsTrigger>
-          <TabsTrigger value="sos">SOS history</TabsTrigger>
+          <TabsTrigger value="history">{t("caregiver.vitalsHistory")}</TabsTrigger>
+          <TabsTrigger value="alerts">{t("nav.alerts")}</TabsTrigger>
+          <TabsTrigger value="plan">{t("caregiver.carePlanTab")}</TabsTrigger>
+          <TabsTrigger value="adherence">{t("nav.adherence")}</TabsTrigger>
+          <TabsTrigger value="notes">{t("caregiver.caregiverNotesTab")}</TabsTrigger>
+          <TabsTrigger value="sos">{t("caregiver.sosHistory")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="history" className="mt-4">
@@ -239,7 +245,7 @@ function DetailBody({ patientId }: { patientId: string }) {
           <NotesTab patientId={patientId} signedIn={signedIn} />
         </TabsContent>
         <TabsContent value="sos" className="mt-4">
-          <SOSPanel patientId={patientId} enabled={signedIn} includeResolved title="Emergency history" />
+          <SOSPanel patientId={patientId} enabled={signedIn} includeResolved title={t("caregiver.emergencyHistory")} />
         </TabsContent>
       </Tabs>
     </div>
@@ -247,6 +253,7 @@ function DetailBody({ patientId }: { patientId: string }) {
 }
 
 function HistoryTab({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const q = useQuery({
     queryKey: ["series", patientId, 1440],
     queryFn: () => getTelemetrySeries({ data: { patientId, minutes: 1440 } }),
@@ -263,26 +270,26 @@ function HistoryTab({ patientId, signedIn }: { patientId: string; signedIn: bool
     temp: r.body_temperature == null ? null : Number(r.body_temperature),
   }));
   if (!health.length)
-    return <EmptyState title="No telemetry yet" description="Readings from the last 24 hours appear here." />;
+    return <EmptyState title={t("caregiver.noTelemetryYet")} description={t("caregiver.telemetryDescription")} />;
 
   return (
     <div className="space-y-4">
       <div className="panel p-5">
-        <h3 className="font-display text-sm font-semibold">Oxygen saturation · last 24 h</h3>
+        <h3 className="font-display text-sm font-semibold">{t("caregiver.oxygenSaturationLast24h")}</h3>
         <TrendChart
           data={health}
-          series={[{ key: "spo2", label: "SpO₂ %", color: "var(--chart-1)" }]}
+          series={[{ key: "spo2", label: t("vitals.spo2Percent"), color: "var(--chart-1)" }]}
           domain={[80, 100]}
           area
         />
       </div>
       <div className="panel p-5">
-        <h3 className="font-display text-sm font-semibold">Heart rate & temperature · last 24 h</h3>
+        <h3 className="font-display text-sm font-semibold">{t("caregiver.heartRateTempLast24h")}</h3>
         <TrendChart
           data={health}
           series={[
-            { key: "bpm", label: "Heart rate", color: "var(--chart-2)" },
-            { key: "temp", label: "Temperature °C", color: "var(--chart-3)" },
+            { key: "bpm", label: t("caregiver.heartRate"), color: "var(--chart-2)" },
+            { key: "temp", label: t("caregiver.temperatureC"), color: "var(--chart-3)" },
           ]}
         />
       </div>
@@ -291,6 +298,7 @@ function HistoryTab({ patientId, signedIn }: { patientId: string; signedIn: bool
 }
 
 function AlertsTab({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const q = useQuery({
     queryKey: ["alerts", patientId],
     queryFn: () => listAlerts({ data: { patientId } }),
@@ -301,7 +309,7 @@ function AlertsTab({ patientId, signedIn }: { patientId: string; signedIn: boole
 
   if (q.isLoading) return <LoadingSkeleton rows={3} />;
   if (!q.data?.length)
-    return <EmptyState title="No alerts" description="Readings have stayed within range." />;
+    return <EmptyState title={t("caregiver.noAlerts")} description={t("caregiver.readingsWithinRange")} />;
 
   return (
     <ul className="space-y-2">
@@ -333,13 +341,14 @@ function PlanTab({
   plans: { id: string; medication: string; dosage: string; duration_minutes: number; frequency_per_day: number; instructions: string | null; start_date: string; end_date: string | null; status: string; doctorName: string | null }[];
   active: { id: string } | null;
 }) {
+  const t = useT();
   if (!plans.length)
-    return <EmptyState title="No care plan" description="A doctor has not published a therapy plan yet." />;
+    return <EmptyState title={t("caregiver.noCarePlan")} description={t("caregiver.noCarePlanDescription")} />;
 
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Care plans are prescribed by the treating doctor and are read-only for caregivers.
+        {t("caregiver.carePlanReadOnlyNote")}
       </p>
       {plans.map((plan) => (
         <article key={plan.id} className="panel p-5">
@@ -348,16 +357,16 @@ function PlanTab({
               {plan.medication} · {plan.dosage}
             </h3>
             <div className="flex items-center gap-2">
-              {active && plan.id === active.id ? <Badge variant="secondary">Current</Badge> : null}
+              {active && plan.id === active.id ? <Badge variant="secondary">{t("caregiver.current")}</Badge> : null}
               <Badge variant={plan.status === "published" ? "default" : "outline"}>{plan.status}</Badge>
             </div>
           </div>
           <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-4">
             {[
-              ["Session length", `${plan.duration_minutes} min`],
-              ["Frequency", `${plan.frequency_per_day}× daily`],
-              ["Start", plan.start_date],
-              ["End", plan.end_date ?? "Ongoing"],
+              [t("caregiver.sessionLength"), `${plan.duration_minutes} min`],
+              [t("caregiver.frequency"), t("caregiver.timesDaily", { count: plan.frequency_per_day })],
+              [t("caregiver.start"), plan.start_date],
+              [t("caregiver.end"), plan.end_date ?? t("caregiver.ongoing")],
             ].map(([k, v]) => (
               <div key={k} className="rounded-lg border bg-surface-2 p-3">
                 <dt className="text-xs text-muted-foreground">{k}</dt>
@@ -369,7 +378,7 @@ function PlanTab({
             <p className="mt-3 text-sm text-muted-foreground">{plan.instructions}</p>
           ) : null}
           {plan.doctorName ? (
-            <p className="mt-2 text-xs text-muted-foreground">Prescribed by {plan.doctorName}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{t("caregiver.prescribedBy", { name: plan.doctorName })}</p>
           ) : null}
         </article>
       ))}
@@ -378,6 +387,7 @@ function PlanTab({
 }
 
 function AdherenceTab({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const adherence = useQuery({
     queryKey: ["adherence", patientId, 30],
     queryFn: () => getAdherence({ data: { patientId, days: 30 } }),
@@ -398,10 +408,10 @@ function AdherenceTab({ patientId, signedIn }: { patientId: string; signedIn: bo
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-4">
         {[
-          { label: "Adherence score", value: `${d?.score ?? 0}%` },
-          { label: "Completed", value: d?.completed ?? 0 },
-          { label: "Partial", value: d?.partial ?? 0 },
-          { label: "Missed", value: d?.missed ?? 0 },
+          { label: t("caregiver.adherenceScore"), value: `${d?.score ?? 0}%` },
+          { label: t("caregiver.completed"), value: d?.completed ?? 0 },
+          { label: t("caregiver.partial"), value: d?.partial ?? 0 },
+          { label: t("caregiver.missed"), value: d?.missed ?? 0 },
         ].map((m) => (
           <div key={m.label} className="panel p-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -413,11 +423,11 @@ function AdherenceTab({ patientId, signedIn }: { patientId: string; signedIn: bo
       </div>
 
       <div className="panel p-5">
-        <h3 className="font-display text-sm font-semibold">Medication sessions</h3>
+        <h3 className="font-display text-sm font-semibold">{t("caregiver.medicationSessions")}</h3>
         {sessions.isLoading ? (
           <LoadingSkeleton rows={2} className="mt-3" />
         ) : !sessions.data?.length ? (
-          <p className="mt-3 text-sm text-muted-foreground">No sessions recorded yet.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("caregiver.noSessionsRecorded")}</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {sessions.data.map((s) => (
@@ -426,7 +436,7 @@ function AdherenceTab({ patientId, signedIn }: { patientId: string; signedIn: bo
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-surface-2 px-4 py-3 text-sm"
               >
                 <span>
-                  {s.medication ?? "Therapy"} {s.dosage ? `· ${s.dosage}` : ""} ·{" "}
+                  {s.medication ?? t("caregiver.therapy")} {s.dosage ? `· ${s.dosage}` : ""} ·{" "}
                   {new Date(s.started_at).toLocaleString()}
                 </span>
                 <span className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -453,6 +463,7 @@ function AdherenceTab({ patientId, signedIn }: { patientId: string; signedIn: bo
 }
 
 function NotesTab({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const qc = useQueryClient();
   const [note, setNote] = useState("");
 
@@ -467,7 +478,7 @@ function NotesTab({ patientId, signedIn }: { patientId: string; signedIn: boolea
     mutationFn: () => addCaregiverNote({ data: { patientId, note } }),
     onSuccess: () => {
       setNote("");
-      toast.success("Observation saved");
+      toast.success(t("caregiver.observationSaved"));
       void qc.invalidateQueries({ queryKey: ["caregiver-notes"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -484,24 +495,24 @@ function NotesTab({ patientId, signedIn }: { patientId: string; signedIn: boolea
         }}
       >
         <label htmlFor="note" className="flex items-center gap-2 font-display text-sm font-semibold">
-          <NotebookPen className="size-4" aria-hidden /> Add a caregiver observation
+          <NotebookPen className="size-4" aria-hidden /> {t("caregiver.addObservation")}
         </label>
         <Textarea
           id="note"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           rows={3}
-          placeholder="How was the therapy session? Any breathlessness, coughing or side effects?"
+          placeholder={t("caregiver.observationPlaceholder")}
         />
         <Button type="submit" disabled={add.isPending || note.trim().length < 2}>
-          {add.isPending ? "Saving…" : "Save observation"}
+          {add.isPending ? t("caregiver.saving") : t("caregiver.saveObservation")}
         </Button>
       </form>
 
       {notes.isLoading ? (
         <LoadingSkeleton rows={2} />
       ) : !notes.data?.length ? (
-        <EmptyState title="No observations yet" description="Your notes about this patient appear here." />
+        <EmptyState title={t("caregiver.noObservationsYet")} description={t("caregiver.notesAppearHere")} />
       ) : (
         <ul className="space-y-2">
           {notes.data.map((n) => (
