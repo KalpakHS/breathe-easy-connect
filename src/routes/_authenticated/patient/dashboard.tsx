@@ -279,7 +279,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           status={
             battPct == null ? "unknown" : battPct < 15 ? "critical" : battPct < 30 ? "warning" : "normal"
           }
-          hint={battery ? `${battery.voltage ?? "--"} V · ${battery.cell_temperature ?? "--"} °C` : ""}
+          hint={`${t.battery.voltage ?? battery?.voltage ?? "--"} V · ${t.battery.temperature ?? battery?.cell_temperature ?? "--"} °C`}
         />
       </section>
 
@@ -306,14 +306,9 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              {
-                label: "Ambient temp",
-                value: environment?.ambient_temperature,
-                unit: "°C",
-                icon: Thermometer,
-              },
-              { label: "Humidity", value: environment?.humidity, unit: "%", icon: Droplets },
-              { label: "Air quality index", value: environment?.aqi, unit: "AQI", icon: Wind },
+              { label: "Ambient temp", value: ambient, unit: "°C", icon: Thermometer },
+              { label: "Humidity", value: environment?.humidity ?? null, unit: "%", icon: Droplets },
+              { label: "Air quality index", value: environment?.aqi ?? null, unit: "AQI", icon: Wind },
             ].map((m) => (
               <div key={m.label} className="rounded-xl border bg-surface-2 p-4">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -326,9 +321,9 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
               </div>
             ))}
           </div>
-          {environment?.simulated ? (
+          {environment?.humidity == null || environment?.aqi == null ? (
             <p className="text-xs text-muted-foreground">
-              Environmental values are currently produced by the simulated sensor feed.
+              Humidity and air-quality sensors are not reporting from this device yet.
             </p>
           ) : null}
 
@@ -346,16 +341,16 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge
-                  status={device?.status === "online" ? "normal" : "critical"}
-                  label={device?.status === "online" ? "Online" : "Offline"}
+                  status={t.online ? "normal" : "critical"}
+                  label={t.online ? "Online" : "Offline"}
                 />
                 <StatusBadge
-                  status={device?.mqtt_connected ? "normal" : "warning"}
-                  label={device?.mqtt_connected ? "MQTT linked" : "MQTT down"}
+                  status={dev.firebaseConnected ? "normal" : "warning"}
+                  label={dev.firebaseConnected ? "Realtime DB linked" : "Realtime DB down"}
                 />
                 <StatusBadge
-                  status={device?.cloud_connected ? "normal" : "warning"}
-                  label={device?.cloud_connected ? "Cloud synced" : "Cloud offline"}
+                  status={t.nebulizer.relay ? "normal" : "unknown"}
+                  label={`Relay ${t.nebulizer.relay ? "ON" : "OFF"}`}
                 />
                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                   <Radio className="size-3.5" /> chamber {Number(device?.fluid_level ?? 0)}%
@@ -368,7 +363,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
         <NebulizerControl
           patientId={patientId}
           session={activeSession}
-          deviceOnline={device?.status === "online"}
+          deviceOnline={t.online}
           medication={carePlan?.medication ?? null}
           dosage={carePlan?.dosage ?? null}
           prescribedMinutes={carePlan?.duration_minutes ?? 10}
