@@ -27,7 +27,7 @@ let db: Database | null = null;
 export function getRealtimeDb(): Database | null {
   if (typeof window === "undefined" || !isFirebaseConfigured) return null;
   if (db) return db;
-  app = getApps().length ? getApp() : initializeApp(config as Required<typeof config>);
+  app = getApps().length ? getApp() : initializeApp({ ...config } as Record<string, string>);
   db = getDatabase(app, config.databaseURL);
   return db;
 }
