@@ -158,8 +158,8 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
     ? t("patient.dashboard.connecting")
     : dev.error
       ? t("patient.dashboard.unableConnect")
-      : telemetry.online
-        ? `${t("patient.dashboard.onlineLive")}${telemetry.lastUpdated ? t("patient.dashboard.updatedSuffix", { time: freshness(new Date(telemetry.lastUpdated).toISOString()).text }) : ""}`
+      : tel.online
+        ? `${t("patient.dashboard.onlineLive")}${tel.lastUpdated ? t("patient.dashboard.updatedSuffix", { time: freshness(new Date(tel.lastUpdated).toISOString()).text }) : ""}`
         : t("patient.dashboard.offlineLastReading", { fresh: fresh.text });
 
   // Threshold engine: SpO2 below configured threshold raises an alert + audio/voice warning.
@@ -205,40 +205,37 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge
               status={tel.online ? "normal" : "critical"}
-              label={tel.online ? "ESP32 connected" : "ESP32 offline"}
+              label={tel.online ? t("patient.dashboard.esp32Connected") : t("patient.dashboard.esp32Offline")}
             />
             <StatusBadge
               status={dev.firebaseConnected ? "normal" : "warning"}
-              label={dev.firebaseConnected ? "Device cloud linked" : "Device cloud down"}
+              label={dev.firebaseConnected ? t("patient.dashboard.cloudLinked") : t("patient.dashboard.cloudDown")}
             />
             <StatusBadge
               status={tel.nebulizer.relay ? "normal" : "unknown"}
-              label={tel.nebulizer.relay ? "Nebulizer ON" : "Nebulizer OFF"}
+              label={tel.nebulizer.relay ? t("patient.dashboard.nebOn") : t("patient.dashboard.nebOff")}
             />
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" disabled={sos.isPending}>
-                <Siren className="mr-2 size-4" /> Emergency SOS
+                <Siren className="mr-2 size-4" /> {t("nav.sos")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Send an emergency SOS?</AlertDialogTitle>
+                <AlertDialogTitle>{t("patient.dashboard.sosConfirmTitle")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Your assigned doctor and caregiver are alerted immediately with your latest
-                  vitals (SpO₂ {spo2 ?? "--"}%, heart rate {bpm ?? "--"} bpm, temperature{" "}
-                  {temp ?? "--"} °C), device status and the current time. Only use this in a real
-                  emergency. If you are in immediate danger, also call local emergency services.
+                  {t("patient.dashboard.sosConfirmDesc", { spo2: spo2 ?? "--", bpm: bpm ?? "--", temp: temp ?? "--" })}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{t("action.cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   className="bg-critical text-critical-foreground hover:bg-critical/90"
                   onClick={() => sos.mutate()}
                 >
-                  Yes, send SOS now
+                  {t("patient.dashboard.sosConfirmAction")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -248,7 +245,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <VitalCard
-          label="Heart rate"
+          label={t("vitals.heartRate")}
           value={bpm}
           unit="bpm"
           icon={<HeartPulse className="size-4" />}
@@ -257,16 +254,16 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           hint={fresh.text}
         />
         <VitalCard
-          label="SpO₂"
+          label={t("vitals.spo2")}
           value={spo2}
           unit="%"
           icon={<Activity className="size-4" />}
           status={spo2Status(spo2, spo2Threshold)}
           trend={spo2 != null && healthPrev?.spo2 != null ? spo2 - Number(healthPrev.spo2) : null}
-          hint={`threshold ${spo2Threshold}%`}
+          hint={t("patient.dashboard.thresholdHint", { threshold: spo2Threshold })}
         />
         <VitalCard
-          label="Body temperature"
+          label={t("vitals.bodyTemp")}
           value={temp}
           unit="°C"
           icon={<Thermometer className="size-4" />}
@@ -279,7 +276,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           hint={fresh.text}
         />
         <VitalCard
-          label="Device battery"
+          label={t("patient.dashboard.deviceBattery")}
           value={battPct}
           unit="%"
           icon={<BatteryMedium className="size-4" />}
@@ -293,7 +290,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
       <section className="grid gap-4 lg:grid-cols-3">
         <div className="panel space-y-4 p-5 lg:col-span-2">
           <div className="flex items-center justify-between">
-            <p className="font-display text-sm font-semibold">Environment</p>
+            <p className="font-display text-sm font-semibold">{t("patient.dashboard.environment")}</p>
             <StatusBadge
               status={
                 environment?.aqi == null
@@ -304,18 +301,18 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
               }
               label={
                 environment?.aqi == null
-                  ? "No data"
+                  ? t("patient.dashboard.noData")
                   : Number(environment.aqi) > 100
-                    ? "Poor air"
-                    : "Good air"
+                    ? t("patient.dashboard.poorAir")
+                    : t("patient.dashboard.goodAir")
               }
             />
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              { label: "Ambient temp", value: ambient, unit: "°C", icon: Thermometer },
-              { label: "Humidity", value: environment?.humidity ?? null, unit: "%", icon: Droplets },
-              { label: "Air quality index", value: environment?.aqi ?? null, unit: "AQI", icon: Wind },
+              { label: t("vitals.ambientTemp"), value: ambient, unit: "°C", icon: Thermometer },
+              { label: t("patient.dashboard.humidity"), value: environment?.humidity ?? null, unit: "%", icon: Droplets },
+              { label: t("patient.dashboard.airQualityIndex"), value: environment?.aqi ?? null, unit: "AQI", icon: Wind },
             ].map((m) => (
               <div key={m.label} className="rounded-xl border bg-surface-2 p-4">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -330,7 +327,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           </div>
           {environment?.humidity == null || environment?.aqi == null ? (
             <p className="text-xs text-muted-foreground">
-              Humidity and air-quality sensors are not reporting from this device yet.
+              {t("patient.dashboard.sensorsNotReporting")}
             </p>
           ) : null}
 
@@ -339,28 +336,27 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
               <div className="flex items-center gap-2">
                 <Cpu className="size-4 text-primary" />
                 <div>
-                  <p className="text-sm font-medium">{device?.device_code ?? "No device"}</p>
+                  <p className="text-sm font-medium">{device?.device_code ?? t("patient.dashboard.noDevice")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Firmware {device?.firmware ?? "--"} · last seen{" "}
-                    {freshness(device?.last_seen_at).text}
+                    {t("patient.dashboard.firmwareLastSeen", { firmware: device?.firmware ?? "--", seen: freshness(device?.last_seen_at).text })}
                   </p>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge
                   status={tel.online ? "normal" : "critical"}
-                  label={tel.online ? "Online" : "Offline"}
+                  label={tel.online ? t("status.online") : t("status.offline")}
                 />
                 <StatusBadge
                   status={dev.firebaseConnected ? "normal" : "warning"}
-                  label={dev.firebaseConnected ? "Realtime DB linked" : "Realtime DB down"}
+                  label={dev.firebaseConnected ? t("patient.dashboard.realtimeLinked") : t("patient.dashboard.realtimeDown")}
                 />
                 <StatusBadge
                   status={tel.nebulizer.relay ? "normal" : "unknown"}
-                  label={`Relay ${tel.nebulizer.relay ? "ON" : "OFF"}`}
+                  label={`${t("patient.dashboard.relayLabel")} ${tel.nebulizer.relay ? "ON" : "OFF"}`}
                 />
                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <Radio className="size-3.5" /> chamber {Number(device?.fluid_level ?? 0)}%
+                  <Radio className="size-3.5" /> {t("patient.dashboard.chamberPct", { value: Number(device?.fluid_level ?? 0) })}
                 </span>
               </div>
             </div>
@@ -382,10 +378,10 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
       <section className="panel p-5">
         <div className="mb-3 flex items-center gap-2">
           <Gauge className="size-4 text-primary" />
-          <p className="font-display text-sm font-semibold">Active alerts</p>
+          <p className="font-display text-sm font-semibold">{t("patient.dashboard.activeAlerts")}</p>
         </div>
         {snap.data.activeAlerts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No active alerts. All readings are within range.</p>
+          <p className="text-sm text-muted-foreground">{t("patient.dashboard.noActiveAlerts")}</p>
         ) : (
           <ul className="space-y-2">
             {snap.data.activeAlerts.map((a) => (
@@ -413,7 +409,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
         patientId={patientId}
         canRespond={false}
         includeResolved
-        title="My emergency SOS history"
+        title={t("patient.dashboard.sosHistoryTitle")}
       />
     </div>
   );
