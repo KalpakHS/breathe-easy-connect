@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { getProfile, updateProfile, updateThresholds } from "@/lib/smartneb.functions";
 import { PatientPage, useSnapshot } from "@/components/smartneb/patient-layout";
 import { LoadingSkeleton } from "@/components/smartneb/states";
+import { LanguageSelect } from "@/components/smartneb/language-select";
+import { useT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -32,6 +34,7 @@ export const Route = createFileRoute("/_authenticated/patient/settings")({
 });
 
 function SettingsBody({ patientId }: { patientId: string }) {
+  const t = useT();
   const qc = useQueryClient();
   const snap = useSnapshot(patientId, false);
   const profile = useQuery({ queryKey: ["profile"], queryFn: () => getProfile() });
@@ -116,6 +119,12 @@ function SettingsBody({ patientId }: { patientId: string }) {
         <Button onClick={() => saveThresholds.mutate()} disabled={saveThresholds.isPending}>
           Save thresholds
         </Button>
+      </section>
+
+      <section className="panel space-y-4 p-5">
+        <p className="font-display text-sm font-semibold">{t("language.label")}</p>
+        <p className="text-xs text-muted-foreground">{t("language.description")}</p>
+        <LanguageSelect className="h-10 w-full max-w-xs" withIcon />
       </section>
 
       <section className="panel space-y-6 p-5">

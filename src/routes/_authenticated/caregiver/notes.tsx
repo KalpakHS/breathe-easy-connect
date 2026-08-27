@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/caregiver/notes")({
   head: () => ({
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/caregiver/notes")({
 });
 
 function CareNotesPage() {
+  const t = useT();
   const signedIn = useSignedIn() === true;
   const qc = useQueryClient();
   const [patientId, setPatientId] = useState<string>("");
@@ -51,14 +53,14 @@ function CareNotesPage() {
     mutationFn: () => addCaregiverNote({ data: { patientId, note } }),
     onSuccess: () => {
       setNote("");
-      toast.success("Observation saved");
+      toast.success(t("caregiver.observationSaved"));
       void qc.invalidateQueries({ queryKey: ["caregiver-notes"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
-    <CaregiverPage title="Notes" subtitle="Your observations across everyone in your care">
+    <CaregiverPage title={t("nav.notes")} subtitle={t("caregiver.notesSubtitle")}>
       {({ patients }) => (
         <div className="space-y-5">
           <form
@@ -70,11 +72,11 @@ function CareNotesPage() {
             }}
           >
             <h2 className="flex items-center gap-2 font-display text-sm font-semibold">
-              <NotebookPen className="size-4" aria-hidden /> New observation
+              <NotebookPen className="size-4" aria-hidden /> {t("caregiver.newObservation")}
             </h2>
             <Select value={patientId} onValueChange={setPatientId}>
-              <SelectTrigger aria-label="Select patient">
-                <SelectValue placeholder="Select a patient" />
+              <SelectTrigger aria-label={t("caregiver.selectPatient")}>
+                <SelectValue placeholder={t("caregiver.selectAPatient")} />
               </SelectTrigger>
               <SelectContent>
                 {patients.map((p) => (
@@ -88,11 +90,11 @@ function CareNotesPage() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={3}
-              placeholder="What did you observe during or after therapy?"
-              aria-label="Observation"
+              placeholder={t("caregiver.observationPlaceholder")}
+              aria-label={t("caregiver.observation")}
             />
             <Button type="submit" disabled={add.isPending || !patientId || note.trim().length < 2}>
-              {add.isPending ? "Saving…" : "Save observation"}
+              {add.isPending ? t("caregiver.savingObservation") : t("caregiver.saveObservation")}
             </Button>
           </form>
 
@@ -101,7 +103,7 @@ function CareNotesPage() {
           ) : notes.isError ? (
             <ErrorState message={(notes.error as Error)?.message} onRetry={() => notes.refetch()} />
           ) : notes.data.length === 0 ? (
-            <EmptyState title="No observations yet" description="Notes you record appear here." />
+            <EmptyState title={t("caregiver.noObservationsYet")} description={t("caregiver.noObservationsDescription")} />
           ) : (
             <ul className="space-y-2">
               {notes.data.map((n) => (
@@ -113,7 +115,7 @@ function CareNotesPage() {
                       params={{ patientId: n.patient_id }}
                       className="underline-offset-2 hover:underline"
                     >
-                      {n.patientName ?? "Patient"}
+                      {n.patientName ?? t("caregiver.patient")}
                     </Link>{" "}
                     · {n.authorName} · {new Date(n.created_at).toLocaleString()}
                   </p>

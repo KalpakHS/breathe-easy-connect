@@ -37,54 +37,56 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThemeToggle } from "./theme";
+import { LanguageSelect, useProfileLanguageSync } from "./language-select";
+import { useT } from "@/i18n";
 import { useSignedIn } from "./use-signed-in";
 import { cn } from "@/lib/utils";
 
-type NavItem = { label: string; to: string; icon: typeof Activity };
+type NavItem = { labelKey: string; to: string; icon: typeof Activity };
 
 export const patientNav: NavItem[] = [
-  { label: "Dashboard", to: "/patient/dashboard", icon: LayoutDashboard },
-  { label: "My Nebulizer", to: "/patient/nebulizer", icon: Wind },
-  { label: "Health Monitoring", to: "/patient/monitoring", icon: Activity },
-  { label: "Nebulization", to: "/patient/nebulization", icon: GaugeIcon },
-  { label: "Adherence", to: "/patient/adherence", icon: CalendarCheck },
-  { label: "Health History", to: "/patient/history", icon: History },
-  { label: "Alerts", to: "/patient/alerts", icon: AlertTriangle },
-  { label: "Reports", to: "/patient/reports", icon: FileText },
-  { label: "AI Assistant", to: "/patient/assistant", icon: Bot },
-  { label: "Profile", to: "/patient/profile", icon: User },
-  { label: "Settings", to: "/patient/settings", icon: Settings },
+  { labelKey: "nav.dashboard", to: "/patient/dashboard", icon: LayoutDashboard },
+  { labelKey: "nav.myNebulizer", to: "/patient/nebulizer", icon: Wind },
+  { labelKey: "nav.healthMonitoring", to: "/patient/monitoring", icon: Activity },
+  { labelKey: "nav.nebulization", to: "/patient/nebulization", icon: GaugeIcon },
+  { labelKey: "nav.adherence", to: "/patient/adherence", icon: CalendarCheck },
+  { labelKey: "nav.healthHistory", to: "/patient/history", icon: History },
+  { labelKey: "nav.alerts", to: "/patient/alerts", icon: AlertTriangle },
+  { labelKey: "nav.reports", to: "/patient/reports", icon: FileText },
+  { labelKey: "nav.assistant", to: "/patient/assistant", icon: Bot },
+  { labelKey: "nav.profile", to: "/patient/profile", icon: User },
+  { labelKey: "nav.settings", to: "/patient/settings", icon: Settings },
 ];
 
 export const doctorNav: NavItem[] = [
-  { label: "Clinical Dashboard", to: "/doctor/dashboard", icon: Stethoscope },
-  { label: "My Patients", to: "/doctor/patients", icon: Users },
-  { label: "Alerts", to: "/doctor/alerts", icon: AlertTriangle },
-  { label: "Emergency SOS", to: "/doctor/sos", icon: Siren },
-  { label: "Care Plans", to: "/doctor/care-plans", icon: ClipboardList },
-  { label: "Clinical Notes", to: "/doctor/notes", icon: NotebookPen },
-  { label: "Reports", to: "/doctor/reports", icon: FileText },
-  { label: "Profile", to: "/doctor/profile", icon: User },
-  { label: "Settings", to: "/doctor/settings", icon: Settings },
+  { labelKey: "nav.clinicalDashboard", to: "/doctor/dashboard", icon: Stethoscope },
+  { labelKey: "nav.myPatients", to: "/doctor/patients", icon: Users },
+  { labelKey: "nav.alerts", to: "/doctor/alerts", icon: AlertTriangle },
+  { labelKey: "nav.sos", to: "/doctor/sos", icon: Siren },
+  { labelKey: "nav.carePlans", to: "/doctor/care-plans", icon: ClipboardList },
+  { labelKey: "nav.clinicalNotes", to: "/doctor/notes", icon: NotebookPen },
+  { labelKey: "nav.reports", to: "/doctor/reports", icon: FileText },
+  { labelKey: "nav.profile", to: "/doctor/profile", icon: User },
+  { labelKey: "nav.settings", to: "/doctor/settings", icon: Settings },
 ];
 
 
 export const caregiverNav: NavItem[] = [
-  { label: "Dashboard", to: "/caregiver/dashboard", icon: HeartHandshake },
-  { label: "My Patients", to: "/caregiver/patients", icon: Users },
-  { label: "Alerts", to: "/caregiver/alerts", icon: AlertTriangle },
-  { label: "Emergency SOS", to: "/caregiver/sos", icon: Siren },
-  { label: "Care Plans", to: "/caregiver/care-plans", icon: ClipboardList },
-  { label: "Notes", to: "/caregiver/notes", icon: NotebookPen },
-  { label: "Profile", to: "/caregiver/profile", icon: User },
+  { labelKey: "nav.dashboard", to: "/caregiver/dashboard", icon: HeartHandshake },
+  { labelKey: "nav.myPatients", to: "/caregiver/patients", icon: Users },
+  { labelKey: "nav.alerts", to: "/caregiver/alerts", icon: AlertTriangle },
+  { labelKey: "nav.sos", to: "/caregiver/sos", icon: Siren },
+  { labelKey: "nav.carePlans", to: "/caregiver/care-plans", icon: ClipboardList },
+  { labelKey: "nav.notes", to: "/caregiver/notes", icon: NotebookPen },
+  { labelKey: "nav.profile", to: "/caregiver/profile", icon: User },
 ];
 
 export const adminNav: NavItem[] = [
-  { label: "Admin Console", to: "/admin/dashboard", icon: ShieldCheck },
+  { labelKey: "nav.adminConsole", to: "/admin/dashboard", icon: ShieldCheck },
 ];
 
 export const superAdminNav: NavItem[] = [
-  { label: "Platform Console", to: "/super-admin/dashboard", icon: ShieldCheck },
+  { labelKey: "nav.platformConsole", to: "/super-admin/dashboard", icon: ShieldCheck },
 ];
 
 
@@ -97,9 +99,10 @@ export const roleHome: Record<MeContext["role"], string> = {
 };
 
 function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
+  const t = useT();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav aria-label="Primary" className="space-y-1">
+    <nav aria-label={t("nav.primary")} className="space-y-1">
       {items.map((item) => {
         const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
         return (
@@ -117,7 +120,7 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
             )}
           >
             <item.icon className="size-4 shrink-0" aria-hidden />
-            {item.label}
+            {t(item.labelKey)}
           </Link>
         );
       })}
@@ -126,15 +129,16 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
 }
 
 function Brand() {
+  const t = useT();
   return (
     <div className="flex items-center gap-2.5 px-1 py-1">
       <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
         <Wind className="size-5" aria-hidden />
       </div>
       <div className="leading-tight">
-        <p className="font-display text-base font-semibold">SmartNeb</p>
+        <p className="font-display text-base font-semibold">{t("app.name")}</p>
         <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
-          Respiratory IoT
+          {t("app.tagline")}
         </p>
       </div>
     </div>
@@ -142,6 +146,7 @@ function Brand() {
 }
 
 function NotificationBell() {
+  const t = useT();
   const signedIn = useSignedIn();
   const queryClient = useQueryClient();
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -194,7 +199,7 @@ function NotificationBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={`Notifications, ${unread} unread`}>
+        <Button variant="ghost" size="icon" aria-label={t("notifications.aria", { count: unread })}>
           <span className="relative">
             <Bell className="size-4" />
             {unread > 0 ? (
@@ -208,7 +213,7 @@ function NotificationBell() {
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
           <p className="font-display text-sm font-semibold">
-            Notifications{unread > 0 ? ` (${unread})` : ""}
+            {t("notifications.title")}{unread > 0 ? ` (${unread})` : ""}
           </p>
           <div className="flex items-center gap-1">
             <Button
@@ -217,7 +222,7 @@ function NotificationBell() {
               className="h-7 px-2 text-xs"
               onClick={() => setUnreadOnly((v) => !v)}
             >
-              {unreadOnly ? "All" : "Unread"}
+              {unreadOnly ? t("notifications.all") : t("notifications.unread")}
             </Button>
             <Button
               size="sm"
@@ -226,13 +231,13 @@ function NotificationBell() {
               disabled={unread === 0 || readAll.isPending}
               onClick={() => readAll.mutate()}
             >
-              Mark all read
+              {t("notifications.markAllRead")}
             </Button>
           </div>
         </div>
         <ScrollArea className="max-h-80">
           {visible.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-muted-foreground">You are all caught up.</p>
+            <p className="px-4 py-6 text-sm text-muted-foreground">{t("state.allCaughtUp")}</p>
           ) : (
             <ul className="divide-y">
               {visible.map((n) => (
@@ -289,9 +294,11 @@ export function AppShell({
   actions?: ReactNode | undefined;
   children: ReactNode;
 }) {
+  const t = useT();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  useProfileLanguageSync();
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -304,13 +311,12 @@ export function AppShell({
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="panel w-full max-w-md space-y-4 p-8 text-center">
-          <h1 className="font-display text-xl font-semibold">Account deactivated</h1>
+          <h1 className="font-display text-xl font-semibold">{t("account.deactivated")}</h1>
           <p className="text-sm text-muted-foreground">
-            Your SmartNeb access has been suspended by an administrator. Contact your care
-            organisation to restore access.
+{t("account.deactivatedBody")}
           </p>
           <Button variant="outline" className="w-full" onClick={signOut}>
-            <LogOut className="mr-2 size-3.5" /> Sign out
+            <LogOut className="mr-2 size-3.5" /> {t("action.signOut")}
           </Button>
         </div>
       </div>
@@ -328,11 +334,9 @@ export function AppShell({
           </div>
           <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/40 p-3">
             <p className="truncate text-sm font-medium">{me.fullName}</p>
-            <p className="text-xs text-muted-foreground capitalize">
-              {me.role.replace("_", " ")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t(`role.${me.role}`)}</p>
             <Button variant="outline" size="sm" className="mt-3 w-full" onClick={signOut}>
-              <LogOut className="mr-2 size-3.5" /> Sign out
+              <LogOut className="mr-2 size-3.5" /> {t("action.signOut")}
             </Button>
           </div>
         </aside>
@@ -342,18 +346,18 @@ export function AppShell({
             <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
               <Sheet open={open} onOpenChange={setOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
+                  <Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("nav.openMenu")}>
                     <Menu className="size-5" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-72 bg-sidebar p-4">
-                  <SheetTitle className="sr-only">Navigation</SheetTitle>
+                  <SheetTitle className="sr-only">{t("nav.navigation")}</SheetTitle>
                   <Brand />
                   <div className="mt-6">
                     <NavList items={nav} onNavigate={() => setOpen(false)} />
                   </div>
                   <Button variant="outline" size="sm" className="mt-6 w-full" onClick={signOut}>
-                    <LogOut className="mr-2 size-3.5" /> Sign out
+                    <LogOut className="mr-2 size-3.5" /> {t("action.signOut")}
                   </Button>
                 </SheetContent>
               </Sheet>
@@ -367,6 +371,7 @@ export function AppShell({
 
               <div className="flex items-center gap-1">
                 {actions}
+                <LanguageSelect className="hidden h-9 w-[128px] sm:flex" withIcon />
                 <NotificationBell />
                 <ThemeToggle />
               </div>
@@ -377,7 +382,7 @@ export function AppShell({
 
           <footer className="flex items-center gap-2 border-t px-6 py-4 text-xs text-muted-foreground">
             <Stethoscope className="size-3.5" aria-hidden />
-            SmartNeb is a monitoring aid and does not replace professional medical judgment.
+            {t("app.disclaimer")}
             <BookOpenCheck className="ml-auto size-3.5" aria-hidden />
           </footer>
         </div>

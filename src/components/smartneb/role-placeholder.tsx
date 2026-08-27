@@ -2,22 +2,23 @@ import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "./states";
-
-const LABEL: Record<string, string> = {
-  doctor: "Doctor",
-  caregiver: "Caregiver",
-  admin: "Admin",
-  "super-admin": "Super admin",
-};
+import { useT } from "@/i18n";
 
 export function RolePlaceholder({ role }: { role: string }) {
   const navigate = useNavigate();
+  const t = useT();
+  const LABEL: Record<string, string> = {
+    doctor: t("role.doctor"),
+    caregiver: t("role.caregiver"),
+    admin: t("role.admin"),
+    "super-admin": t("role.super_admin"),
+  };
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="w-full max-w-lg space-y-6">
         <EmptyState
-          title={`${LABEL[role] ?? role} workspace is next`}
-          description="The patient portal is live. Clinical, caregiver and administration workspaces are the next phase of the build."
+          title={t("caregiver.workspaceNext", { role: LABEL[role] ?? role })}
+          description={t("caregiver.workspaceNextDescription")}
         />
         <div className="flex justify-center gap-2">
           <Button
@@ -27,7 +28,7 @@ export function RolePlaceholder({ role }: { role: string }) {
               navigate({ to: "/auth", replace: true });
             }}
           >
-            Sign out
+            {t("action.signOut")}
           </Button>
         </div>
       </div>

@@ -651,6 +651,7 @@ export const updateProfile = createServerFn({ method: "POST" })
       theme?: string;
       voice_alerts?: boolean;
       notify_email?: boolean;
+      language?: string;
     }) =>
       z
         .object({
@@ -659,6 +660,7 @@ export const updateProfile = createServerFn({ method: "POST" })
           theme: z.enum(["light", "dark", "system"]).optional(),
           voice_alerts: z.boolean().optional(),
           notify_email: z.boolean().optional(),
+          language: z.enum(["en", "hi", "kn"]).optional(),
         })
         .parse(d),
   )
@@ -669,12 +671,15 @@ export const updateProfile = createServerFn({ method: "POST" })
       theme?: string;
       voice_alerts?: boolean;
       notify_email?: boolean;
+      language?: string;
     } = {};
     if (data.full_name !== undefined) patch.full_name = data.full_name;
     if (data.phone !== undefined) patch.phone = data.phone;
     if (data.theme !== undefined) patch.theme = data.theme;
     if (data.voice_alerts !== undefined) patch.voice_alerts = data.voice_alerts;
     if (data.notify_email !== undefined) patch.notify_email = data.notify_email;
+    if (data.language !== undefined) patch.language = data.language;
+
     const { error } = await context.supabase
       .from("profiles")
       .update(patch)
