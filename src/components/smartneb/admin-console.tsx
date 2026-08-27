@@ -49,15 +49,16 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n";
 
-function ago(iso: string | null) {
-  if (!iso) return "never";
+function ago(iso: string | null, t: ReturnType<typeof useT>) {
+  if (!iso) return t("admin.never");
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("admin.justNow");
+  if (mins < 60) return t("admin.minutesAgo", { count: mins });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
+  if (hours < 24) return t("admin.hoursAgo", { count: hours });
+  return t("admin.daysAgo", { count: Math.round(hours / 24) });
 }
 
 function Stat({
@@ -99,6 +100,7 @@ function Stat({
 }
 
 export function AdminConsole({ scope = "admin" }: { scope?: "admin" | "super_admin" }) {
+  const t = useT();
   const me = useMe();
   const signedIn = useSignedIn();
   const queryClient = useQueryClient();
@@ -151,7 +153,7 @@ export function AdminConsole({ scope = "admin" }: { scope?: "admin" | "super_adm
   if (!staff) {
     return (
       <div className="p-8">
-        <ErrorState message="Administrator access is required to open this console." />
+        <ErrorState message={t("admin.accessRequired")} />
       </div>
     );
   }
@@ -162,17 +164,22 @@ export function AdminConsole({ scope = "admin" }: { scope?: "admin" | "super_adm
     <AppShell
       me={me.data}
       nav={scope === "super_admin" ? superAdminNav : adminNav}
-      title={scope === "super_admin" ? "Platform Console" : "Admin Console"}
+      title={scope === "super_admin" ? t("nav.platformConsole") : t("nav.adminConsole")}
       subtitle={
         o
-          ? `${o.users.total} users · ${o.devices.total} devices · ${o.alerts.active} active alerts · ${o.sos.active} live SOS`
-          : "Loading platform status"
+          ? t("admin.subtitle", {
+              users: o.users.total,
+              devices: o.devices.total,
+              alerts: o.alerts.active,
+              sos: o.sos.active,
+            })
+          : t("admin.loadingStatus")
       }
       actions={
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Refresh platform data"
+          aria-label={t("admin.refreshData")}
           onClick={() => void queryClient.invalidateQueries()}
         >
           <RefreshCw className="size-4" />
@@ -189,29 +196,35 @@ export function AdminConsole({ scope = "admin" }: { scope?: "admin" | "super_adm
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Stat
-            label="Users"
+            label={t("admin.users")}
             value={o?.users.total ?? "--"}
-            hint={`${o?.users.active ?? 0} active · ${o?.users.inactive ?? 0} deactivated`}
+            hint={t("admin.usersHint", { active: o?.users.active ?? 0, inactive: o?.users.inactive ?? 0 })}
             icon={Users}
           />
           <Stat
-            label="Devices online"
+            label={t("admin.devicesOnline")}
             value={`${o?.devices.online ?? 0}/${o?.devices.total ?? 0}`}
-            hint={`${o?.devices.mqttConnected ?? 0} MQTT · ${o?.devices.unassigned ?? 0} unassigned`}
+            hint={t("admin.devicesHint", {
+              mqtt: o?.devices.mqttConnected ?? 0,
+              unassigned: o?.devices.unassigned ?? 0,
+            })}
             icon={Cpu}
             tone={o && o.devices.online === 0 && o.devices.total > 0 ? "warning" : "ok"}
           />
           <Stat
-            label="Active alerts"
+            label={t("admin.activeAlerts")}
             value={o?.alerts.active ?? 0}
-            hint={`${o?.alerts.critical ?? 0} critical · ${o?.alerts.warning ?? 0} warning`}
+            hint={t("admin.alertsHint", { critical: o?.alerts.critical ?? 0, warning: o?.alerts.warning ?? 0 })}
             icon={AlertTriangle}
             tone={o?.alerts.critical ? "critical" : "default"}
           />
           <Stat
-            label="Live SOS"
+            label={t("admin.liveSOS")}
             value={o?.sos.active ?? 0}
-            hint={`${o?.sos.acknowledged ?? 0} acknowledged · ${o?.sos.last24h ?? 0} in 24h`}
+            hint={t("admin.sosHint", {
+              acknowledged: o?.sos.acknowledged ?? 0,
+              last24h: o?.sos.last24h ?? 0,
+            })}
             icon={Siren}
             tone={o?.sos.active ? "critical" : "ok"}
           />
@@ -219,42 +232,45 @@ export function AdminConsole({ scope = "admin" }: { scope?: "admin" | "super_adm
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Stat
-            label="Telemetry (1h)"
+            label={t("admin.telemetry1h")}
             value={o?.telemetry.lastHour ?? 0}
-            hint={`${o?.telemetry.patientsReporting ?? 0} patients reporting · last ${ago(o?.telemetry.lastRecordedAt ?? null)}`}
+            hint={t("admin.telemetry1hHint", {
+              patients: o?.telemetry.patientsReporting ?? 0,
+              last: ago(o?.telemetry.lastRecordedAt ?? null, t),
+            })}
             icon={Activity}
             tone={o && o.telemetry.lastHour === 0 ? "warning" : "ok"}
           />
           <Stat
-            label="Telemetry (24h)"
+            label={t("admin.telemetry24h")}
             value={o?.telemetry.last24h ?? 0}
-            hint={`${o?.telemetry.stalePatients ?? 0} patients with no recent data`}
+            hint={t("admin.telemetry24hHint", { stale: o?.telemetry.stalePatients ?? 0 })}
             icon={Activity}
           />
           <Stat
-            label="Therapy sessions"
+            label={t("admin.therapySessions")}
             value={o?.sessions.running ?? 0}
-            hint={`${o?.sessions.completedToday ?? 0} completed today`}
+            hint={t("admin.therapyHint", { completed: o?.sessions.completedToday ?? 0 })}
             icon={ShieldCheck}
           />
           <Stat
-            label="Unassigned patients"
+            label={t("admin.unassignedPatients")}
             value={o?.unassignedPatients ?? 0}
-            hint="Patients with no doctor or caregiver"
+            hint={t("admin.unassignedHint")}
             icon={Users}
             tone={o?.unassignedPatients ? "warning" : "ok"}
           />
         </section>
 
-        <SOSPanel enabled={on} title="Emergency SOS — platform wide" />
+        <SOSPanel enabled={on} title={t("admin.emergencySOSPlatform")} />
 
         <Tabs defaultValue="users">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="assignments">Assignments</TabsTrigger>
-            <TabsTrigger value="devices">Devices</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
-            <TabsTrigger value="audit">Audit log</TabsTrigger>
+            <TabsTrigger value="users">{t("admin.tabs.users")}</TabsTrigger>
+            <TabsTrigger value="assignments">{t("admin.tabs.assignments")}</TabsTrigger>
+            <TabsTrigger value="devices">{t("admin.tabs.devices")}</TabsTrigger>
+            <TabsTrigger value="alerts">{t("admin.tabs.alerts")}</TabsTrigger>
+            <TabsTrigger value="audit">{t("admin.tabs.audit")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="mt-4">
@@ -281,6 +297,7 @@ export function AdminConsole({ scope = "admin" }: { scope?: "admin" | "super_adm
 /* ------------------------------ Users ------------------------------ */
 
 function UsersTab({ enabled }: { enabled: boolean }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const [q, setQ] = useState("");
   const users = useQuery({
@@ -293,7 +310,7 @@ function UsersTab({ enabled }: { enabled: boolean }) {
   const toggle = useMutation({
     mutationFn: (vars: { userId: string; active: boolean }) => setUserActive({ data: vars }),
     onSuccess: (_r, vars) => {
-      toast.success(vars.active ? "Account activated" : "Account deactivated");
+      toast.success(vars.active ? t("admin.accountActivated") : t("admin.accountDeactivated"));
       void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       void queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
       void queryClient.invalidateQueries({ queryKey: ["admin-audit"] });
@@ -325,14 +342,14 @@ function UsersTab({ enabled }: { enabled: boolean }) {
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search name, email or role"
-          aria-label="Search users"
+          placeholder={t("admin.searchUsersPlaceholder")}
+          aria-label={t("admin.searchUsers")}
           className="h-9 max-w-sm"
         />
-        <span className="ml-auto text-xs text-muted-foreground">{rows.length} accounts</span>
+        <span className="ml-auto text-xs text-muted-foreground">{t("admin.accountsCount", { count: rows.length })}</span>
       </div>
       {rows.length === 0 ? (
-        <EmptyState title="No users found" description="Adjust your search to see accounts." />
+        <EmptyState title={t("admin.noUsersFound")} description={t("admin.noUsersFoundDesc")} />
       ) : (
         <ScrollArea className="mt-3 max-h-[32rem]">
           <ul className="space-y-2 pr-2">
@@ -344,10 +361,10 @@ function UsersTab({ enabled }: { enabled: boolean }) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{u.fullName}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {u.email ?? "no email"} · joined {new Date(u.createdAt).toLocaleDateString()}
+                    {u.email ?? t("admin.noEmail")} · {t("admin.joined", { date: new Date(u.createdAt).toLocaleDateString() })}
                   </p>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {(u.roles.length ? u.roles : ["no role"]).map((r) => (
+                    {(u.roles.length ? u.roles : [t("admin.noRole")]).map((r) => (
                       <Badge key={r} variant="secondary" className="capitalize">
                         {r.replace("_", " ")}
                       </Badge>
@@ -359,11 +376,11 @@ function UsersTab({ enabled }: { enabled: boolean }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
-                    {u.isActive ? "Active" : "Deactivated"}
+                    {u.isActive ? t("status.active") : t("admin.deactivated")}
                   </span>
                   <Switch
                     checked={u.isActive}
-                    aria-label={`${u.isActive ? "Deactivate" : "Activate"} ${u.fullName}`}
+                    aria-label={`${u.isActive ? t("admin.deactivate") : t("admin.activate")} ${u.fullName}`}
                     onCheckedChange={(next) =>
                       toggle.mutate({ userId: u.id, active: Boolean(next) })
                     }
@@ -381,6 +398,7 @@ function UsersTab({ enabled }: { enabled: boolean }) {
 /* --------------------------- Assignments --------------------------- */
 
 function AssignmentsTab({ enabled }: { enabled: boolean }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const patients = useQuery({
     queryKey: ["admin-patients"],
@@ -403,7 +421,7 @@ function AssignmentsTab({ enabled }: { enabled: boolean }) {
       action: "assign" | "unassign";
     }) => setAssignment({ data: vars }),
     onSuccess: (_r, vars) => {
-      toast.success(vars.action === "assign" ? "Care team member assigned" : "Assignment removed");
+      toast.success(vars.action === "assign" ? t("admin.careTeamAssigned") : t("admin.assignmentRemoved"));
       void queryClient.invalidateQueries({ queryKey: ["admin-patients"] });
       void queryClient.invalidateQueries({ queryKey: ["admin-staff"] });
       void queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
@@ -420,7 +438,7 @@ function AssignmentsTab({ enabled }: { enabled: boolean }) {
 
   const list = patients.data ?? [];
   if (!list.length)
-    return <EmptyState title="No patients yet" description="Patient accounts appear here once registered." />;
+    return <EmptyState title={t("admin.noPatientsYet")} description={t("admin.noPatientsYetDesc")} />;
 
   return (
     <div className="space-y-3">
@@ -450,6 +468,7 @@ function AssignmentCard({
   caregivers: { id: string; name: string; relation: string }[];
   onChange: (kind: "doctor" | "caregiver", staffId: string, action: "assign" | "unassign") => void;
 }) {
+  const t = useT();
   const freeDoctors = doctors.filter((d) => !patient.doctors.some((x) => x.id === d.id));
   const freeCaregivers = caregivers.filter((c) => !patient.caregivers.some((x) => x.id === c.id));
 
@@ -459,33 +478,33 @@ function AssignmentCard({
         <div className="min-w-0">
           <p className="font-display text-base font-semibold">{patient.fullName}</p>
           <p className="text-xs text-muted-foreground">
-            {patient.mrn} · {patient.condition ?? "No condition recorded"} ·{" "}
-            {patient.userLinked ? "account linked" : "no login linked"}
+            {patient.mrn} · {patient.condition ?? t("admin.noConditionRecorded")} ·{" "}
+            {patient.userLinked ? t("admin.accountLinked") : t("admin.noLoginLinked")}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           <Badge variant={patient.deviceCode ? "secondary" : "outline"}>
-            {patient.deviceCode ?? "no device"}
+            {patient.deviceCode ?? t("admin.noDevice")}
             {patient.deviceStatus ? ` · ${patient.deviceStatus}` : ""}
           </Badge>
-          <Badge variant="outline">telemetry {ago(patient.lastTelemetryAt)}</Badge>
-          {patient.activeSOS ? <Badge variant="destructive">SOS</Badge> : null}
+          <Badge variant="outline">{t("admin.telemetryAgo", { time: ago(patient.lastTelemetryAt, t) })}</Badge>
+          {patient.activeSOS ? <Badge variant="destructive">{t("admin.sosBadge")}</Badge> : null}
           {patient.activeAlerts ? (
-            <Badge variant="destructive">{patient.activeAlerts} alerts</Badge>
+            <Badge variant="destructive">{t("admin.alertsBadge", { count: patient.activeAlerts })}</Badge>
           ) : null}
         </div>
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <TeamColumn
-          heading="Doctors"
+          heading={t("admin.doctors")}
           members={patient.doctors}
           options={freeDoctors.map((d) => ({ id: d.id, label: `${d.name} · ${d.specialty}` }))}
           onAssign={(id) => onChange("doctor", id, "assign")}
           onRemove={(id) => onChange("doctor", id, "unassign")}
         />
         <TeamColumn
-          heading="Caregivers"
+          heading={t("admin.caregivers")}
           members={patient.caregivers}
           options={freeCaregivers.map((c) => ({ id: c.id, label: `${c.name} · ${c.relation}` }))}
           onAssign={(id) => onChange("caregiver", id, "assign")}
@@ -509,6 +528,7 @@ function TeamColumn({
   onAssign: (id: string) => void;
   onRemove: (id: string) => void;
 }) {
+  const t = useT();
   const [pick, setPick] = useState("");
   return (
     <div className="rounded-xl border border-border p-3">
@@ -516,14 +536,14 @@ function TeamColumn({
         {heading}
       </p>
       {members.length === 0 ? (
-        <p className="mt-2 text-sm text-muted-foreground">None assigned</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("admin.noneAssigned")}</p>
       ) : (
         <ul className="mt-2 space-y-1.5">
           {members.map((m) => (
             <li key={m.id} className="flex items-center justify-between gap-2">
               <span className="truncate text-sm">{m.name}</span>
               <Button size="sm" variant="ghost" onClick={() => onRemove(m.id)}>
-                Remove
+                {t("admin.remove")}
               </Button>
             </li>
           ))}
@@ -531,13 +551,13 @@ function TeamColumn({
       )}
       <div className="mt-3 flex gap-2">
         <Select value={pick} onValueChange={setPick}>
-          <SelectTrigger className="h-9" aria-label={`Select ${heading.toLowerCase()}`}>
-            <SelectValue placeholder={`Add ${heading.slice(0, -1).toLowerCase()}`} />
+          <SelectTrigger className="h-9" aria-label={t("admin.selectRole", { role: heading.toLowerCase() })}>
+            <SelectValue placeholder={t("admin.addRole", { role: heading.slice(0, -1).toLowerCase() })} />
           </SelectTrigger>
           <SelectContent>
             {options.length === 0 ? (
               <SelectItem value="none" disabled>
-                No one available
+                {t("admin.noOneAvailable")}
               </SelectItem>
             ) : (
               options.map((o) => (
@@ -556,7 +576,7 @@ function TeamColumn({
             setPick("");
           }}
         >
-          Assign
+          {t("admin.assign")}
         </Button>
       </div>
     </div>
@@ -566,6 +586,7 @@ function TeamColumn({
 /* ----------------------------- Devices ----------------------------- */
 
 function DevicesTab({ enabled }: { enabled: boolean }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const [code, setCode] = useState("");
   const [firmware, setFirmware] = useState("");
@@ -594,7 +615,7 @@ function DevicesTab({ enabled }: { enabled: boolean }) {
   const create = useMutation({
     mutationFn: (vars: { deviceCode: string; firmware?: string }) => registerDevice({ data: vars }),
     onSuccess: () => {
-      toast.success("Device registered");
+      toast.success(t("admin.deviceRegistered"));
       setCode("");
       setFirmware("");
       invalidate();
@@ -609,7 +630,7 @@ function DevicesTab({ enabled }: { enabled: boolean }) {
       status?: "online" | "offline" | "maintenance" | "disabled";
     }) => updateDevice({ data: vars }),
     onSuccess: () => {
-      toast.success("Device updated");
+      toast.success(t("admin.deviceUpdated"));
       invalidate();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -622,7 +643,7 @@ function DevicesTab({ enabled }: { enabled: boolean }) {
         onSubmit={(e) => {
           e.preventDefault();
           if (code.trim().length < 3) {
-            toast.error("Device code must be at least 3 characters.");
+            toast.error(t("admin.deviceCodeTooShort"));
             return;
           }
           const fw = firmware.trim();
@@ -630,7 +651,7 @@ function DevicesTab({ enabled }: { enabled: boolean }) {
         }}
       >
         <div className="grid gap-1.5">
-          <Label htmlFor="device-code">Device code</Label>
+          <Label htmlFor="device-code">{t("admin.deviceCode")}</Label>
           <Input
             id="device-code"
             value={code}
@@ -640,7 +661,7 @@ function DevicesTab({ enabled }: { enabled: boolean }) {
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="device-fw">Firmware</Label>
+          <Label htmlFor="device-fw">{t("admin.firmware")}</Label>
           <Input
             id="device-fw"
             value={firmware}
@@ -650,7 +671,7 @@ function DevicesTab({ enabled }: { enabled: boolean }) {
           />
         </div>
         <Button type="submit" disabled={create.isPending} className="h-10">
-          <Plus className="mr-2 size-4" /> Register device
+          <Plus className="mr-2 size-4" /> {t("admin.registerDevice")}
         </Button>
       </form>
 
@@ -662,7 +683,7 @@ function DevicesTab({ enabled }: { enabled: boolean }) {
           onRetry={() => devices.refetch()}
         />
       ) : (devices.data ?? []).length === 0 ? (
-        <EmptyState title="No devices registered" description="Register a nebulizer above to begin monitoring." />
+        <EmptyState title={t("admin.noDevicesRegistered")} description={t("admin.noDevicesRegisteredDesc")} />
       ) : (
         <div className="space-y-3">
           {(devices.data ?? []).map((d) => (
@@ -691,6 +712,7 @@ function DeviceCard({
   onAssign: (patientId: string | null) => void;
   onStatus: (status: "online" | "offline" | "maintenance" | "disabled") => void;
 }) {
+  const t = useT();
   return (
     <div className="panel grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto]">
       <div className="min-w-0">
@@ -705,15 +727,15 @@ function DeviceCard({
             ) : (
               <WifiOff className="size-3" aria-hidden />
             )}
-            MQTT {device.mqttConnected ? "up" : "down"}
+            {t("admin.mqttStatus", { state: device.mqttConnected ? t("admin.up") : t("admin.down") })}
           </Badge>
-          <Badge variant="outline">Cloud {device.cloudConnected ? "up" : "down"}</Badge>
-          <Badge variant="outline">fw {device.firmware}</Badge>
+          <Badge variant="outline">{t("admin.cloudStatus", { state: device.cloudConnected ? t("admin.up") : t("admin.down") })}</Badge>
+          <Badge variant="outline">{t("admin.fwLabel", { version: device.firmware })}</Badge>
         </div>
         <p className="mt-1.5 text-xs text-muted-foreground">
-          {device.patientName ? `${device.patientName} · ${device.mrn}` : "Unassigned"} · nebulizer{" "}
-          {device.nebulizerState} · fluid {Math.round(device.fluidLevel)}% · seen{" "}
-          {ago(device.lastSeenAt)} · telemetry {ago(device.lastTelemetryAt)}
+          {device.patientName ? `${device.patientName} · ${device.mrn}` : t("admin.unassigned")} · {t("admin.nebulizerState", { state: device.nebulizerState })}{" "}
+          · {t("admin.fluidLevel", { percent: Math.round(device.fluidLevel) })} · {t("admin.seenAgo", { time: ago(device.lastSeenAt, t) })}{" "}
+          · {t("admin.telemetryAgo", { time: ago(device.lastTelemetryAt, t) })}
         </p>
       </div>
 
@@ -722,11 +744,11 @@ function DeviceCard({
           value={device.patientId ?? "unassigned"}
           onValueChange={(v) => onAssign(v === "unassigned" ? null : v)}
         >
-          <SelectTrigger className="h-9 w-56" aria-label={`Assign patient to ${device.deviceCode}`}>
-            <SelectValue placeholder="Assign patient" />
+          <SelectTrigger className="h-9 w-56" aria-label={t("admin.assignPatientTo", { device: device.deviceCode })}>
+            <SelectValue placeholder={t("admin.assignPatient")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="unassigned">Unassigned</SelectItem>
+            <SelectItem value="unassigned">{t("admin.unassigned")}</SelectItem>
             {patients.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.fullName} · {p.mrn}
@@ -735,14 +757,14 @@ function DeviceCard({
           </SelectContent>
         </Select>
         <Select value={device.status} onValueChange={(v) => onStatus(v as "online")}>
-          <SelectTrigger className="h-9 w-40" aria-label={`Set status for ${device.deviceCode}`}>
+          <SelectTrigger className="h-9 w-40" aria-label={t("admin.setStatusFor", { device: device.deviceCode })}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="online">Online</SelectItem>
-            <SelectItem value="offline">Offline</SelectItem>
-            <SelectItem value="maintenance">Maintenance</SelectItem>
-            <SelectItem value="disabled">Disabled</SelectItem>
+            <SelectItem value="online">{t("status.online")}</SelectItem>
+            <SelectItem value="offline">{t("status.offline")}</SelectItem>
+            <SelectItem value="maintenance">{t("admin.maintenance")}</SelectItem>
+            <SelectItem value="disabled">{t("admin.disabled")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -753,6 +775,7 @@ function DeviceCard({
 /* ----------------------------- Alerts ------------------------------ */
 
 function AlertsTab({ enabled }: { enabled: boolean }) {
+  const t = useT();
   const alerts = useQuery({
     queryKey: ["admin-alerts"],
     queryFn: () => listAdminAlerts(),
@@ -765,7 +788,7 @@ function AlertsTab({ enabled }: { enabled: boolean }) {
   if (alerts.isError)
     return <ErrorState message={(alerts.error as Error)?.message} onRetry={() => alerts.refetch()} />;
   if (!(alerts.data ?? []).length)
-    return <EmptyState title="No alerts recorded" description="Threshold breaches appear here in real time." />;
+    return <EmptyState title={t("admin.noAlertsRecorded")} description={t("admin.noAlertsRecordedDesc")} />;
 
   return (
     <div className="panel p-4">
@@ -789,8 +812,8 @@ function AlertsTab({ enabled }: { enabled: boolean }) {
               <p className="mt-1 text-sm">{a.message}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {a.type}
-                {a.value != null ? ` · value ${a.value}` : ""}
-                {a.threshold != null ? ` · threshold ${a.threshold}` : ""} ·{" "}
+                {a.value != null ? ` · ${t("admin.value")} ${a.value}` : ""}
+                {a.threshold != null ? ` · ${t("admin.threshold")} ${a.threshold}` : ""} ·{" "}
                 {new Date(a.createdAt).toLocaleString()}
               </p>
             </li>
@@ -804,6 +827,7 @@ function AlertsTab({ enabled }: { enabled: boolean }) {
 /* ------------------------------ Audit ------------------------------ */
 
 function AuditTab({ enabled }: { enabled: boolean }) {
+  const t = useT();
   const [action, setAction] = useState("all");
   const [term, setTerm] = useState("");
   const logs = useQuery({
@@ -817,7 +841,7 @@ function AuditTab({ enabled }: { enabled: boolean }) {
   if (logs.isError)
     return <ErrorState message={(logs.error as Error)?.message} onRetry={() => logs.refetch()} />;
   if (!(logs.data ?? []).length)
-    return <EmptyState title="No audit activity" description="Administrative actions are recorded here." />;
+    return <EmptyState title={t("admin.noAuditActivity")} description={t("admin.noAuditActivityDesc")} />;
 
   const rows = logs.data ?? [];
   const actions = [...new Set(rows.map((l) => l.action))].sort();
@@ -836,16 +860,16 @@ function AuditTab({ enabled }: { enabled: boolean }) {
         <Input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search actor, target id or details…"
-          aria-label="Search audit log"
+          placeholder={t("admin.searchAuditPlaceholder")}
+          aria-label={t("admin.searchAuditLog")}
           className="max-w-xs"
         />
         <Select value={action} onValueChange={setAction}>
-          <SelectTrigger className="w-56" aria-label="Filter by action">
+          <SelectTrigger className="w-56" aria-label={t("admin.filterByAction")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All actions</SelectItem>
+            <SelectItem value="all">{t("admin.allActions")}</SelectItem>
             {actions.map((a) => (
               <SelectItem key={a} value={a}>
                 {a}
@@ -854,7 +878,7 @@ function AuditTab({ enabled }: { enabled: boolean }) {
           </SelectContent>
         </Select>
         <span className="self-center text-xs text-muted-foreground">
-          {filtered.length} of {rows.length} entries
+          {t("admin.entriesOf", { filtered: filtered.length, total: rows.length })}
         </span>
       </div>
       <ScrollArea className="max-h-[32rem]">
@@ -863,7 +887,7 @@ function AuditTab({ enabled }: { enabled: boolean }) {
             <li key={l.id} className="py-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{l.action}</Badge>
-                <span className="text-sm">{l.actorName ?? "System"}</span>
+                <span className="text-sm">{l.actorName ?? t("admin.system")}</span>
                 <span className="ml-auto text-xs text-muted-foreground">
                   {new Date(l.createdAt).toLocaleString()}
                 </span>
@@ -875,7 +899,7 @@ function AuditTab({ enabled }: { enabled: boolean }) {
           ))}
           {filtered.length === 0 ? (
             <li className="py-6 text-center text-sm text-muted-foreground">
-              No entries match these filters.
+              {t("admin.noMatchingEntries")}
             </li>
           ) : null}
         </ul>
@@ -883,4 +907,3 @@ function AuditTab({ enabled }: { enabled: boolean }) {
     </div>
   );
 }
-

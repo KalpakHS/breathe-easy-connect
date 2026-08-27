@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getProfile, updateProfile } from "@/lib/smartneb.functions";
 import { DoctorPage } from "@/components/smartneb/doctor-layout";
+import { LanguageSelect } from "@/components/smartneb/language-select";
+import { useT } from "@/i18n";
 import { LoadingSkeleton } from "@/components/smartneb/states";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -89,6 +91,7 @@ function DoctorSettingsPage() {
 
         return (
           <div className="grid gap-5 xl:grid-cols-2">
+            <LanguagePanel />
             <section className="panel space-y-5 p-5">
               <h2 className="font-display text-sm font-semibold">Alerting</h2>
 
@@ -187,5 +190,16 @@ function DoctorSettingsPage() {
         );
       }}
     </DoctorPage>
+  );
+}
+
+function LanguagePanel() {
+  const t = useT();
+  return (
+    <section className="panel space-y-4 p-5">
+      <h2 className="font-display text-sm font-semibold">{t("language.label")}</h2>
+      <p className="text-xs text-muted-foreground">{t("language.description")}</p>
+      <LanguageSelect className="h-10 w-full max-w-xs" withIcon />
+    </section>
   );
 }

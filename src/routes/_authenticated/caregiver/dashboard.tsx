@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useT, type TFunction } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/caregiver/dashboard")({
   head: () => ({
@@ -75,6 +76,7 @@ function tempStatus(v: number | null, max: number): VitalStatus {
 }
 
 function CaregiverDashboard() {
+  const t = useT();
   const me = useMe();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
@@ -165,14 +167,18 @@ function CaregiverDashboard() {
     <AppShell
       me={me.data}
       nav={caregiverNav}
-      title="Care Dashboard"
-      subtitle={`${roster.data?.length ?? 0} people in your care · ${sosCount} emergencies · ${critical} critical alerts`}
+      title={t("caregiver.careDashboard")}
+      subtitle={t("caregiver.careDashboardSubtitle", {
+        count: roster.data?.length ?? 0,
+        sos: sosCount,
+        critical,
+      })}
     >
       {!me.data.caregiverId ? (
-        <ErrorState message="No caregiver record is linked to this account yet. Ask an administrator to link you to a patient." />
+        <ErrorState message={t("caregiver.noCaregiverRecordShort")} />
       ) : (
         <div className="space-y-6">
-          <SOSPanel enabled={signedIn} title="Emergency SOS — people in your care" />
+          <SOSPanel enabled={signedIn} title={t("caregiver.emergencySosPeopleInCare")} />
 
           <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
             <section className="panel flex max-h-[calc(100vh-11rem)] flex-col p-4">
@@ -181,8 +187,8 @@ function CaregiverDashboard() {
                 <Input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search name, MRN or condition"
-                  aria-label="Search patients"
+                  placeholder={t("caregiver.searchPatientsPlaceholder")}
+                  aria-label={t("caregiver.searchPatients")}
                   className="h-9"
                 />
               </div>
@@ -191,8 +197,8 @@ function CaregiverDashboard() {
                   <LoadingSkeleton rows={3} />
                 ) : patients.length === 0 ? (
                   <EmptyState
-                    title="No assigned patients"
-                    description="Patients you are assigned to care for appear here."
+                    title={t("caregiver.noAssignedPatients")}
+                    description={t("caregiver.assignedPatientsAppearHere")}
                   />
                 ) : (
                   <ul className="space-y-2 pr-2">
@@ -219,8 +225,8 @@ function CaregiverDashboard() {
               />
             ) : (
               <EmptyState
-                title="Select a patient"
-                description="Pick someone in your care to review live vitals and therapy."
+                title={t("caregiver.selectAPatientTitle")}
+                description={t("caregiver.selectAPatientDescription")}
               />
             )}
           </div>
@@ -239,6 +245,7 @@ function RosterCard({
   active: boolean;
   onSelect: () => void;
 }) {
+  const t = useT();
   const fresh = freshness(patient.recordedAt);
   return (
     <button
@@ -254,23 +261,23 @@ function RosterCard({
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{patient.full_name}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {patient.mrn} · {patient.condition ?? "No condition recorded"}
+            {patient.mrn} · {patient.condition ?? t("caregiver.noConditionRecorded")}
           </p>
         </div>
         <StatusBadge status={spo2Status(patient.spo2, patient.spo2_threshold)} />
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span className="tabular-nums">SpO₂ {patient.spo2 ?? "--"}%</span>
-        <span className="tabular-nums">HR {patient.bpm ?? "--"}</span>
+        <span className="tabular-nums">{t("vitals.spo2")} {patient.spo2 ?? "--"}%</span>
+        <span className="tabular-nums">{t("caregiver.hrAbbrev")} {patient.bpm ?? "--"}</span>
         <span>{fresh.text}</span>
         {patient.activeSOS > 0 ? (
           <Badge variant="destructive" className="gap-1">
-            <Siren className="size-3" /> SOS
+            <Siren className="size-3" /> {t("caregiver.sos")}
           </Badge>
         ) : null}
         {patient.sessionStatus === "running" ? (
           <Badge variant="secondary" className="gap-1">
-            <Wind className="size-3" /> In therapy
+            <Wind className="size-3" /> {t("caregiver.inTherapy")}
           </Badge>
         ) : null}
         {patient.activeAlerts > 0 ? (
@@ -292,6 +299,7 @@ function PatientWorkspace({
   patientId: string;
   signedIn: boolean;
 }) {
+  const t = useT();
   const snapshot = useQuery({
     queryKey: ["snapshot", patientId],
     queryFn: () => getPatientSnapshot({ data: { patientId } }),
@@ -321,16 +329,16 @@ function PatientWorkspace({
       <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
         <div className="min-w-0">
           <h2 className="font-display text-xl font-semibold">
-            {p?.full_name ?? patient?.full_name ?? "Patient"}
+            {p?.full_name ?? patient?.full_name ?? t("caregiver.patient")}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {p?.mrn ?? patient?.mrn} · {p?.condition ?? "No condition recorded"}
-            {patient?.relation ? ` · your ${patient.relation}` : ""}
+            {p?.mrn ?? patient?.mrn} · {p?.condition ?? t("caregiver.noConditionRecorded")}
+            {patient?.relation ? ` · ${t("caregiver.yourRelation", { relation: patient.relation })}` : ""}
           </p>
         </div>
         <StatusBadge
           status={fresh.stale ? "unknown" : "normal"}
-          label={fresh.stale ? `Stale · ${fresh.text}` : `Live · ${fresh.text}`}
+          label={fresh.stale ? t("caregiver.staleLabel", { time: fresh.text }) : t("caregiver.liveLabel", { time: fresh.text })}
         />
       </div>
 
@@ -339,33 +347,33 @@ function PatientWorkspace({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <VitalCard
-            label="Oxygen saturation"
+            label={t("caregiver.oxygenSaturation")}
             value={spo2}
             unit="%"
             status={spo2Status(spo2, spo2Min)}
             trend={spo2 != null && prevSpo2 != null ? spo2 - prevSpo2 : null}
-            hint={`Threshold ${spo2Min}%`}
+            hint={t("caregiver.thresholdHint", { value: `${spo2Min}%` })}
             icon={<Activity className="size-4" aria-hidden />}
           />
           <VitalCard
-            label="Heart rate"
+            label={t("caregiver.heartRate")}
             value={bpm}
             unit="bpm"
             status={bpmStatus(bpm, bpmLow, bpmHigh)}
             trend={bpm != null && prevBpm != null ? bpm - prevBpm : null}
-            hint={`Range ${bpmLow}-${bpmHigh}`}
+            hint={t("caregiver.rangeHint", { value: `${bpmLow}-${bpmHigh}` })}
             icon={<HeartPulse className="size-4" aria-hidden />}
           />
           <VitalCard
-            label="Body temperature"
+            label={t("caregiver.bodyTemperature")}
             value={temp == null ? null : temp.toFixed(1)}
             unit="°C"
             status={tempStatus(temp, tempMax)}
-            hint={`Max ${tempMax}°C`}
+            hint={t("caregiver.maxHint", { value: `${tempMax}°C` })}
             icon={<Thermometer className="size-4" aria-hidden />}
           />
           <VitalCard
-            label="Device battery"
+            label={t("caregiver.deviceBattery")}
             value={battPct}
             unit="%"
             status={
@@ -382,20 +390,23 @@ function PatientWorkspace({
           <div className="flex items-center gap-2">
             <Cpu className="size-4 text-primary" aria-hidden />
             <div>
-              <p className="text-sm font-medium">{device?.device_code ?? "No device"}</p>
+              <p className="text-sm font-medium">{device?.device_code ?? t("caregiver.noDevice")}</p>
               <p className="text-xs text-muted-foreground">
-                Firmware {device?.firmware ?? "--"} · last seen {freshness(device?.last_seen_at).text}
+                {t("caregiver.firmwareLastSeen", {
+                  firmware: device?.firmware ?? "--",
+                  time: freshness(device?.last_seen_at).text,
+                })}
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge
               status={device?.status === "online" ? "normal" : "critical"}
-              label={device?.status === "online" ? "Online" : "Offline"}
+              label={device?.status === "online" ? t("status.online") : t("status.offline")}
             />
             <StatusBadge
               status={device?.mqtt_connected ? "normal" : "warning"}
-              label={device?.mqtt_connected ? "MQTT linked" : "MQTT down"}
+              label={device?.mqtt_connected ? t("caregiver.mqttLinked") : t("caregiver.mqttDown")}
             />
             <StatusBadge
               status={
@@ -406,17 +417,17 @@ function PatientWorkspace({
                     : "unknown"
               }
               label={
-                snap?.activeSession ? `Therapy ${snap.activeSession.status}` : "No active therapy"
+                snap?.activeSession ? t("caregiver.therapyStatus", { status: snap.activeSession.status }) : t("caregiver.noActiveTherapy")
               }
             />
             <span className="text-xs text-muted-foreground">
-              chamber {Number(device?.fluid_level ?? 0)}%
+              {t("caregiver.chamberPercent", { value: Number(device?.fluid_level ?? 0) })}
             </span>
           </div>
         </div>
         {snap?.carePlan ? (
           <p className="mt-3 text-xs text-muted-foreground">
-            Current plan: {snap.carePlan.medication} {snap.carePlan.dosage} ·{" "}
+            {t("caregiver.currentPlan")}: {snap.carePlan.medication} {snap.carePlan.dosage} ·{" "}
             {snap.carePlan.duration_minutes} min, {snap.carePlan.frequency_per_day}x daily
           </p>
         ) : null}
@@ -424,10 +435,10 @@ function PatientWorkspace({
 
       <Tabs defaultValue="alerts">
         <TabsList>
-          <TabsTrigger value="alerts">Alerts</TabsTrigger>
-          <TabsTrigger value="adherence">Adherence</TabsTrigger>
-          <TabsTrigger value="history">Health history</TabsTrigger>
-          <TabsTrigger value="sos">SOS history</TabsTrigger>
+          <TabsTrigger value="alerts">{t("nav.alerts")}</TabsTrigger>
+          <TabsTrigger value="adherence">{t("nav.adherence")}</TabsTrigger>
+          <TabsTrigger value="history">{t("caregiver.healthHistory")}</TabsTrigger>
+          <TabsTrigger value="sos">{t("caregiver.sosHistory")}</TabsTrigger>
         </TabsList>
         <TabsContent value="alerts" className="mt-4">
           <AlertsTab patientId={patientId} signedIn={signedIn} />
@@ -443,7 +454,7 @@ function PatientWorkspace({
             patientId={patientId}
             enabled={signedIn}
             includeResolved
-            title="Emergency history"
+            title={t("caregiver.emergencyHistory")}
           />
         </TabsContent>
       </Tabs>
@@ -452,6 +463,7 @@ function PatientWorkspace({
 }
 
 function AlertsTab({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const q = useQuery({
     queryKey: ["alerts", patientId],
     queryFn: () => listAlerts({ data: { patientId } }),
@@ -462,7 +474,7 @@ function AlertsTab({ patientId, signedIn }: { patientId: string; signedIn: boole
 
   if (q.isLoading) return <LoadingSkeleton rows={3} />;
   if (!q.data?.length)
-    return <EmptyState title="No alerts" description="Readings have stayed within range." />;
+    return <EmptyState title={t("caregiver.noAlerts")} description={t("caregiver.readingsWithinRange")} />;
 
   return (
     <ul className="space-y-2">
@@ -488,6 +500,7 @@ function AlertsTab({ patientId, signedIn }: { patientId: string; signedIn: boole
 }
 
 function AdherenceTab({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const q = useQuery({
     queryKey: ["adherence", patientId, 30],
     queryFn: () => getAdherence({ data: { patientId, days: 30 } }),
@@ -508,10 +521,10 @@ function AdherenceTab({ patientId, signedIn }: { patientId: string; signedIn: bo
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-4">
         {[
-          { label: "Adherence score", value: `${d?.score ?? 0}%`, icon: CalendarCheck },
-          { label: "Completed", value: d?.completed ?? 0, icon: CalendarCheck },
-          { label: "Partial", value: d?.partial ?? 0, icon: CalendarCheck },
-          { label: "Missed", value: d?.missed ?? 0, icon: AlertTriangle },
+          { label: t("caregiver.adherenceScore"), value: `${d?.score ?? 0}%`, icon: CalendarCheck },
+          { label: t("caregiver.completed"), value: d?.completed ?? 0, icon: CalendarCheck },
+          { label: t("caregiver.partial"), value: d?.partial ?? 0, icon: CalendarCheck },
+          { label: t("caregiver.missed"), value: d?.missed ?? 0, icon: AlertTriangle },
         ].map((m) => (
           <div key={m.label} className="panel p-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -523,11 +536,11 @@ function AdherenceTab({ patientId, signedIn }: { patientId: string; signedIn: bo
       </div>
 
       <div className="panel p-5">
-        <h3 className="font-display text-sm font-semibold">Recent therapy sessions</h3>
+        <h3 className="font-display text-sm font-semibold">{t("caregiver.recentTherapySessions")}</h3>
         {sessions.isLoading ? (
           <LoadingSkeleton rows={2} className="mt-3" />
         ) : !sessions.data?.length ? (
-          <p className="mt-3 text-sm text-muted-foreground">No sessions recorded yet.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("caregiver.noSessionsRecordedYet")}</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {sessions.data.map((s) => (
@@ -536,7 +549,7 @@ function AdherenceTab({ patientId, signedIn }: { patientId: string; signedIn: bo
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-surface-2 px-4 py-3 text-sm"
               >
                 <span>
-                  {s.medication ?? "Therapy"} {s.dosage ? `· ${s.dosage}` : ""} ·{" "}
+                  {s.medication ?? t("caregiver.therapy")} {s.dosage ? `· ${s.dosage}` : ""} ·{" "}
                   {new Date(s.started_at).toLocaleString()}
                 </span>
                 <span className="text-xs text-muted-foreground">
@@ -553,6 +566,7 @@ function AdherenceTab({ patientId, signedIn }: { patientId: string; signedIn: bo
 }
 
 function HistoryTab({ patientId, signedIn }: { patientId: string; signedIn: boolean }) {
+  const t = useT();
   const q = useQuery({
     queryKey: ["series", patientId, 1440],
     queryFn: () => getTelemetrySeries({ data: { patientId, minutes: 1440 } }),
@@ -570,12 +584,12 @@ function HistoryTab({ patientId, signedIn }: { patientId: string; signedIn: bool
   }));
 
   if (!health.length)
-    return <EmptyState title="No telemetry yet" description="Readings from the last 24 hours appear here." />;
+    return <EmptyState title={t("caregiver.noTelemetryYet")} description={t("caregiver.readingsLast24h")} />;
 
   return (
     <div className="space-y-4">
       <div className="panel p-5">
-        <h3 className="font-display text-sm font-semibold">Oxygen saturation · last 24 h</h3>
+        <h3 className="font-display text-sm font-semibold">{t("caregiver.oxygenSaturationLast24h")}</h3>
         <TrendChart
           data={health}
           series={[{ key: "spo2", label: "SpO₂ %", color: "var(--chart-1)" }]}
@@ -584,12 +598,12 @@ function HistoryTab({ patientId, signedIn }: { patientId: string; signedIn: bool
         />
       </div>
       <div className="panel p-5">
-        <h3 className="font-display text-sm font-semibold">Heart rate & temperature · last 24 h</h3>
+        <h3 className="font-display text-sm font-semibold">{t("caregiver.heartRateTempLast24h")}</h3>
         <TrendChart
           data={health}
           series={[
-            { key: "bpm", label: "Heart rate", color: "var(--chart-2)" },
-            { key: "temp", label: "Temperature °C", color: "var(--chart-3)" },
+            { key: "bpm", label: t("caregiver.heartRate"), color: "var(--chart-2)" },
+            { key: "temp", label: t("caregiver.temperatureLabel"), color: "var(--chart-3)" },
           ]}
         />
       </div>

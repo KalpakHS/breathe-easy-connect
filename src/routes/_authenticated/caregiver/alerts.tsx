@@ -7,6 +7,7 @@ import { useSignedIn } from "@/components/smartneb/use-signed-in";
 import { EmptyState, ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { StatusBadge } from "@/components/smartneb/vitals";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/caregiver/alerts")({
   head: () => ({
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/caregiver/alerts")({
 });
 
 function CareAlertsPage() {
+  const t = useT();
   const [includeResolved, setIncludeResolved] = useState(false);
   const signedIn = useSignedIn() === true;
 
@@ -39,11 +41,11 @@ function CareAlertsPage() {
 
   return (
     <CaregiverPage
-      title="Alerts"
-      subtitle="Health alerts across everyone in your care"
+      title={t("nav.alerts")}
+      subtitle={t("caregiver.alertsSubtitle")}
       actions={
         <Button variant="outline" size="sm" onClick={() => setIncludeResolved((v) => !v)}>
-          {includeResolved ? "Hide resolved" : "Show resolved"}
+          {includeResolved ? t("caregiver.hideResolved") : t("caregiver.showResolved")}
         </Button>
       }
     >
@@ -53,7 +55,7 @@ function CareAlertsPage() {
         ) : q.isError ? (
           <ErrorState message={(q.error as Error)?.message} onRetry={() => q.refetch()} />
         ) : q.data.length === 0 ? (
-          <EmptyState title="No alerts" description="Everyone in your care is within their thresholds." />
+          <EmptyState title={t("caregiver.noAlerts")} description={t("caregiver.noAlertsDescription")} />
         ) : (
           <ul className="space-y-2">
             {q.data.map((a) => (

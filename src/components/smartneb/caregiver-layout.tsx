@@ -9,6 +9,7 @@ import { useMe } from "./patient-layout";
 import { useSignedIn } from "./use-signed-in";
 import { ErrorState, LoadingSkeleton } from "./states";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/i18n";
 
 export type { CaregiverPatientRow };
 
@@ -47,18 +48,19 @@ export function useCarePatients() {
 }
 
 function CareIndicators({ patients }: { patients: CaregiverPatientRow[] }) {
+  const t = useT();
   const sos = patients.reduce((n, p) => n + p.activeSOS, 0);
   const critical = patients.reduce((n, p) => n + p.criticalAlerts, 0);
   if (!sos && !critical) return null;
   return (
     <div className="mr-1 flex items-center gap-1.5">
       {sos > 0 ? (
-        <Badge variant="destructive" className="gap-1" aria-label={`${sos} active emergencies`}>
-          <Siren className="size-3" aria-hidden /> {sos} SOS
+        <Badge variant="destructive" className="gap-1" aria-label={t("caregiver.activeEmergenciesAria", { count: sos })}>
+          <Siren className="size-3" aria-hidden /> {sos} {t("caregiver.sos")}
         </Badge>
       ) : null}
       {critical > 0 ? (
-        <Badge variant="destructive" className="gap-1" aria-label={`${critical} critical alerts`}>
+        <Badge variant="destructive" className="gap-1" aria-label={t("caregiver.criticalAlertsAria", { count: critical })}>
           <AlertTriangle className="size-3" aria-hidden /> {critical}
         </Badge>
       ) : null}
@@ -86,6 +88,7 @@ export function CaregiverPage({
   actions?: ReactNode;
   children: (ctx: { patients: CaregiverPatientRow[]; isLoading: boolean }) => ReactNode;
 }) {
+  const t = useT();
   const me = useMe();
   const roster = useCarePatients();
 
@@ -123,7 +126,7 @@ export function CaregiverPage({
       {isCaregiver ? (
         <PageSlot render={children} ctx={{ patients, isLoading: roster.isLoading }} />
       ) : (
-        <ErrorState message="No caregiver record is linked to this account yet. Ask an administrator to link you to the people you care for." />
+        <ErrorState message={t("caregiver.noCaregiverRecord")} />
       )}
     </AppShell>
   );

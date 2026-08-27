@@ -7,6 +7,7 @@ import { StatusBadge, freshness } from "@/components/smartneb/vitals";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import type { CaregiverPatientRow } from "@/lib/caregiver.functions";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/caregiver/patients/")({
   head: () => ({
@@ -37,10 +38,11 @@ function statusFor(p: CaregiverPatientRow) {
 }
 
 function MyPatientsPage() {
+  const t = useT();
   const [q, setQ] = useState("");
 
   return (
-    <CaregiverPage title="My Patients" subtitle="People assigned to your care">
+    <CaregiverPage title={t("nav.myPatients")} subtitle={t("caregiver.myPatientsSubtitle")}>
       {({ patients, isLoading }) => (
         <PatientGrid patients={patients} isLoading={isLoading} q={q} setQ={setQ} />
       )}
@@ -59,6 +61,7 @@ function PatientGrid({
   q: string;
   setQ: (v: string) => void;
 }) {
+  const t = useT();
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const list = needle
@@ -83,16 +86,16 @@ function PatientGrid({
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search name, MRN or condition"
-          aria-label="Search assigned patients"
+          placeholder={t("caregiver.searchPatientsPlaceholder")}
+          aria-label={t("caregiver.searchAssignedPatients")}
           className="h-9"
         />
       </div>
 
       {filtered.length === 0 ? (
         <EmptyState
-          title="No assigned patients"
-          description="Patients an administrator assigns to you appear here."
+          title={t("caregiver.noAssignedPatients")}
+          description={t("caregiver.noAssignedPatientsDescription")}
         />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -109,7 +112,7 @@ function PatientGrid({
                     <div className="min-w-0">
                       <p className="truncate font-display text-base font-semibold">{p.full_name}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {p.mrn} · {p.condition ?? "No condition recorded"}
+                        {p.mrn} · {p.condition ?? t("caregiver.noConditionRecorded")}
                       </p>
                     </div>
                     <StatusBadge status={statusFor(p)} />
@@ -117,9 +120,9 @@ function PatientGrid({
 
                   <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
                     {[
-                      ["SpO₂", p.spo2 == null ? "--" : `${p.spo2}%`],
-                      ["Heart rate", p.bpm == null ? "--" : `${p.bpm}`],
-                      ["Temp", p.bodyTemperature == null ? "--" : `${p.bodyTemperature.toFixed(1)}°`],
+                      [t("vitals.spo2"), p.spo2 == null ? "--" : `${p.spo2}%`],
+                      [t("caregiver.heartRate"), p.bpm == null ? "--" : `${p.bpm}`],
+                      [t("caregiver.temp"), p.bodyTemperature == null ? "--" : `${p.bodyTemperature.toFixed(1)}°`],
                     ].map(([k, v]) => (
                       <div key={k} className="rounded-lg border bg-surface-2 p-2">
                         <dt className="text-[11px] text-muted-foreground">{k}</dt>
@@ -130,30 +133,30 @@ function PatientGrid({
 
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
-                      <Cpu className="size-3.5" aria-hidden /> {p.deviceCode ?? "No device"} ·{" "}
-                      {p.deviceStatus ?? "unknown"}
+                      <Cpu className="size-3.5" aria-hidden /> {p.deviceCode ?? t("caregiver.noDevice")} ·{" "}
+                      {p.deviceStatus ?? t("status.unknown")}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <BatteryMedium className="size-3.5" aria-hidden />{" "}
-                      {p.fluidLevel == null ? "--" : `${Math.round(p.fluidLevel)}%`} chamber
+                      {p.fluidLevel == null ? "--" : `${Math.round(p.fluidLevel)}%`} {t("caregiver.chamber")}
                     </span>
-                    <span>Updated {fresh.text}</span>
+                    <span>{t("caregiver.updated", { time: fresh.text })}</span>
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     {p.activeSOS > 0 ? (
                       <Badge variant="destructive" className="gap-1">
-                        <Siren className="size-3" aria-hidden /> SOS
+                        <Siren className="size-3" aria-hidden /> {t("caregiver.sos")}
                       </Badge>
                     ) : null}
                     {p.activeAlerts > 0 ? (
                       <Badge variant="destructive" className="gap-1">
-                        <AlertTriangle className="size-3" aria-hidden /> {p.activeAlerts} alerts
+                        <AlertTriangle className="size-3" aria-hidden /> {t("caregiver.alertsCount", { count: p.activeAlerts })}
                       </Badge>
                     ) : null}
                     {p.sessionStatus === "running" ? (
                       <Badge variant="secondary" className="gap-1">
-                        <Wind className="size-3" aria-hidden /> In therapy
+                        <Wind className="size-3" aria-hidden /> {t("caregiver.inTherapy")}
                       </Badge>
                     ) : null}
                     {p.planMedication ? (
