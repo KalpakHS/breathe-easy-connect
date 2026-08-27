@@ -520,6 +520,7 @@ function CarePlanList({ patientId }: { patientId: string }) {
 }
 
 function CarePlanDialog({ patientId }: { patientId: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -548,7 +549,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
         },
       }),
     onSuccess: () => {
-      toast.success("Care plan published to the patient");
+      toast.success(t("doctor.carePlans.publishedToPatient"));
       setOpen(false);
       setForm((f) => ({ ...f, medication: "", dosage: "", instructions: "" }));
       void queryClient.invalidateQueries({ queryKey: ["care-plans", patientId] });
@@ -561,14 +562,14 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm">
-          <ClipboardPlus className="mr-2 size-4" /> New care plan
+          <ClipboardPlus className="mr-2 size-4" /> {t("doctor.carePlans.newCarePlan")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create nebulization care plan</DialogTitle>
+          <DialogTitle>{t("doctor.carePlans.createTitle")}</DialogTitle>
           <DialogDescription>
-            The patient is notified as soon as the plan is published.
+            {t("doctor.carePlans.createDesc")}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -576,7 +577,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
           onSubmit={(e) => {
             e.preventDefault();
             if (!form.medication.trim() || !form.dosage.trim()) {
-              toast.error("Medication and dosage are required");
+              toast.error(t("doctor.carePlans.medicationDosageRequired"));
               return;
             }
             create.mutate();
@@ -584,25 +585,25 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="medication">Medication</Label>
+              <Label htmlFor="medication">{t("doctor.field.medication")}</Label>
               <Input
                 id="medication"
                 value={form.medication}
                 onChange={(e) => setForm({ ...form, medication: e.target.value })}
-                placeholder="Salbutamol"
+                placeholder={t("doctor.placeholder.medication")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="dosage">Dosage</Label>
+              <Label htmlFor="dosage">{t("doctor.field.dosage")}</Label>
               <Input
                 id="dosage"
                 value={form.dosage}
                 onChange={(e) => setForm({ ...form, dosage: e.target.value })}
-                placeholder="2.5 mg / 2.5 mL"
+                placeholder={t("doctor.placeholder.dosage")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Label htmlFor="duration">{t("doctor.field.durationMinutes")}</Label>
               <Input
                 id="duration"
                 type="number"
@@ -613,7 +614,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="frequency">Doses per day</Label>
+              <Label htmlFor="frequency">{t("doctor.field.dosesPerDay")}</Label>
               <Input
                 id="frequency"
                 type="number"
@@ -624,7 +625,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="start">Start date</Label>
+              <Label htmlFor="start">{t("doctor.field.startDate")}</Label>
               <Input
                 id="start"
                 type="date"
@@ -633,7 +634,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="end">End date (optional)</Label>
+              <Label htmlFor="end">{t("doctor.field.endDateOptional")}</Label>
               <Input
                 id="end"
                 type="date"
@@ -643,18 +644,18 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="instructions">Instructions</Label>
+            <Label htmlFor="instructions">{t("doctor.field.instructions")}</Label>
             <Textarea
               id="instructions"
               rows={3}
               value={form.instructions}
               onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-              placeholder="Sit upright, breathe slowly through the mouthpiece..."
+              placeholder={t("doctor.placeholder.instructions")}
             />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={create.isPending}>
-              {create.isPending ? "Publishing..." : "Publish plan"}
+              {create.isPending ? t("doctor.carePlans.publishing") : t("doctor.carePlans.publishPlan")}
             </Button>
           </DialogFooter>
         </form>
@@ -664,6 +665,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
 }
 
 function NotesPanel({ patientId }: { patientId: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const [note, setNote] = useState("");
   const notes = useQuery({
@@ -674,7 +676,7 @@ function NotesPanel({ patientId }: { patientId: string }) {
     mutationFn: () => addClinicalNote({ data: { patientId, note: note.trim() } }),
     onSuccess: () => {
       setNote("");
-      toast.success("Note saved");
+      toast.success(t("doctor.notes.savedShort"));
       void queryClient.invalidateQueries({ queryKey: ["clinical-notes", patientId] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -684,28 +686,28 @@ function NotesPanel({ patientId }: { patientId: string }) {
     <div className="space-y-4">
       <div className="panel space-y-3 p-4">
         <Label htmlFor="clinical-note" className="flex items-center gap-2">
-          <NotebookPen className="size-4" aria-hidden /> Add clinical note
+          <NotebookPen className="size-4" aria-hidden /> {t("doctor.notes.addNote")}
         </Label>
         <Textarea
           id="clinical-note"
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Observation, therapy response, follow-up plan..."
+          placeholder={t("doctor.notes.workspacePlaceholder")}
         />
         <Button
           size="sm"
           disabled={note.trim().length < 2 || add.isPending}
           onClick={() => add.mutate()}
         >
-          {add.isPending ? "Saving..." : "Save note"}
+          {add.isPending ? t("doctor.notes.saving") : t("doctor.notes.saveNote")}
         </Button>
       </div>
 
       {notes.isLoading ? (
         <LoadingSkeleton rows={2} />
       ) : !notes.data?.length ? (
-        <EmptyState title="No clinical notes" description="Notes you write appear here." />
+        <EmptyState title={t("doctor.notes.emptyTitle")} description={t("doctor.notes.emptyDesc")} />
       ) : (
         <ul className="space-y-2">
           {notes.data.map((n) => (

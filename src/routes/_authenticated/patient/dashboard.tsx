@@ -84,7 +84,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
     mrn: snap.data?.patient?.mrn ?? null,
     deviceCode: snap.data?.device?.device_code ?? null,
   });
-  const t = dev.telemetry;
+  const tel = dev.telemetry;
 
   // Archive real readings so history, reports and the alert engine stay truthful.
   const ingest = useMutation({
@@ -92,23 +92,23 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
       ingestDeviceTelemetry({
         data: {
           patientId,
-          bpm: t.bpm,
-          spo2: t.spo2,
-          bodyTemperature: t.bodyTemperature,
-          ambientTemperature: t.ambientTemperature,
-          batteryPercentage: t.battery.percentage,
-          batteryVoltage: t.battery.voltage,
-          batteryCurrent: t.battery.current,
-          batteryPower: t.battery.power,
-          batteryTemperature: t.battery.temperature,
-          relay: t.nebulizer.relay,
+          bpm: tel.bpm,
+          spo2: tel.spo2,
+          bodyTemperature: tel.bodyTemperature,
+          ambientTemperature: tel.ambientTemperature,
+          batteryPercentage: tel.battery.percentage,
+          batteryVoltage: tel.battery.voltage,
+          batteryCurrent: tel.battery.current,
+          batteryPower: tel.battery.power,
+          batteryTemperature: tel.battery.temperature,
+          relay: tel.nebulizer.relay,
         },
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["snapshot", patientId] }),
   });
   const ingestRef = useRef(ingest);
   ingestRef.current = ingest;
-  const onlineForIngest = t.online;
+  const onlineForIngest = tel.online;
 
   useEffect(() => {
     if (!onlineForIngest) return;
@@ -143,16 +143,16 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
   const { patient, device, health, healthPrev, environment, battery, carePlan, activeSession } =
     snap.data ?? ({} as NonNullable<typeof snap.data>);
   // Live device values take precedence; stored records are the fallback history.
-  const spo2 = t.spo2 ?? (health?.spo2 == null ? null : Number(health.spo2));
-  const bpm = t.bpm ?? (health?.bpm == null ? null : Number(health.bpm));
+  const spo2 = tel.spo2 ?? (health?.spo2 == null ? null : Number(health.spo2));
+  const bpm = tel.bpm ?? (health?.bpm == null ? null : Number(health.bpm));
   const temp =
-    t.bodyTemperature ?? (health?.body_temperature == null ? null : Number(health.body_temperature));
+    tel.bodyTemperature ?? (health?.body_temperature == null ? null : Number(health.body_temperature));
   const ambient =
-    t.ambientTemperature ??
+    tel.ambientTemperature ??
     (environment?.ambient_temperature == null ? null : Number(environment.ambient_temperature));
   const spo2Threshold = Number(patient?.spo2_threshold ?? 92);
   const battPct =
-    t.battery.percentage ?? (battery?.percentage == null ? null : Number(battery.percentage));
+    tel.battery.percentage ?? (battery?.percentage == null ? null : Number(battery.percentage));
   const fresh = freshness(health?.recorded_at);
   const liveText = dev.loading
     ? t("patient.dashboard.connecting")
@@ -204,16 +204,16 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
         <div className="flex items-center gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge
-              status={t.online ? "normal" : "critical"}
-              label={t.online ? "ESP32 connected" : "ESP32 offline"}
+              status={tel.online ? "normal" : "critical"}
+              label={tel.online ? "ESP32 connected" : "ESP32 offline"}
             />
             <StatusBadge
               status={dev.firebaseConnected ? "normal" : "warning"}
               label={dev.firebaseConnected ? "Device cloud linked" : "Device cloud down"}
             />
             <StatusBadge
-              status={t.nebulizer.relay ? "normal" : "unknown"}
-              label={t.nebulizer.relay ? "Nebulizer ON" : "Nebulizer OFF"}
+              status={tel.nebulizer.relay ? "normal" : "unknown"}
+              label={tel.nebulizer.relay ? "Nebulizer ON" : "Nebulizer OFF"}
             />
           </div>
           <AlertDialog>
@@ -286,7 +286,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           status={
             battPct == null ? "unknown" : battPct < 15 ? "critical" : battPct < 30 ? "warning" : "normal"
           }
-          hint={`${t.battery.voltage ?? battery?.voltage ?? "--"} V · ${t.battery.temperature ?? battery?.cell_temperature ?? "--"} °C`}
+          hint={`${tel.battery.voltage ?? battery?.voltage ?? "--"} V · ${tel.battery.temperature ?? battery?.cell_temperature ?? "--"} °C`}
         />
       </section>
 
@@ -348,16 +348,16 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge
-                  status={t.online ? "normal" : "critical"}
-                  label={t.online ? "Online" : "Offline"}
+                  status={tel.online ? "normal" : "critical"}
+                  label={tel.online ? "Online" : "Offline"}
                 />
                 <StatusBadge
                   status={dev.firebaseConnected ? "normal" : "warning"}
                   label={dev.firebaseConnected ? "Realtime DB linked" : "Realtime DB down"}
                 />
                 <StatusBadge
-                  status={t.nebulizer.relay ? "normal" : "unknown"}
-                  label={`Relay ${t.nebulizer.relay ? "ON" : "OFF"}`}
+                  status={tel.nebulizer.relay ? "normal" : "unknown"}
+                  label={`Relay ${tel.nebulizer.relay ? "ON" : "OFF"}`}
                 />
                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                   <Radio className="size-3.5" /> chamber {Number(device?.fluid_level ?? 0)}%
@@ -370,7 +370,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
         <NebulizerControl
           patientId={patientId}
           session={activeSession}
-          deviceOnline={t.online}
+          deviceOnline={tel.online}
           onRelay={dev.setRelay}
           medication={carePlan?.medication ?? null}
           dosage={carePlan?.dosage ?? null}
