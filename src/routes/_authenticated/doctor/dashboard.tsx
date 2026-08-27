@@ -434,6 +434,7 @@ function PatientWorkspace({
 }
 
 function CarePlanList({ patientId }: { patientId: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const plans = useQuery({
     queryKey: ["care-plans", patientId],
@@ -443,7 +444,7 @@ function CarePlanList({ patientId }: { patientId: string }) {
     mutationFn: (v: { planId: string; status: "published" | "paused" | "ended" }) =>
       setCarePlanStatus({ data: v }),
     onSuccess: () => {
-      toast.success("Care plan updated");
+      toast.success(t("doctor.carePlans.updated"));
       void queryClient.invalidateQueries({ queryKey: ["care-plans", patientId] });
       void queryClient.invalidateQueries({ queryKey: ["snapshot", patientId] });
     },
@@ -454,8 +455,8 @@ function CarePlanList({ patientId }: { patientId: string }) {
   if (!plans.data?.length)
     return (
       <EmptyState
-        title="No care plans yet"
-        description="Create a nebulization plan to define medication, dosage and daily frequency."
+        title={t("doctor.carePlans.noPlansYet")}
+        description={t("doctor.carePlans.noPlansYetDesc")}
       />
     );
 
@@ -469,9 +470,12 @@ function CarePlanList({ patientId }: { patientId: string }) {
                 {plan.medication} · {plan.dosage}
               </p>
               <p className="text-xs text-muted-foreground">
-                {plan.duration_minutes} min · {plan.frequency_per_day}x daily · from{" "}
-                {plan.start_date}
-                {plan.end_date ? ` to ${plan.end_date}` : ""}
+                {t("doctor.carePlans.durationDaily", {
+                  duration: plan.duration_minutes,
+                  freq: plan.frequency_per_day,
+                  start: plan.start_date,
+                })}
+                {plan.end_date ? t("doctor.carePlans.toDate", { end: plan.end_date }) : ""}
               </p>
               {plan.instructions ? (
                 <p className="mt-2 text-sm text-muted-foreground">{plan.instructions}</p>
@@ -487,7 +491,7 @@ function CarePlanList({ patientId }: { patientId: string }) {
                   variant="outline"
                   onClick={() => status.mutate({ planId: plan.id, status: "published" })}
                 >
-                  Publish
+                  {t("doctor.carePlans.publish")}
                 </Button>
               ) : (
                 <Button
@@ -495,7 +499,7 @@ function CarePlanList({ patientId }: { patientId: string }) {
                   variant="outline"
                   onClick={() => status.mutate({ planId: plan.id, status: "paused" })}
                 >
-                  Pause
+                  {t("doctor.carePlans.pause")}
                 </Button>
               )}
               {plan.status !== "ended" ? (
@@ -504,7 +508,7 @@ function CarePlanList({ patientId }: { patientId: string }) {
                   variant="ghost"
                   onClick={() => status.mutate({ planId: plan.id, status: "ended" })}
                 >
-                  End
+                  {t("doctor.carePlans.end")}
                 </Button>
               ) : null}
             </div>

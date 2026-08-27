@@ -33,6 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { SOSPanel } from "@/components/smartneb/sos-panel";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/patient/dashboard")({
   head: () => ({
@@ -52,11 +53,7 @@ export const Route = createFileRoute("/_authenticated/patient/dashboard")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => (
-    <PatientPage title="Command center" subtitle="Your health and nebulizer status">
-      {({ patientId, fullName }) => <DashboardBody patientId={patientId} fullName={fullName} />}
-    </PatientPage>
-  ),
+  component: RouteComponent,
 });
 
 function spo2Status(v: number | null, threshold: number): VitalStatus {
@@ -66,7 +63,17 @@ function spo2Status(v: number | null, threshold: number): VitalStatus {
   return "normal";
 }
 
+function RouteComponent() {
+  const t = useT();
+  return (
+    <PatientPage title={t("patient.dashboard.title")} subtitle={t("patient.dashboard.subtitle")}>
+      {({ patientId, fullName }) => <DashboardBody patientId={patientId} fullName={fullName} />}
+    </PatientPage>
+  );
+}
+
 function DashboardBody({ patientId, fullName }: { patientId: string; fullName: string }) {
+  const t = useT();
   const qc = useQueryClient();
   const snap = useSnapshot(patientId);
   const spokenRef = useRef(0);
@@ -125,8 +132,8 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
   const sos = useMutation({
     mutationFn: () => triggerSOS({ data: { patientId, source: "manual" } }),
     onSuccess: (res) => {
-      toast.error("Emergency SOS sent", {
-        description: `${res.notified} care team member(s) notified with your latest vitals.`,
+      toast.error(t("patient.dashboard.sosSentTitle"), {
+        description: t("patient.dashboard.sosSentDesc", { count: res.notified }),
       });
       void qc.invalidateQueries({ queryKey: ["sos-events"] });
     },
@@ -148,12 +155,12 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
     t.battery.percentage ?? (battery?.percentage == null ? null : Number(battery.percentage));
   const fresh = freshness(health?.recorded_at);
   const liveText = dev.loading
-    ? "Connecting to SmartNeb device…"
+    ? t("patient.dashboard.connecting")
     : dev.error
-      ? "Unable to connect to device data"
-      : t.online
-        ? `Device online · live ESP32 telemetry${t.lastUpdated ? ` · updated ${freshness(new Date(t.lastUpdated).toISOString()).text}` : ""}`
-        : `Device offline — showing last stored reading (${fresh.text})`;
+      ? t("patient.dashboard.unableConnect")
+      : telemetry.online
+        ? `${t("patient.dashboard.onlineLive")}${telemetry.lastUpdated ? t("patient.dashboard.updatedSuffix", { time: freshness(new Date(telemetry.lastUpdated).toISOString()).text }) : ""}`
+        : t("patient.dashboard.offlineLastReading", { fresh: fresh.text });
 
   // Threshold engine: SpO2 below configured threshold raises an alert + audio/voice warning.
   useEffect(() => {
