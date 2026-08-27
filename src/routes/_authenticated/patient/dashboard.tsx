@@ -364,6 +364,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           patientId={patientId}
           session={activeSession}
           deviceOnline={t.online}
+          onRelay={dev.setRelay}
           medication={carePlan?.medication ?? null}
           dosage={carePlan?.dosage ?? null}
           prescribedMinutes={carePlan?.duration_minutes ?? 10}
