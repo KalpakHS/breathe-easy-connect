@@ -231,4 +231,14 @@ export const en_doctor: Record<string, string> = {
   "doctor.adherence.noRecords": "No adherence records yet.",
   "doctor.adherence.recentSessions": "Recent nebulization sessions",
   "doctor.adherence.noSessions": "No sessions recorded yet.",
+
+  "doctor.patients.mrnCondition": "{mrn} · {condition}",
+  "doctor.patients.deviceStatusLine": "{code} · {status}",
+  "doctor.patients.unassigned": "unassigned",
+  "doctor.alerts.detailLine": "{type} · value {value} vs threshold {threshold} · {date}",
+  "doctor.workspace.identityLine": "{mrn} · {sex} · DOB {dob} · {device}",
+  "doctor.workspace.contactLine": "{email} · {phone}",
+  "doctor.adherence.sessionLine": "{date} · {medication}",
+  "doctor.adherence.sessionProgress": "{percent}% · {status}",
+  "doctor.carePlans.medicationDosage": "{medication} · {dosage}",
 } as const;

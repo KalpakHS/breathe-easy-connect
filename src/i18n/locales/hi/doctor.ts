@@ -230,4 +230,14 @@ export const hi_doctor: Record<string, string> = {
   "doctor.adherence.noRecords": "अभी तक कोई पालन रिकॉर्ड नहीं।",
   "doctor.adherence.recentSessions": "हाल के नेबुलाइज़ेशन सत्र",
   "doctor.adherence.noSessions": "अभी तक कोई सत्र दर्ज नहीं।",
+
+  "doctor.patients.mrnCondition": "{mrn} · {condition}",
+  "doctor.patients.deviceStatusLine": "{code} · {status}",
+  "doctor.patients.unassigned": "अनियुक्त",
+  "doctor.alerts.detailLine": "{type} · मान {value} बनाम सीमा {threshold} · {date}",
+  "doctor.workspace.identityLine": "{mrn} · {sex} · जन्म तिथि {dob} · {device}",
+  "doctor.workspace.contactLine": "{email} · {phone}",
+  "doctor.adherence.sessionLine": "{date} · {medication}",
+  "doctor.adherence.sessionProgress": "{percent}% · {status}",
+  "doctor.carePlans.medicationDosage": "{medication} · {dosage}",
 } as const;

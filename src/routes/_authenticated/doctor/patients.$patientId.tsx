@@ -37,6 +37,7 @@ import { TimeSlotsField } from "@/components/smartneb/time-slots-field";
 import { EmptyState, ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { StatusBadge, VitalCard, freshness, type VitalStatus } from "@/components/smartneb/vitals";
 import { TrendChart } from "@/components/smartneb/charts";
+import { useT } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,6 +98,7 @@ function today() {
 }
 
 function DoctorPatientDetailPage() {
+  const t = useT();
   const { patientId } = useParams({ from: "/_authenticated/doctor/patients/$patientId" });
   const signedIn = useSignedIn() === true;
 
@@ -117,17 +119,20 @@ function DoctorPatientDetailPage() {
 
   return (
     <DoctorPage
-      title={detail.data?.patient.full_name ?? "Patient workspace"}
+      title={detail.data?.patient.full_name ?? t("doctor.patients.workspaceFallback")}
       subtitle={
         detail.data
-          ? `${detail.data.patient.mrn} · ${detail.data.patient.condition ?? "No condition recorded"}`
-          : "Loading patient record"
+          ? t("doctor.patients.mrnCondition", {
+              mrn: detail.data.patient.mrn,
+              condition: detail.data.patient.condition ?? t("doctor.patients.noCondition"),
+            })
+          : t("doctor.patients.loadingRecord")
       }
 
       actions={
         <Button asChild variant="outline" size="sm">
           <Link to="/doctor/patients">
-            <ArrowLeft className="mr-2 size-4" aria-hidden /> Roster
+            <ArrowLeft className="mr-2 size-4" aria-hidden /> {t("doctor.patients.roster")}
           </Link>
         </Button>
       }
@@ -161,6 +166,7 @@ function Workspace({
   snapshot: Awaited<ReturnType<typeof getPatientSnapshot>> | undefined;
   signedIn: boolean;
 }) {
+  const t = useT();
   const p = detail.patient;
   const spo2 = snapshot?.health?.spo2 == null ? null : Number(snapshot.health.spo2);
   const bpm = snapshot?.health?.bpm == null ? null : Number(snapshot.health.bpm);
@@ -174,24 +180,37 @@ function Workspace({
         <div className="min-w-0">
           <h2 className="font-display text-lg font-semibold">{p.full_name}</h2>
           <p className="text-sm text-muted-foreground">
-            {p.mrn} · {p.sex ?? "—"} · DOB {p.date_of_birth ?? "—"} ·{" "}
-            {detail.device?.device_code ?? "No device"}
+            {t("doctor.workspace.identityLine", {
+              mrn: p.mrn,
+              sex: p.sex ?? "—",
+              dob: p.date_of_birth ?? "—",
+              device: detail.device?.device_code ?? t("doctor.patients.noDevice"),
+            })}
           </p>
           {detail.contact ? (
             <p className="mt-1 text-xs text-muted-foreground">
-              {detail.contact.email ?? "No email"} · {detail.contact.phone ?? "No phone"}
+              {t("doctor.workspace.contactLine", {
+                email: detail.contact.email ?? t("doctor.patients.noEmail"),
+                phone: detail.contact.phone ?? t("doctor.patients.noPhone"),
+              })}
             </p>
           ) : null}
           {detail.caregivers.length ? (
             <p className="mt-1 text-xs text-muted-foreground">
-              Caregivers: {detail.caregivers.map((c) => `${c.full_name} (${c.relation})`).join(", ")}
+              {t("doctor.patients.caregivers", {
+                list: detail.caregivers.map((cg) => `${cg.full_name} (${cg.relation})`).join(", "),
+              })}
             </p>
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge
             status={fresh.stale ? "unknown" : "normal"}
-            label={fresh.stale ? `Stale · ${fresh.text}` : `Live · ${fresh.text}`}
+            label={
+              fresh.stale
+                ? t("doctor.workspace.stale", { text: fresh.text })
+                : t("doctor.workspace.live", { text: fresh.text })
+            }
           />
           <CarePlanDialog patientId={patientId} />
         </div>

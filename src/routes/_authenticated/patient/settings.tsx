@@ -26,12 +26,17 @@ export const Route = createFileRoute("/_authenticated/patient/settings")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => (
-    <PatientPage title="Settings" subtitle="Alert thresholds and notifications">
+  component: () => <SettingsRoute />,
+});
+
+function SettingsRoute() {
+  const t = useT();
+  return (
+    <PatientPage title={t("nav.settings")} subtitle={t("patient.settings.subtitle")}>
       {({ patientId }) => <SettingsBody patientId={patientId} />}
     </PatientPage>
-  ),
-});
+  );
+}
 
 function SettingsBody({ patientId }: { patientId: string }) {
   const t = useT();
@@ -64,7 +69,7 @@ function SettingsBody({ patientId }: { patientId: string }) {
   const saveThresholds = useMutation({
     mutationFn: () => updateThresholds({ data: { patientId, spo2, bpmHigh, tempMax } }),
     onSuccess: () => {
-      toast.success("Thresholds updated");
+      toast.success(t("patient.settings.thresholdsUpdated"));
       void qc.invalidateQueries({ queryKey: ["snapshot", patientId] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -73,7 +78,7 @@ function SettingsBody({ patientId }: { patientId: string }) {
   const savePrefs = useMutation({
     mutationFn: () => updateProfile({ data: { voice_alerts: voice, notify_email: email } }),
     onSuccess: () => {
-      toast.success("Preferences saved");
+      toast.success(t("patient.settings.preferencesSaved"));
       void qc.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -84,11 +89,11 @@ function SettingsBody({ patientId }: { patientId: string }) {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <section className="panel space-y-6 p-5">
-        <p className="font-display text-sm font-semibold">Alert thresholds</p>
+        <p className="font-display text-sm font-semibold">{t("patient.settings.alertThresholds")}</p>
 
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <Label>Minimum SpO₂</Label>
+            <Label>{t("patient.settings.minSpo2")}</Label>
             <span className="tabular-nums text-muted-foreground">{spo2}%</span>
           </div>
           <Slider value={[spo2]} min={80} max={99} step={1} onValueChange={(v) => setSpo2(v[0] ?? 92)} />
@@ -96,7 +101,7 @@ function SettingsBody({ patientId }: { patientId: string }) {
 
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <Label>Maximum heart rate</Label>
+            <Label>{t("patient.settings.maxHeartRate")}</Label>
             <span className="tabular-nums text-muted-foreground">{bpmHigh} bpm</span>
           </div>
           <Slider value={[bpmHigh]} min={80} max={200} step={1} onValueChange={(v) => setBpmHigh(v[0] ?? 120)} />
@@ -104,7 +109,7 @@ function SettingsBody({ patientId }: { patientId: string }) {
 
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <Label>Maximum body temperature</Label>
+            <Label>{t("patient.settings.maxBodyTemp")}</Label>
             <span className="tabular-nums text-muted-foreground">{tempMax.toFixed(1)} °C</span>
           </div>
           <Slider
@@ -117,7 +122,7 @@ function SettingsBody({ patientId }: { patientId: string }) {
         </div>
 
         <Button onClick={() => saveThresholds.mutate()} disabled={saveThresholds.isPending}>
-          Save thresholds
+          {t("patient.settings.saveThresholds")}
         </Button>
       </section>
 
@@ -128,23 +133,23 @@ function SettingsBody({ patientId }: { patientId: string }) {
       </section>
 
       <section className="panel space-y-6 p-5">
-        <p className="font-display text-sm font-semibold">Notifications</p>
+        <p className="font-display text-sm font-semibold">{t("notifications.title")}</p>
         <div className="flex items-center justify-between rounded-lg border bg-surface-2 p-4">
           <div>
-            <Label htmlFor="voice">Spoken alerts</Label>
-            <p className="text-xs text-muted-foreground">Read critical alerts aloud in the browser.</p>
+            <Label htmlFor="voice">{t("patient.settings.spokenAlerts")}</Label>
+            <p className="text-xs text-muted-foreground">{t("patient.settings.spokenAlertsDesc")}</p>
           </div>
           <Switch id="voice" checked={voice} onCheckedChange={setVoice} />
         </div>
         <div className="flex items-center justify-between rounded-lg border bg-surface-2 p-4">
           <div>
-            <Label htmlFor="email">Email notifications</Label>
-            <p className="text-xs text-muted-foreground">Send alert summaries to your inbox.</p>
+            <Label htmlFor="email">{t("patient.settings.emailNotifications")}</Label>
+            <p className="text-xs text-muted-foreground">{t("patient.settings.emailNotificationsDesc")}</p>
           </div>
           <Switch id="email" checked={email} onCheckedChange={setEmail} />
         </div>
         <Button onClick={() => savePrefs.mutate()} disabled={savePrefs.isPending}>
-          Save preferences
+          {t("patient.settings.savePreferences")}
         </Button>
       </section>
     </div>

@@ -42,10 +42,11 @@ export const Route = createFileRoute("/_authenticated/doctor/settings")({
 });
 
 function DoctorSettingsPage() {
+  const t = useT();
   const navigate = useNavigate();
 
   return (
-    <DoctorPage title="Settings" subtitle="Alerting, appearance and session security">
+    <DoctorPage title={t("doctor.settings.title")} subtitle={t("doctor.settings.subtitle")}>
       {({ signedIn }) => {
         const qc = useQueryClient();
         const profile = useQuery({
@@ -74,7 +75,7 @@ function DoctorSettingsPage() {
             theme?: "light" | "dark" | "system";
           }) => updateProfile({ data: patch }),
           onSuccess: () => {
-            toast.success("Settings saved");
+            toast.success(t("doctor.settings.saved"));
             void qc.invalidateQueries({ queryKey: ["profile"] });
           },
           onError: (e: Error) => toast.error(e.message),
@@ -93,16 +94,15 @@ function DoctorSettingsPage() {
           <div className="grid gap-5 xl:grid-cols-2">
             <LanguagePanel />
             <section className="panel space-y-5 p-5">
-              <h2 className="font-display text-sm font-semibold">Alerting</h2>
+              <h2 className="font-display text-sm font-semibold">{t("doctor.settings.alerting")}</h2>
 
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <Label htmlFor="voice-alerts" className="text-sm">
-                    Spoken critical alerts
+                    {t("doctor.settings.spokenAlerts")}
                   </Label>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Reads critical desaturation and emergency SOS events aloud so you never miss them
-                    while reviewing another chart.
+                    {t("doctor.settings.spokenAlertsDesc")}
                   </p>
                 </div>
                 <Switch
@@ -118,10 +118,10 @@ function DoctorSettingsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <Label htmlFor="email-alerts" className="text-sm">
-                    Email notifications
+                    {t("doctor.settings.emailNotifications")}
                   </Label>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Receive a summary email when one of your patients raises an emergency.
+                    {t("doctor.settings.emailNotificationsDesc")}
                   </p>
                 </div>
                 <Switch
@@ -139,25 +139,23 @@ function DoctorSettingsPage() {
                 size="sm"
                 onClick={() => {
                   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-                    toast.error("Speech synthesis is unavailable in this browser");
+                    toast.error(t("doctor.settings.speechUnavailable"));
                     return;
                   }
                   window.speechSynthesis.speak(
-                    new SpeechSynthesisUtterance(
-                      "Critical alert. Patient oxygen saturation is below the prescribed threshold.",
-                    ),
+                    new SpeechSynthesisUtterance(t("doctor.settings.testVoiceUtterance")),
                   );
                 }}
               >
-                <Volume2 className="mr-2 size-4" aria-hidden /> Test voice alert
+                <Volume2 className="mr-2 size-4" aria-hidden /> {t("doctor.settings.testVoiceAlert")}
               </Button>
             </section>
 
             <section className="panel space-y-5 p-5">
-              <h2 className="font-display text-sm font-semibold">Appearance &amp; session</h2>
+              <h2 className="font-display text-sm font-semibold">{t("doctor.settings.appearanceSession")}</h2>
 
               <div className="space-y-1.5">
-                <Label htmlFor="theme">Theme</Label>
+                <Label htmlFor="theme">{t("doctor.settings.theme")}</Label>
                 <Select
                   value={theme}
                   onValueChange={(v) => {
@@ -169,20 +167,20 @@ function DoctorSettingsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="system">Match system</SelectItem>
-                    <SelectItem value="light">Light (high contrast)</SelectItem>
-                    <SelectItem value="dark">Dark (night shift)</SelectItem>
+                    <SelectItem value="system">{t("doctor.settings.matchSystem")}</SelectItem>
+                    <SelectItem value="light">{t("doctor.settings.lightHighContrast")}</SelectItem>
+                    <SelectItem value="dark">{t("doctor.settings.darkNightShift")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="rounded-lg border bg-surface-2 p-4">
-                <p className="text-sm font-medium">Sign out of SmartNeb</p>
+                <p className="text-sm font-medium">{t("doctor.settings.signOutTitle")}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Ends this clinical session on the current device and clears cached patient data.
+                  {t("doctor.settings.signOutDesc")}
                 </p>
                 <Button variant="destructive" size="sm" className="mt-3" onClick={() => void signOut()}>
-                  <LogOut className="mr-2 size-4" aria-hidden /> Sign out
+                  <LogOut className="mr-2 size-4" aria-hidden /> {t("action.signOut")}
                 </Button>
               </div>
             </section>

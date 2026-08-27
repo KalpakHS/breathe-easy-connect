@@ -7,6 +7,7 @@ import { StatusBadge, freshness } from "@/components/smartneb/vitals";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/doctor/patients/")({
   head: () => ({
@@ -32,11 +33,19 @@ export const Route = createFileRoute("/_authenticated/doctor/patients/")({
 type Filter = "all" | "critical" | "therapy" | "offline";
 
 function DoctorPatientsPage() {
+  const t = useT();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
 
+  const filters: [Filter, string][] = [
+    ["all", t("doctor.patients.filter.all")],
+    ["critical", t("doctor.patients.filter.critical")],
+    ["therapy", t("doctor.patients.filter.therapy")],
+    ["offline", t("doctor.patients.filter.offline")],
+  ];
+
   return (
-    <DoctorPage title="My Patients" subtitle="Everyone assigned to you by an administrator">
+    <DoctorPage title={t("doctor.patients.title")} subtitle={t("doctor.patients.subtitle")}>
       {({ patients, isLoading }) => {
         const rows = useMemo(() => {
           const needle = q.trim().toLowerCase();
@@ -70,20 +79,13 @@ function DoctorPatientsPage() {
                 <Input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search name, MRN or condition"
-                  aria-label="Search patients"
+                  placeholder={t("doctor.patients.searchPlaceholder")}
+                  aria-label={t("doctor.patients.searchAria")}
                   className="h-9"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    ["all", "All"],
-                    ["critical", "Critical"],
-                    ["therapy", "In therapy"],
-                    ["offline", "Device offline"],
-                  ] as [Filter, string][]
-                ).map(([key, label]) => (
+                {filters.map(([key, label]) => (
                   <Button
                     key={key}
                     size="sm"
@@ -98,8 +100,8 @@ function DoctorPatientsPage() {
 
             {rows.length === 0 ? (
               <EmptyState
-                title="No patients match"
-                description="Adjust the search or filters, or ask an administrator to assign patients to you."
+                title={t("doctor.patients.emptyTitle")}
+                description={t("doctor.patients.emptyDesc")}
               />
             ) : (
               <ul className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
@@ -119,7 +121,10 @@ function DoctorPatientsPage() {
                         <div className="min-w-0">
                           <p className="truncate font-display text-base font-semibold">{p.full_name}</p>
                           <p className="truncate text-xs text-muted-foreground">
-                            {p.mrn} · {p.condition ?? "No condition recorded"}
+                            {t("doctor.patients.mrnCondition", {
+                              mrn: p.mrn,
+                              condition: p.condition ?? t("doctor.patients.noCondition"),
+                            })}
                           </p>
                         </div>
                         <StatusBadge status={spo2Status} />
@@ -154,16 +159,21 @@ function DoctorPatientsPage() {
 
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <Badge variant={p.deviceStatus === "online" ? "secondary" : "outline"}>
-                          {p.deviceCode ?? "No device"} · {p.deviceStatus ?? "unassigned"}
+                          {t("doctor.patients.deviceStatusLine", {
+                            code: p.deviceCode ?? t("doctor.patients.noDevice"),
+                            status: p.deviceStatus ?? t("doctor.patients.unassigned"),
+                          })}
                         </Badge>
                         {p.sessionStatus === "running" ? (
                           <Badge variant="secondary" className="gap-1">
-                            <Wind className="size-3" aria-hidden /> In therapy
+                            <Wind className="size-3" aria-hidden /> {t("doctor.patients.inTherapy")}
                           </Badge>
                         ) : null}
                         {p.activeAlerts > 0 ? (
                           <Badge variant={p.criticalAlerts > 0 ? "destructive" : "outline"}>
-                            {p.activeAlerts} active alert{p.activeAlerts === 1 ? "" : "s"}
+                            {p.activeAlerts === 1
+                              ? t("doctor.patients.activeAlertOne", { count: p.activeAlerts })
+                              : t("doctor.patients.activeAlertOther", { count: p.activeAlerts })}
                           </Badge>
                         ) : null}
                         <span>{fresh.text}</span>
@@ -172,7 +182,7 @@ function DoctorPatientsPage() {
                       <div className="mt-4">
                         <Button asChild size="sm" className="w-full">
                           <Link to="/doctor/patients/$patientId" params={{ patientId: p.id }}>
-                            Open clinical workspace
+                            {t("doctor.patients.openWorkspace")}
                           </Link>
                         </Button>
                       </div>

@@ -231,4 +231,14 @@ export const kn_doctor: Record<string, string> = {
   "doctor.adherence.noRecords": "ಇನ್ನೂ ಯಾವುದೇ ಅನುಸರಣಾ ದಾಖಲೆಗಳಿಲ್ಲ.",
   "doctor.adherence.recentSessions": "ಇತ್ತೀಚಿನ ನೆಬುಲೈಸೇಶನ್ ಸೆಷನ್‌ಗಳು",
   "doctor.adherence.noSessions": "ಇನ್ನೂ ಯಾವುದೇ ಸೆಷನ್‌ಗಳನ್ನು ದಾಖಲಿಸಲಾಗಿಲ್ಲ.",
+
+  "doctor.patients.mrnCondition": "{mrn} · {condition}",
+  "doctor.patients.deviceStatusLine": "{code} · {status}",
+  "doctor.patients.unassigned": "ನಿಯೋಜಿಸಿಲ್ಲ",
+  "doctor.alerts.detailLine": "{type} · ಮೌಲ್ಯ {value} ವಿರುದ್ಧ ಮಿತಿ {threshold} · {date}",
+  "doctor.workspace.identityLine": "{mrn} · {sex} · ಜನ್ಮ ದಿನಾಂಕ {dob} · {device}",
+  "doctor.workspace.contactLine": "{email} · {phone}",
+  "doctor.adherence.sessionLine": "{date} · {medication}",
+  "doctor.adherence.sessionProgress": "{percent}% · {status}",
+  "doctor.carePlans.medicationDosage": "{medication} · {dosage}",
 } as const;

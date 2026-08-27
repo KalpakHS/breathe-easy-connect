@@ -6,6 +6,7 @@ import { PatientPage } from "@/components/smartneb/patient-layout";
 import { RANGES, TrendChart } from "@/components/smartneb/charts";
 import { ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/patient/monitoring")({
   head: () => ({
@@ -21,14 +22,20 @@ export const Route = createFileRoute("/_authenticated/patient/monitoring")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => (
-    <PatientPage title="Health monitoring" subtitle="Telemetry trends from your device">
-      {({ patientId }) => <MonitoringBody patientId={patientId} />}
-    </PatientPage>
-  ),
+  component: () => <MonitoringRoute />,
 });
 
+function MonitoringRoute() {
+  const t = useT();
+  return (
+    <PatientPage title={t("nav.healthMonitoring")} subtitle={t("patient.monitoring.subtitle")}>
+      {({ patientId }) => <MonitoringBody patientId={patientId} />}
+    </PatientPage>
+  );
+}
+
 function MonitoringBody({ patientId }: { patientId: string }) {
+  const t = useT();
   const [minutes, setMinutes] = useState(360);
   const q = useQuery({
     queryKey: ["series", patientId, minutes],
@@ -70,60 +77,60 @@ function MonitoringBody({ patientId }: { patientId: string }) {
             variant={minutes === r.minutes ? "default" : "outline"}
             onClick={() => setMinutes(r.minutes)}
           >
-            {r.label}
+            {t(r.key)}
           </Button>
         ))}
       </div>
 
       {empty ? (
         <div className="panel p-8 text-center text-sm text-muted-foreground">
-          No telemetry recorded in this window yet.
+          {t("patient.monitoring.noTelemetry")}
         </div>
       ) : (
         <>
           <section className="panel p-5">
-            <p className="mb-3 font-display text-sm font-semibold">Heart rate &amp; SpO₂</p>
+            <p className="mb-3 font-display text-sm font-semibold">{t("patient.monitoring.heartRateSpo2")}</p>
             <TrendChart
               data={health}
               series={[
-                { key: "bpm", label: "Heart rate (bpm)", color: "var(--chart-1)" },
-                { key: "spo2", label: "SpO₂ (%)", color: "var(--chart-2)" },
+                { key: "bpm", label: t("patient.history.heartRateSeries"), color: "var(--chart-1)" },
+                { key: "spo2", label: t("patient.history.spo2Series"), color: "var(--chart-2)" },
               ]}
             />
           </section>
 
           <section className="panel p-5">
-            <p className="mb-3 font-display text-sm font-semibold">Body temperature</p>
+            <p className="mb-3 font-display text-sm font-semibold">{t("vitals.bodyTemp")}</p>
             <TrendChart
               data={health}
               area
               domain={[34, 41]}
-              series={[{ key: "temp", label: "Body temp (°C)", color: "var(--chart-4)" }]}
+              series={[{ key: "temp", label: t("patient.monitoring.bodyTempSeries"), color: "var(--chart-4)" }]}
             />
           </section>
 
           <section className="grid gap-6 lg:grid-cols-2">
             <div className="panel p-5">
-              <p className="mb-3 font-display text-sm font-semibold">Environment</p>
+              <p className="mb-3 font-display text-sm font-semibold">{t("patient.dashboard.environment")}</p>
               <TrendChart
                 data={env}
                 height={220}
                 series={[
-                  { key: "ambient", label: "Ambient (°C)", color: "var(--chart-3)" },
-                  { key: "humidity", label: "Humidity (%)", color: "var(--chart-2)" },
-                  { key: "aqi", label: "AQI", color: "var(--chart-5)" },
+                  { key: "ambient", label: t("patient.monitoring.ambientSeries"), color: "var(--chart-3)" },
+                  { key: "humidity", label: t("patient.monitoring.humiditySeries"), color: "var(--chart-2)" },
+                  { key: "aqi", label: t("patient.monitoring.aqiSeries"), color: "var(--chart-5)" },
                 ]}
               />
             </div>
             <div className="panel p-5">
-              <p className="mb-3 font-display text-sm font-semibold">Battery</p>
+              <p className="mb-3 font-display text-sm font-semibold">{t("vitals.battery")}</p>
               <TrendChart
                 data={batt}
                 height={220}
                 area
                 series={[
-                  { key: "percentage", label: "Charge (%)", color: "var(--chart-2)" },
-                  { key: "voltage", label: "Voltage (V)", color: "var(--chart-1)" },
+                  { key: "percentage", label: t("patient.monitoring.chargeSeries"), color: "var(--chart-2)" },
+                  { key: "voltage", label: t("patient.monitoring.voltageSeries"), color: "var(--chart-1)" },
                 ]}
               />
             </div>
