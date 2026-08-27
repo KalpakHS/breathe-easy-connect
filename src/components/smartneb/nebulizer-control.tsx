@@ -133,6 +133,9 @@ export function NebulizerControl({
       }),
     onSuccess: (_d, vars) => {
       if (vars.action === "heartbeat") return;
+      if (vars.action === "resume") void relay(true);
+      if (vars.action === "pause" || vars.action === "stop" || vars.action === "complete")
+        void relay(false);
       void qc.invalidateQueries({ queryKey: ["snapshot", patientId] });
       void qc.invalidateQueries({ queryKey: ["sessions", patientId] });
       void qc.invalidateQueries({ queryKey: ["adherence", patientId] });
