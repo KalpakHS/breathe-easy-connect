@@ -4,6 +4,7 @@ import { getMe, getPatientSnapshot } from "@/lib/smartneb.functions";
 import { AppShell, patientNav } from "./app-shell";
 import { useSignedIn } from "./use-signed-in";
 import { ErrorState, LoadingSkeleton } from "./states";
+import { useT } from "@/i18n";
 
 export function useMe() {
   const signedIn = useSignedIn();
@@ -38,6 +39,7 @@ export function PatientPage({
   actions?: ReactNode;
   children: (ctx: { patientId: string; fullName: string }) => ReactNode;
 }) {
+  const t = useT();
   const me = useMe();
 
   if (me.isPending) {
@@ -60,17 +62,17 @@ export function PatientPage({
       {me.data.patientId ? (
         children({ patientId: me.data.patientId, fullName: me.data.fullName })
       ) : (
-        <ErrorState message="No patient record is linked to this account yet. Ask an administrator to link you to a patient." />
+        <ErrorState message={t("patient.noRecordLinked")} />
       )}
     </AppShell>
   );
 }
 
-export function greeting() {
+export function greetingKey(): "patient.greeting.morning" | "patient.greeting.afternoon" | "patient.greeting.evening" {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "patient.greeting.morning";
+  if (h < 17) return "patient.greeting.afternoon";
+  return "patient.greeting.evening";
 }
 
 export { useSignedIn };

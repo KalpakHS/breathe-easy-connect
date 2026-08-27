@@ -104,6 +104,8 @@ export const en_patient: Record<string, string> = {
   "patient.dashboard.activeAlerts": "Active alerts",
   "patient.dashboard.noActiveAlerts": "No active alerts. All readings are within range.",
   "patient.dashboard.sosHistoryTitle": "My emergency SOS history",
+  "patient.dashboard.sosSentTitle": "Emergency SOS sent",
+  "patient.dashboard.sosSentDesc": "{count} care team member(s) notified with your latest vitals.",
 
   // Adherence
   "patient.adherence.subtitle": "Your therapy consistency over the last 30 days",

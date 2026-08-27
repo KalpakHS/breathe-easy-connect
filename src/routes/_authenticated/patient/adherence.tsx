@@ -4,6 +4,7 @@ import { getAdherence } from "@/lib/smartneb.functions";
 import { PatientPage } from "@/components/smartneb/patient-layout";
 import { Gauge, StatusBadge } from "@/components/smartneb/vitals";
 import { EmptyState, ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/patient/adherence")({
   head: () => ({
@@ -19,14 +20,20 @@ export const Route = createFileRoute("/_authenticated/patient/adherence")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => (
-    <PatientPage title="Adherence" subtitle="Your therapy consistency over the last 30 days">
-      {({ patientId }) => <AdherenceBody patientId={patientId} />}
-    </PatientPage>
-  ),
+  component: RouteComponent,
 });
 
+function RouteComponent() {
+  const t = useT();
+  return (
+    <PatientPage title={t("nav.adherence")} subtitle={t("patient.adherence.subtitle")}>
+      {({ patientId }) => <AdherenceBody patientId={patientId} />}
+    </PatientPage>
+  );
+}
+
 function AdherenceBody({ patientId }: { patientId: string }) {
+  const t = useT();
   const q = useQuery({
     queryKey: ["adherence", patientId],
     queryFn: () => getAdherence({ data: { patientId, days: 30 } }),
@@ -42,22 +49,26 @@ function AdherenceBody({ patientId }: { patientId: string }) {
     <div className="space-y-6">
       <section className="grid gap-6 lg:grid-cols-3">
         <div className="panel flex flex-col items-center gap-3 p-6">
-          <p className="self-start font-display text-sm font-semibold">Adherence score</p>
-          <Gauge value={score} label="Last 30 days" unit="%" />
+          <p className="self-start font-display text-sm font-semibold">{t("patient.adherence.score")}</p>
+          <Gauge value={score} label={t("patient.adherence.last30")} unit="%" />
         </div>
         <div className="panel grid grid-cols-3 gap-4 p-6 lg:col-span-2">
           {[
-            ["Completed", completed, "normal"],
-            ["Partial", partial, "warning"],
-            ["Missed", missed, "critical"],
-          ].map(([label, value, tone]) => (
-            <div key={String(label)} className="rounded-xl border bg-surface-2 p-4">
-              <p className="text-xs text-muted-foreground">{label}</p>
+            ["patient.adherence.completed", completed, "normal"],
+            ["patient.adherence.partial", partial, "warning"],
+            ["patient.adherence.missed", missed, "critical"],
+          ].map(([labelKey, value, tone]) => (
+            <div key={String(labelKey)} className="rounded-xl border bg-surface-2 p-4">
+              <p className="text-xs text-muted-foreground">{t(String(labelKey))}</p>
               <p className="mt-1 font-display text-3xl font-semibold tabular-nums">{Number(value)}</p>
               <div className="mt-2">
                 <StatusBadge
                   status={tone as "normal" | "warning" | "critical"}
-                  label={total ? `${Math.round((Number(value) / total) * 100)}% of doses` : "no doses"}
+                  label={
+                    total
+                      ? t("patient.adherence.pctOfDoses", { pct: Math.round((Number(value) / total) * 100) })
+                      : t("patient.adherence.noDoses")
+                  }
                 />
               </div>
             </div>
@@ -66,9 +77,9 @@ function AdherenceBody({ patientId }: { patientId: string }) {
       </section>
 
       <section className="panel p-5">
-        <p className="mb-3 font-display text-sm font-semibold">Dose log</p>
+        <p className="mb-3 font-display text-sm font-semibold">{t("patient.adherence.doseLog")}</p>
         {records.length === 0 ? (
-          <EmptyState title="No scheduled doses" description="Your care plan has no scheduled doses yet." />
+          <EmptyState title={t("patient.adherence.noScheduledTitle")} description={t("patient.adherence.noScheduledDesc")} />
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
             {records.map((r) => (

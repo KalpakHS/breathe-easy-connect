@@ -6,6 +6,7 @@ import { PatientPage } from "@/components/smartneb/patient-layout";
 import { StatusBadge } from "@/components/smartneb/vitals";
 import { EmptyState, ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/patient/alerts")({
   head: () => ({
@@ -21,14 +22,20 @@ export const Route = createFileRoute("/_authenticated/patient/alerts")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => (
-    <PatientPage title="Alerts" subtitle="Threshold breaches and device warnings">
-      {({ patientId }) => <AlertsBody patientId={patientId} />}
-    </PatientPage>
-  ),
+  component: RouteComponent,
 });
 
+function RouteComponent() {
+  const t = useT();
+  return (
+    <PatientPage title={t("nav.alerts")} subtitle={t("patient.alerts.subtitle")}>
+      {({ patientId }) => <AlertsBody patientId={patientId} />}
+    </PatientPage>
+  );
+}
+
 function AlertsBody({ patientId }: { patientId: string }) {
+  const t = useT();
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ["alerts", patientId],
@@ -39,7 +46,7 @@ function AlertsBody({ patientId }: { patientId: string }) {
   const ack = useMutation({
     mutationFn: (vars: { alertId: string; resolve?: boolean }) => acknowledgeAlert({ data: vars }),
     onSuccess: () => {
-      toast.success("Alert updated");
+      toast.success(t("patient.alerts.updated"));
       void qc.invalidateQueries({ queryKey: ["alerts", patientId] });
       void qc.invalidateQueries({ queryKey: ["snapshot", patientId] });
     },
@@ -50,7 +57,7 @@ function AlertsBody({ patientId }: { patientId: string }) {
   if (q.isError || !q.data)
     return <ErrorState message={(q.error as Error)?.message} onRetry={() => q.refetch()} />;
   if (q.data.length === 0)
-    return <EmptyState title="No alerts" description="Your readings have stayed within range." />;
+    return <EmptyState title={t("patient.alerts.noneTitle")} description={t("patient.alerts.noneDesc")} />;
 
   return (
     <ul className="space-y-3">
@@ -71,12 +78,12 @@ function AlertsBody({ patientId }: { patientId: string }) {
           <div className="flex gap-2">
             {a.status === "active" ? (
               <Button size="sm" variant="outline" onClick={() => ack.mutate({ alertId: a.id })}>
-                Acknowledge
+                {t("patient.sos.acknowledge")}
               </Button>
             ) : null}
             {a.status !== "resolved" ? (
               <Button size="sm" onClick={() => ack.mutate({ alertId: a.id, resolve: true })}>
-                Resolve
+                {t("patient.sos.resolve")}
               </Button>
             ) : null}
           </div>

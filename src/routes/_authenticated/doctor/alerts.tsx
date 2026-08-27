@@ -9,6 +9,7 @@ import { EmptyState, ErrorState, LoadingSkeleton } from "@/components/smartneb/s
 import { StatusBadge } from "@/components/smartneb/vitals";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/doctor/alerts")({
   head: () => ({
@@ -34,11 +35,19 @@ export const Route = createFileRoute("/_authenticated/doctor/alerts")({
 type Sev = "all" | "critical" | "warning" | "info";
 
 function DoctorAlertsPage() {
+  const t = useT();
   const [sev, setSev] = useState<Sev>("all");
   const [includeResolved, setIncludeResolved] = useState(false);
 
+  const sevLabels: Record<Sev, string> = {
+    all: t("doctor.severity.all"),
+    critical: t("doctor.severity.critical"),
+    warning: t("doctor.severity.warning"),
+    info: t("doctor.severity.info"),
+  };
+
   return (
-    <DoctorPage title="Clinical Alerts" subtitle="Threshold breaches across your patient panel">
+    <DoctorPage title={t("doctor.alerts.title")} subtitle={t("doctor.alerts.subtitle")}>
       {({ signedIn }) => {
         const qc = useQueryClient();
         const alerts = useQuery({
@@ -50,7 +59,7 @@ function DoctorAlertsPage() {
         const respond = useMutation({
           mutationFn: (v: { alertId: string; resolve?: boolean }) => acknowledgeAlert({ data: v }),
           onSuccess: () => {
-            toast.success("Alert updated");
+            toast.success(t("doctor.alerts.updated"));
             void qc.invalidateQueries({ queryKey: ["doctor-alerts"] });
             void qc.invalidateQueries({ queryKey: ["doctor-patients"] });
           },
@@ -79,7 +88,7 @@ function DoctorAlertsPage() {
                   onClick={() => setSev(s)}
                   className="capitalize"
                 >
-                  {s}
+                  {sevLabels[s]}
                 </Button>
               ))}
               <div className="ml-auto">
@@ -88,15 +97,15 @@ function DoctorAlertsPage() {
                   variant={includeResolved ? "default" : "outline"}
                   onClick={() => setIncludeResolved((v) => !v)}
                 >
-                  {includeResolved ? "Hiding nothing" : "Show resolved"}
+                  {includeResolved ? t("doctor.alerts.hidingNothing") : t("doctor.alerts.showResolved")}
                 </Button>
               </div>
             </div>
 
             {rows.length === 0 ? (
               <EmptyState
-                title="No alerts to triage"
-                description="Every assigned patient is currently within their prescribed thresholds."
+                title={t("doctor.alerts.emptyTitle")}
+                description={t("doctor.alerts.emptyDesc")}
               />
             ) : (
               <ul className="space-y-2">
@@ -137,12 +146,12 @@ function DoctorAlertsPage() {
                           variant="outline"
                           onClick={() => respond.mutate({ alertId: a.id })}
                         >
-                          Acknowledge
+                          {t("doctor.alerts.acknowledge")}
                         </Button>
                       ) : null}
                       {a.status !== "resolved" ? (
                         <Button size="sm" onClick={() => respond.mutate({ alertId: a.id, resolve: true })}>
-                          Resolve
+                          {t("doctor.alerts.resolve")}
                         </Button>
                       ) : null}
                     </div>

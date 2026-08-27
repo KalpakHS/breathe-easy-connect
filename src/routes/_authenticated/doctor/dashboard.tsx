@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/doctor/dashboard")({
   head: () => ({
@@ -91,6 +92,7 @@ function today() {
 }
 
 function DoctorDashboard() {
+  const t = useT();
   const me = useMe();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
@@ -189,14 +191,18 @@ function DoctorDashboard() {
     <AppShell
       me={me.data}
       nav={doctorNav}
-      title="Clinical Dashboard"
-      subtitle={`${roster.data?.length ?? 0} assigned patients · ${critical} critical alerts · ${inTherapy} in therapy`}
+      title={t("doctor.dashboard.title")}
+      subtitle={t("doctor.dashboard.subtitle", {
+        count: roster.data?.length ?? 0,
+        critical,
+        inTherapy,
+      })}
     >
       {!me.data.doctorId ? (
-        <ErrorState message="No clinician record is linked to this account yet. Ask an administrator to link you." />
+        <ErrorState message={t("doctor.noClinicianRecord")} />
       ) : (
         <div className="space-y-6">
-        <SOSPanel enabled={signedIn} title="Emergency SOS — assigned patients" />
+        <SOSPanel enabled={signedIn} title={t("doctor.sos.assignedPatients")} />
         <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
           <section className="panel flex max-h-[calc(100vh-11rem)] flex-col p-4">
             <div className="flex items-center gap-2">
@@ -204,8 +210,8 @@ function DoctorDashboard() {
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search name, MRN or condition"
-                aria-label="Search patients"
+                placeholder={t("doctor.patients.searchPlaceholder")}
+                aria-label={t("doctor.patients.searchAria")}
                 className="h-9"
               />
             </div>
@@ -214,8 +220,8 @@ function DoctorDashboard() {
                 <LoadingSkeleton rows={4} />
               ) : patients.length === 0 ? (
                 <EmptyState
-                  title="No assigned patients"
-                  description="Patients assigned to you by an administrator appear here."
+                  title={t("doctor.patients.noAssigned")}
+                  description={t("doctor.patients.noAssignedDesc")}
                 />
               ) : (
                 <ul className="space-y-2 pr-2">
@@ -241,7 +247,7 @@ function DoctorDashboard() {
               patientId={selected}
             />
           ) : (
-            <EmptyState title="Select a patient" description="Pick a patient to review live vitals." />
+            <EmptyState title={t("doctor.patients.selectPatient")} description={t("doctor.patients.selectPatientDesc")} />
           )}
         </div>
         </div>
@@ -259,6 +265,7 @@ function RosterCard({
   active: boolean;
   onSelect: () => void;
 }) {
+  const t = useT();
   const s = spo2Status(patient.spo2, patient.spo2_threshold);
   const fresh = freshness(patient.recordedAt);
   return (
@@ -275,7 +282,7 @@ function RosterCard({
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{patient.full_name}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {patient.mrn} · {patient.condition ?? "No condition recorded"}
+            {patient.mrn} · {patient.condition ?? t("doctor.patients.noCondition")}
           </p>
         </div>
         <StatusBadge status={s} />
@@ -286,7 +293,7 @@ function RosterCard({
         <span>{fresh.text}</span>
         {patient.sessionStatus === "running" ? (
           <Badge variant="secondary" className="gap-1">
-            <Wind className="size-3" /> In therapy
+            <Wind className="size-3" /> {t("doctor.patients.inTherapy")}
           </Badge>
         ) : null}
         {patient.activeAlerts > 0 ? (
@@ -308,6 +315,7 @@ function PatientWorkspace({
   patientId: string;
   signedIn: boolean;
 }) {
+  const t = useT();
   const snapshot = useQuery({
     queryKey: ["snapshot", patientId],
     queryFn: () => getPatientSnapshot({ data: { patientId } }),
@@ -336,17 +344,21 @@ function PatientWorkspace({
       <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
         <div className="min-w-0">
           <h2 className="font-display text-xl font-semibold">
-            {p?.full_name ?? patient?.full_name ?? "Patient"}
+            {p?.full_name ?? patient?.full_name ?? t("doctor.patients.fallbackName")}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {p?.mrn ?? patient?.mrn} · {p?.condition ?? "No condition recorded"} ·{" "}
-            {patient?.deviceCode ?? "No device"}
+            {p?.mrn ?? patient?.mrn} · {p?.condition ?? t("doctor.patients.noCondition")} ·{" "}
+            {patient?.deviceCode ?? t("doctor.patients.noDevice")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge
             status={fresh.stale ? "unknown" : "normal"}
-            label={fresh.stale ? `Stale · ${fresh.text}` : `Live · ${fresh.text}`}
+            label={
+              fresh.stale
+                ? t("doctor.workspace.stale", { text: fresh.text })
+                : t("doctor.workspace.live", { text: fresh.text })
+            }
           />
           <CarePlanDialog patientId={patientId} />
         </div>
@@ -357,29 +369,29 @@ function PatientWorkspace({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <VitalCard
-            label="Oxygen saturation"
+            label={t("doctor.vitals.oxygenSaturation")}
             value={spo2 ?? null}
             unit="%"
             status={spo2Status(spo2, spo2Min)}
             trend={spo2 != null && prevSpo2 != null ? spo2 - prevSpo2 : null}
-            hint={`Threshold ${spo2Min}%`}
+            hint={t("doctor.vitals.threshold", { value: spo2Min })}
             icon={<Activity className="size-4" aria-hidden />}
           />
           <VitalCard
-            label="Heart rate"
+            label={t("doctor.vitals.heartRate")}
             value={bpm ?? null}
             unit="bpm"
             status={bpmStatus(bpm, bpmLow, bpmHigh)}
             trend={bpm != null && prevBpm != null ? bpm - prevBpm : null}
-            hint={`Range ${bpmLow}-${bpmHigh}`}
+            hint={t("doctor.vitals.range", { low: bpmLow, high: bpmHigh })}
             icon={<HeartPulse className="size-4" aria-hidden />}
           />
           <VitalCard
-            label="Body temperature"
+            label={t("doctor.vitals.bodyTemperature")}
             value={temp == null ? null : temp.toFixed(1)}
             unit="°C"
             status={tempStatus(temp, tempMax)}
-            hint={`Max ${tempMax}°C`}
+            hint={t("doctor.vitals.max", { value: tempMax })}
             icon={<Thermometer className="size-4" aria-hidden />}
           />
         </div>
@@ -387,7 +399,7 @@ function PatientWorkspace({
 
       {(snap?.activeAlerts ?? []).length > 0 ? (
         <div className="panel p-5">
-          <h3 className="font-display text-sm font-semibold">Active alerts</h3>
+          <h3 className="font-display text-sm font-semibold">{t("doctor.profile.activeAlerts")}</h3>
           <ul className="mt-3 space-y-2">
             {(snap?.activeAlerts ?? []).map((a) => (
               <li
@@ -407,8 +419,8 @@ function PatientWorkspace({
 
       <Tabs defaultValue="plans">
         <TabsList>
-          <TabsTrigger value="plans">Care plans</TabsTrigger>
-          <TabsTrigger value="notes">Clinical notes</TabsTrigger>
+          <TabsTrigger value="plans">{t("doctor.tabs.carePlans")}</TabsTrigger>
+          <TabsTrigger value="notes">{t("doctor.tabs.clinicalNotes")}</TabsTrigger>
         </TabsList>
         <TabsContent value="plans" className="mt-4">
           <CarePlanList patientId={patientId} />
@@ -422,6 +434,7 @@ function PatientWorkspace({
 }
 
 function CarePlanList({ patientId }: { patientId: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const plans = useQuery({
     queryKey: ["care-plans", patientId],
@@ -431,7 +444,7 @@ function CarePlanList({ patientId }: { patientId: string }) {
     mutationFn: (v: { planId: string; status: "published" | "paused" | "ended" }) =>
       setCarePlanStatus({ data: v }),
     onSuccess: () => {
-      toast.success("Care plan updated");
+      toast.success(t("doctor.carePlans.updated"));
       void queryClient.invalidateQueries({ queryKey: ["care-plans", patientId] });
       void queryClient.invalidateQueries({ queryKey: ["snapshot", patientId] });
     },
@@ -442,8 +455,8 @@ function CarePlanList({ patientId }: { patientId: string }) {
   if (!plans.data?.length)
     return (
       <EmptyState
-        title="No care plans yet"
-        description="Create a nebulization plan to define medication, dosage and daily frequency."
+        title={t("doctor.carePlans.noPlansYet")}
+        description={t("doctor.carePlans.noPlansYetDesc")}
       />
     );
 
@@ -457,9 +470,12 @@ function CarePlanList({ patientId }: { patientId: string }) {
                 {plan.medication} · {plan.dosage}
               </p>
               <p className="text-xs text-muted-foreground">
-                {plan.duration_minutes} min · {plan.frequency_per_day}x daily · from{" "}
-                {plan.start_date}
-                {plan.end_date ? ` to ${plan.end_date}` : ""}
+                {t("doctor.carePlans.durationDaily", {
+                  duration: plan.duration_minutes,
+                  freq: plan.frequency_per_day,
+                  start: plan.start_date,
+                })}
+                {plan.end_date ? t("doctor.carePlans.toDate", { end: plan.end_date }) : ""}
               </p>
               {plan.instructions ? (
                 <p className="mt-2 text-sm text-muted-foreground">{plan.instructions}</p>
@@ -475,7 +491,7 @@ function CarePlanList({ patientId }: { patientId: string }) {
                   variant="outline"
                   onClick={() => status.mutate({ planId: plan.id, status: "published" })}
                 >
-                  Publish
+                  {t("doctor.carePlans.publish")}
                 </Button>
               ) : (
                 <Button
@@ -483,7 +499,7 @@ function CarePlanList({ patientId }: { patientId: string }) {
                   variant="outline"
                   onClick={() => status.mutate({ planId: plan.id, status: "paused" })}
                 >
-                  Pause
+                  {t("doctor.carePlans.pause")}
                 </Button>
               )}
               {plan.status !== "ended" ? (
@@ -492,7 +508,7 @@ function CarePlanList({ patientId }: { patientId: string }) {
                   variant="ghost"
                   onClick={() => status.mutate({ planId: plan.id, status: "ended" })}
                 >
-                  End
+                  {t("doctor.carePlans.end")}
                 </Button>
               ) : null}
             </div>
@@ -504,6 +520,7 @@ function CarePlanList({ patientId }: { patientId: string }) {
 }
 
 function CarePlanDialog({ patientId }: { patientId: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -532,7 +549,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
         },
       }),
     onSuccess: () => {
-      toast.success("Care plan published to the patient");
+      toast.success(t("doctor.carePlans.publishedToPatient"));
       setOpen(false);
       setForm((f) => ({ ...f, medication: "", dosage: "", instructions: "" }));
       void queryClient.invalidateQueries({ queryKey: ["care-plans", patientId] });
@@ -545,14 +562,14 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm">
-          <ClipboardPlus className="mr-2 size-4" /> New care plan
+          <ClipboardPlus className="mr-2 size-4" /> {t("doctor.carePlans.newCarePlan")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create nebulization care plan</DialogTitle>
+          <DialogTitle>{t("doctor.carePlans.createTitle")}</DialogTitle>
           <DialogDescription>
-            The patient is notified as soon as the plan is published.
+            {t("doctor.carePlans.createDesc")}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -560,7 +577,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
           onSubmit={(e) => {
             e.preventDefault();
             if (!form.medication.trim() || !form.dosage.trim()) {
-              toast.error("Medication and dosage are required");
+              toast.error(t("doctor.carePlans.medicationDosageRequired"));
               return;
             }
             create.mutate();
@@ -568,25 +585,25 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="medication">Medication</Label>
+              <Label htmlFor="medication">{t("doctor.field.medication")}</Label>
               <Input
                 id="medication"
                 value={form.medication}
                 onChange={(e) => setForm({ ...form, medication: e.target.value })}
-                placeholder="Salbutamol"
+                placeholder={t("doctor.placeholder.medication")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="dosage">Dosage</Label>
+              <Label htmlFor="dosage">{t("doctor.field.dosage")}</Label>
               <Input
                 id="dosage"
                 value={form.dosage}
                 onChange={(e) => setForm({ ...form, dosage: e.target.value })}
-                placeholder="2.5 mg / 2.5 mL"
+                placeholder={t("doctor.placeholder.dosage")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Label htmlFor="duration">{t("doctor.field.durationMinutes")}</Label>
               <Input
                 id="duration"
                 type="number"
@@ -597,7 +614,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="frequency">Doses per day</Label>
+              <Label htmlFor="frequency">{t("doctor.field.dosesPerDay")}</Label>
               <Input
                 id="frequency"
                 type="number"
@@ -608,7 +625,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="start">Start date</Label>
+              <Label htmlFor="start">{t("doctor.field.startDate")}</Label>
               <Input
                 id="start"
                 type="date"
@@ -617,7 +634,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="end">End date (optional)</Label>
+              <Label htmlFor="end">{t("doctor.field.endDateOptional")}</Label>
               <Input
                 id="end"
                 type="date"
@@ -627,18 +644,18 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="instructions">Instructions</Label>
+            <Label htmlFor="instructions">{t("doctor.field.instructions")}</Label>
             <Textarea
               id="instructions"
               rows={3}
               value={form.instructions}
               onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-              placeholder="Sit upright, breathe slowly through the mouthpiece..."
+              placeholder={t("doctor.placeholder.instructions")}
             />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={create.isPending}>
-              {create.isPending ? "Publishing..." : "Publish plan"}
+              {create.isPending ? t("doctor.carePlans.publishing") : t("doctor.carePlans.publishPlan")}
             </Button>
           </DialogFooter>
         </form>
@@ -648,6 +665,7 @@ function CarePlanDialog({ patientId }: { patientId: string }) {
 }
 
 function NotesPanel({ patientId }: { patientId: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const [note, setNote] = useState("");
   const notes = useQuery({
@@ -658,7 +676,7 @@ function NotesPanel({ patientId }: { patientId: string }) {
     mutationFn: () => addClinicalNote({ data: { patientId, note: note.trim() } }),
     onSuccess: () => {
       setNote("");
-      toast.success("Note saved");
+      toast.success(t("doctor.notes.savedShort"));
       void queryClient.invalidateQueries({ queryKey: ["clinical-notes", patientId] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -668,28 +686,28 @@ function NotesPanel({ patientId }: { patientId: string }) {
     <div className="space-y-4">
       <div className="panel space-y-3 p-4">
         <Label htmlFor="clinical-note" className="flex items-center gap-2">
-          <NotebookPen className="size-4" aria-hidden /> Add clinical note
+          <NotebookPen className="size-4" aria-hidden /> {t("doctor.notes.addNote")}
         </Label>
         <Textarea
           id="clinical-note"
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Observation, therapy response, follow-up plan..."
+          placeholder={t("doctor.notes.workspacePlaceholder")}
         />
         <Button
           size="sm"
           disabled={note.trim().length < 2 || add.isPending}
           onClick={() => add.mutate()}
         >
-          {add.isPending ? "Saving..." : "Save note"}
+          {add.isPending ? t("doctor.notes.saving") : t("doctor.notes.saveNote")}
         </Button>
       </div>
 
       {notes.isLoading ? (
         <LoadingSkeleton rows={2} />
       ) : !notes.data?.length ? (
-        <EmptyState title="No clinical notes" description="Notes you write appear here." />
+        <EmptyState title={t("doctor.notes.emptyTitle")} description={t("doctor.notes.emptyDesc")} />
       ) : (
         <ul className="space-y-2">
           {notes.data.map((n) => (

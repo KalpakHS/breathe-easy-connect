@@ -7,6 +7,7 @@ import { listSOSEvents, respondToSOS, type SOSEventRow } from "@/lib/sos.functio
 import { StatusBadge } from "./vitals";
 import { EmptyState, LoadingSkeleton } from "./states";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n";
 
 export function useSOSEvents({
   patientId,
@@ -61,12 +62,13 @@ export function SOSCard({
   event: SOSEventRow;
   canRespond?: boolean;
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const respond = useMutation({
     mutationFn: (action: "acknowledge" | "resolve") =>
       respondToSOS({ data: { sosId: event.id, action } }),
     onSuccess: (_r, action) => {
-      toast.success(action === "resolve" ? "Emergency resolved" : "Emergency acknowledged");
+      toast.success(action === "resolve" ? t("patient.sos.resolved") : t("patient.sos.acknowledged"));
       void qc.invalidateQueries({ queryKey: ["sos-events"] });
       void qc.invalidateQueries({ queryKey: ["caregiver-patients"] });
       void qc.invalidateQueries({ queryKey: ["doctor-patients"] });
@@ -99,7 +101,7 @@ export function SOSCard({
             />
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {event.condition ?? "No condition recorded"} · SOS via {event.source} ·{" "}
+            {event.condition ?? t("patient.sos.noCondition")} · {t("patient.sos.viaSource", { source: event.source })} ·{" "}
             {new Date(event.created_at).toLocaleString()}
           </p>
         </div>
@@ -112,12 +114,12 @@ export function SOSCard({
                 disabled={respond.isPending}
                 onClick={() => respond.mutate("acknowledge")}
               >
-                Acknowledge
+                {t("patient.sos.acknowledge")}
               </Button>
             ) : null}
             {event.status !== "resolved" ? (
               <Button size="sm" disabled={respond.isPending} onClick={() => respond.mutate("resolve")}>
-                Resolve
+                {t("patient.sos.resolve")}
               </Button>
             ) : null}
           </div>
@@ -126,27 +128,27 @@ export function SOSCard({
 
       <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-4">
         <div className="rounded-lg border bg-background/60 p-2.5">
-          <dt className="text-muted-foreground">SpO₂ at trigger</dt>
+          <dt className="text-muted-foreground">{t("patient.sos.spo2AtTrigger")}</dt>
           <dd className="mt-0.5 font-display text-base font-semibold tabular-nums">
             {fmtVital(event.vitals?.spo2, "%")}
           </dd>
         </div>
         <div className="rounded-lg border bg-background/60 p-2.5">
-          <dt className="text-muted-foreground">Heart rate</dt>
+          <dt className="text-muted-foreground">{t("vitals.heartRate")}</dt>
           <dd className="mt-0.5 font-display text-base font-semibold tabular-nums">
             {fmtVital(event.vitals?.bpm, " bpm")}
           </dd>
         </div>
         <div className="rounded-lg border bg-background/60 p-2.5">
-          <dt className="text-muted-foreground">Temperature</dt>
+          <dt className="text-muted-foreground">{t("patient.sos.temperature")}</dt>
           <dd className="mt-0.5 font-display text-base font-semibold tabular-nums">
             {fmtVital(event.vitals?.body_temperature, " °C")}
           </dd>
         </div>
         <div className="rounded-lg border bg-background/60 p-2.5">
-          <dt className="text-muted-foreground">Device</dt>
+          <dt className="text-muted-foreground">{t("patient.sos.device")}</dt>
           <dd className="mt-0.5 text-sm font-medium">
-            {event.deviceCode ?? "No device"}
+            {event.deviceCode ?? t("patient.sos.noDevice")}
             <span className="ml-1 text-xs text-muted-foreground">
               ({event.deviceStatus ?? "unknown"})
             </span>
@@ -156,12 +158,12 @@ export function SOSCard({
 
       {event.acknowledged_at ? (
         <p className="mt-2 text-[11px] text-muted-foreground">
-          Acknowledged {new Date(event.acknowledged_at).toLocaleString()}
+          {t("patient.sos.acknowledgedAt", { date: new Date(event.acknowledged_at).toLocaleString() })}
         </p>
       ) : null}
       {event.resolved_at ? (
         <p className="text-[11px] text-muted-foreground">
-          Resolved {new Date(event.resolved_at).toLocaleString()}
+          {t("patient.sos.resolvedAt", { date: new Date(event.resolved_at).toLocaleString() })}
         </p>
       ) : null}
     </li>
@@ -172,7 +174,7 @@ export function SOSPanel({
   patientId,
   enabled = true,
   canRespond = true,
-  title = "Emergency SOS",
+  title,
   includeResolved = false,
 }: {
   patientId?: string | undefined;
@@ -181,16 +183,18 @@ export function SOSPanel({
   title?: string;
   includeResolved?: boolean;
 }) {
+  const t = useT();
+  const resolvedTitle = title ?? t("nav.sos");
   const q = useSOSEvents({ patientId, enabled, includeResolved });
 
   return (
     <section className="panel p-5">
       <div className="mb-3 flex items-center gap-2">
         <Siren className="size-4 text-critical" aria-hidden />
-        <h3 className="font-display text-sm font-semibold">{title}</h3>
+        <h3 className="font-display text-sm font-semibold">{resolvedTitle}</h3>
         {(q.data ?? []).some((e) => e.status === "active") ? (
           <span className="rounded-full bg-critical px-2 py-0.5 text-[11px] font-semibold text-critical-foreground">
-            {(q.data ?? []).filter((e) => e.status === "active").length} active
+            {t("patient.sos.activeCount", { count: (q.data ?? []).filter((e) => e.status === "active").length })}
           </span>
         ) : null}
       </div>
@@ -198,8 +202,8 @@ export function SOSPanel({
         <LoadingSkeleton rows={1} />
       ) : (q.data ?? []).length === 0 ? (
         <EmptyState
-          title="No emergencies"
-          description="Emergency SOS signals raised by patients appear here instantly."
+          title={t("patient.sos.noneTitle")}
+          description={t("patient.sos.noneDesc")}
           icon={<Siren className="size-5" />}
         />
       ) : (

@@ -10,6 +10,7 @@ import { useSignedIn } from "./use-signed-in";
 import { ErrorState, LoadingSkeleton } from "./states";
 import { useSOSEvents } from "./sos-panel";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/i18n";
 
 export type { DoctorPatientRow };
 
@@ -50,6 +51,7 @@ export function useDoctorPatients() {
 }
 
 function DoctorIndicators({ patients }: { patients: DoctorPatientRow[] }) {
+  const t = useT();
   const signedIn = useSignedIn() === true;
   const sos = useSOSEvents({ enabled: signedIn });
   const activeSOS = (sos.data ?? []).filter((e) => e.status !== "resolved").length;
@@ -58,12 +60,12 @@ function DoctorIndicators({ patients }: { patients: DoctorPatientRow[] }) {
   return (
     <div className="mr-1 flex items-center gap-1.5">
       {activeSOS > 0 ? (
-        <Badge variant="destructive" className="gap-1" aria-label={`${activeSOS} active emergencies`}>
-          <Siren className="size-3" aria-hidden /> {activeSOS} SOS
+        <Badge variant="destructive" className="gap-1" aria-label={t("doctor.activeEmergenciesAria", { count: activeSOS })}>
+          <Siren className="size-3" aria-hidden /> {activeSOS} {t("doctor.sosBadge")}
         </Badge>
       ) : null}
       {critical > 0 ? (
-        <Badge variant="destructive" className="gap-1" aria-label={`${critical} critical alerts`}>
+        <Badge variant="destructive" className="gap-1" aria-label={t("doctor.criticalAlertsAria", { count: critical })}>
           <AlertTriangle className="size-3" aria-hidden /> {critical}
         </Badge>
       ) : null}
@@ -80,6 +82,11 @@ function PageSlot<T>({ render, ctx }: { render: (ctx: T) => ReactNode; ctx: T })
 }
 
 /** Shell for every doctor route: role gate, sidebar, live indicators. */
+function NoClinicianRecord() {
+  const t = useT();
+  return <ErrorState message={t("doctor.noClinicianRecord")} />;
+}
+
 export function DoctorPage({
   title,
   subtitle,
@@ -133,7 +140,7 @@ export function DoctorPage({
       {isDoctor ? (
         <PageSlot render={children} ctx={{ patients, isLoading: roster.isLoading, signedIn }} />
       ) : (
-        <ErrorState message="No clinician record is linked to this account yet. Ask an administrator to link you to your patients." />
+        <NoClinicianRecord />
       )}
     </AppShell>
   );

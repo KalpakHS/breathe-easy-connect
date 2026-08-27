@@ -11,6 +11,7 @@ import { Gauge, StatusBadge } from "@/components/smartneb/vitals";
 import { ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/patient/nebulizer")({
   head: () => ({
@@ -26,14 +27,20 @@ export const Route = createFileRoute("/_authenticated/patient/nebulizer")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => (
-    <PatientPage title="My nebulizer" subtitle="Device control and medication chamber">
-      {({ patientId }) => <NebulizerBody patientId={patientId} />}
-    </PatientPage>
-  ),
+  component: () => <NebulizerRoute />,
 });
 
+function NebulizerRoute() {
+  const t = useT();
+  return (
+    <PatientPage title={t("nav.myNebulizer")} subtitle={t("patient.nebulizer.subtitle")}>
+      {({ patientId }) => <NebulizerBody patientId={patientId} />}
+    </PatientPage>
+  );
+}
+
 function NebulizerBody({ patientId }: { patientId: string }) {
+  const t = useT();
   const qc = useQueryClient();
   const snap = useSnapshot(patientId);
   const dev = useDeviceTelemetry({
@@ -50,7 +57,7 @@ function NebulizerBody({ patientId }: { patientId: string }) {
   const refill = useMutation({
     mutationFn: () => refillChamber({ data: { patientId, levelAfter: level } }),
     onSuccess: () => {
-      toast.success("Refill logged");
+      toast.success(t("patient.nebulizer.refillLogged"));
       void qc.invalidateQueries({ queryKey: ["refills", patientId] });
       void qc.invalidateQueries({ queryKey: ["snapshot", patientId] });
     },
@@ -63,6 +70,19 @@ function NebulizerBody({ patientId }: { patientId: string }) {
 
   const { device, carePlan, activeSession } = snap.data;
   const fluid = Number(device?.fluid_level ?? 0);
+
+  const carePlanRows: Array<[string, string | null | undefined]> = [
+    [t("patient.nebulizer.medication"), carePlan?.medication],
+    [t("patient.nebulizer.dosage"), carePlan?.dosage],
+    [t("patient.nebulizer.duration"), carePlan ? `${carePlan.duration_minutes} min` : null],
+    [t("patient.nebulizer.frequency"), carePlan ? t("patient.nebulizer.perDay", { count: carePlan.frequency_per_day }) : null],
+    [
+      t("patient.nebulizer.scheduledTimes"),
+      (carePlan as { time_slots?: string[] | null } | undefined)?.time_slots?.length
+        ? (carePlan as { time_slots?: string[] }).time_slots!.join(" · ")
+        : t("patient.nebulizer.flexible"),
+    ],
+  ];
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -79,23 +99,15 @@ function NebulizerBody({ patientId }: { patientId: string }) {
 
         <section className="panel space-y-4 p-5">
           <div className="flex items-center justify-between">
-            <p className="font-display text-sm font-semibold">Prescription</p>
-            <StatusBadge status={carePlan ? "normal" : "warning"} label={carePlan ? "Active plan" : "No plan"} />
+            <p className="font-display text-sm font-semibold">{t("patient.nebulizer.prescription")}</p>
+            <StatusBadge
+              status={carePlan ? "normal" : "warning"}
+              label={carePlan ? t("patient.nebulizer.activePlan") : t("patient.nebulizer.noPlan")}
+            />
           </div>
           {carePlan ? (
             <dl className="grid gap-4 sm:grid-cols-2">
-              {[
-                ["Medication", carePlan.medication],
-                ["Dosage", carePlan.dosage],
-                ["Duration", `${carePlan.duration_minutes} min`],
-                ["Frequency", `${carePlan.frequency_per_day}× per day`],
-                [
-                  "Scheduled times",
-                  (carePlan as { time_slots?: string[] | null }).time_slots?.length
-                    ? (carePlan as { time_slots?: string[] }).time_slots!.join(" · ")
-                    : "Flexible",
-                ],
-              ].map(([k, v]) => (
+              {carePlanRows.map(([k, v]) => (
                 <div key={String(k)} className="rounded-lg border bg-surface-2 p-4">
                   <dt className="text-xs text-muted-foreground">{k}</dt>
                   <dd className="mt-1 text-sm font-medium">{v ?? "--"}</dd>
@@ -103,14 +115,14 @@ function NebulizerBody({ patientId }: { patientId: string }) {
               ))}
               {carePlan.instructions ? (
                 <div className="rounded-lg border bg-surface-2 p-4 sm:col-span-2">
-                  <dt className="text-xs text-muted-foreground">Instructions</dt>
+                  <dt className="text-xs text-muted-foreground">{t("patient.nebulizer.instructions")}</dt>
                   <dd className="mt-1 text-sm">{carePlan.instructions}</dd>
                 </div>
               ) : null}
             </dl>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Your doctor has not published a care plan yet.
+              {t("patient.nebulizer.noCarePlan")}
             </p>
           )}
         </section>
@@ -118,22 +130,22 @@ function NebulizerBody({ patientId }: { patientId: string }) {
 
       <div className="space-y-6">
         <section className="panel flex flex-col items-center gap-4 p-5">
-          <p className="self-start font-display text-sm font-semibold">Medication chamber</p>
-          <Gauge value={fluid} label="Fluid level" unit="%" />
+          <p className="self-start font-display text-sm font-semibold">{t("patient.nebulizer.chamber")}</p>
+          <Gauge value={fluid} label={t("patient.nebulizer.fluidLevel")} unit="%" />
           <div className="w-full space-y-3">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Refill to</span>
+              <span>{t("patient.nebulizer.refillTo")}</span>
               <span className="tabular-nums">{level}%</span>
             </div>
             <Slider value={[level]} min={0} max={100} step={5} onValueChange={(v) => setLevel(v[0] ?? 0)} />
             <Button className="w-full" onClick={() => refill.mutate()} disabled={refill.isPending}>
-              <Droplets className="mr-2 size-4" /> Log refill
+              <Droplets className="mr-2 size-4" /> {t("patient.nebulizer.logRefill")}
             </Button>
           </div>
         </section>
 
         <section className="panel p-5">
-          <p className="mb-3 font-display text-sm font-semibold">Recent refills</p>
+          <p className="mb-3 font-display text-sm font-semibold">{t("patient.nebulizer.recentRefills")}</p>
           {refills.data && refills.data.length > 0 ? (
             <ul className="space-y-2 text-sm">
               {refills.data.map((r) => (
@@ -146,7 +158,7 @@ function NebulizerBody({ patientId }: { patientId: string }) {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">No refills logged yet.</p>
+            <p className="text-sm text-muted-foreground">{t("patient.nebulizer.noRefills")}</p>
           )}
         </section>
       </div>

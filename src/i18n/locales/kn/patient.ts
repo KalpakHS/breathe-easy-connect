@@ -97,6 +97,8 @@ export const kn_patient: Record<string, string> = {
   "patient.dashboard.activeAlerts": "ಸಕ್ರಿಯ ಎಚ್ಚರಿಕೆಗಳು",
   "patient.dashboard.noActiveAlerts": "ಯಾವುದೇ ಸಕ್ರಿಯ ಎಚ್ಚರಿಕೆಗಳಿಲ್ಲ. ಎಲ್ಲಾ ವಾಚನಗಳು ವ್ಯಾಪ್ತಿಯಲ್ಲಿವೆ.",
   "patient.dashboard.sosHistoryTitle": "ನನ್ನ ತುರ್ತು SOS ಇತಿಹಾಸ",
+  "patient.dashboard.sosSentTitle": "ತುರ್ತು SOS ಕಳುಹಿಸಲಾಗಿದೆ",
+  "patient.dashboard.sosSentDesc": "{count} ಆರೈಕೆ ತಂಡದ ಸದಸ್ಯ(ರಿಗೆ) ನಿಮ್ಮ ಇತ್ತೀಚಿನ ವೈಟಲ್ಸ್‌ನೊಂದಿಗೆ ತಿಳಿಸಲಾಗಿದೆ.",
 
   "patient.adherence.subtitle": "ಕಳೆದ 30 ದಿನಗಳಲ್ಲಿ ನಿಮ್ಮ ಚಿಕಿತ್ಸಾ ಸ್ಥಿರತೆ",
   "patient.adherence.score": "ಅನುಸರಣೆ ಸ್ಕೋರ್",

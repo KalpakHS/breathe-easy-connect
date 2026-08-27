@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/doctor/profile")({
   head: () => ({
@@ -31,8 +32,9 @@ export const Route = createFileRoute("/_authenticated/doctor/profile")({
 });
 
 function DoctorProfilePage() {
+  const t = useT();
   return (
-    <DoctorPage title="Clinician Profile" subtitle="Your identity across the SmartNeb care team">
+    <DoctorPage title={t("doctor.profile.title")} subtitle={t("doctor.profile.subtitle")}>
       {({ patients, signedIn }) => {
         const qc = useQueryClient();
         const profile = useQuery({
@@ -55,7 +57,7 @@ function DoctorProfilePage() {
           mutationFn: () =>
             updateProfile({ data: { full_name: fullName.trim(), phone: phone.trim() } }),
           onSuccess: () => {
-            toast.success("Profile updated");
+            toast.success(t("doctor.profile.updated"));
             void qc.invalidateQueries({ queryKey: ["profile"] });
             void qc.invalidateQueries({ queryKey: ["me"] });
           },
@@ -71,19 +73,19 @@ function DoctorProfilePage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (fullName.trim().length < 2) {
-                  toast.error("Enter your full name");
+                  toast.error(t("doctor.validation.enterFullName"));
                   return;
                 }
                 save.mutate();
               }}
             >
-              <h2 className="font-display text-sm font-semibold">Contact details</h2>
+              <h2 className="font-display text-sm font-semibold">{t("doctor.profile.contactDetails")}</h2>
               <div className="space-y-1.5">
-                <Label htmlFor="full-name">Full name</Label>
+                <Label htmlFor="full-name">{t("doctor.profile.fullName")}</Label>
                 <Input id="full-name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="phone">{t("doctor.profile.phone")}</Label>
                 <Input
                   id="phone"
                   value={phone}
@@ -92,37 +94,37 @@ function DoctorProfilePage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("doctor.profile.email")}</Label>
                 <Input id="email" value={profile.data?.email ?? ""} readOnly disabled />
               </div>
               <Button type="submit" disabled={save.isPending}>
-                Save profile
+                {t("doctor.profile.saveProfile")}
               </Button>
             </form>
 
             <aside className="panel space-y-3 p-5">
-              <h2 className="font-display text-sm font-semibold">Practice summary</h2>
+              <h2 className="font-display text-sm font-semibold">{t("doctor.profile.practiceSummary")}</h2>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Assigned patients</span>
+                <span className="text-muted-foreground">{t("doctor.profile.assignedPatients")}</span>
                 <span className="font-display text-lg font-semibold tabular-nums">
                   {patients.length}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Active alerts</span>
+                <span className="text-muted-foreground">{t("doctor.profile.activeAlerts")}</span>
                 <span className="font-display text-lg font-semibold tabular-nums">
                   {patients.reduce((n, p) => n + p.activeAlerts, 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">In therapy now</span>
+                <span className="text-muted-foreground">{t("doctor.profile.inTherapyNow")}</span>
                 <span className="font-display text-lg font-semibold tabular-nums">
                   {patients.filter((p) => p.sessionStatus === "running").length}
                 </span>
               </div>
-              <Badge variant="secondary">Clinician account</Badge>
+              <Badge variant="secondary">{t("doctor.profile.clinicianAccount")}</Badge>
               <p className="text-xs text-muted-foreground">
-                Patient assignments are managed by administrators.
+                {t("doctor.profile.assignmentsManaged")}
               </p>
             </aside>
           </div>

@@ -5,6 +5,7 @@ import { PatientPage } from "@/components/smartneb/patient-layout";
 import { TrendChart } from "@/components/smartneb/charts";
 import { StatusBadge } from "@/components/smartneb/vitals";
 import { ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/patient/history")({
   head: () => ({
@@ -21,13 +22,21 @@ export const Route = createFileRoute("/_authenticated/patient/history")({
     ],
   }),
   component: () => (
-    <PatientPage title="Health history" subtitle="Last 7 days of vitals, sessions and alerts">
-      {({ patientId }) => <HistoryBody patientId={patientId} />}
-    </PatientPage>
+    <PatientPageWrapper />
   ),
 });
 
+function PatientPageWrapper() {
+  const t = useT();
+  return (
+    <PatientPage title={t("nav.healthHistory")} subtitle={t("patient.history.subtitle")}>
+      {({ patientId }) => <HistoryBody patientId={patientId} />}
+    </PatientPage>
+  );
+}
+
 function HistoryBody({ patientId }: { patientId: string }) {
+  const t = useT();
   const series = useQuery({
     queryKey: ["series", patientId, 10080],
     queryFn: () => getTelemetrySeries({ data: { patientId, minutes: 10080 } }),
@@ -55,14 +64,17 @@ function HistoryBody({ patientId }: { patientId: string }) {
     ...(sessions.data ?? []).map((s) => ({
       id: `s-${s.id}`,
       at: s.started_at,
-      title: `Nebulization ${s.status}`,
-      detail: `${s.medication ?? "Session"} · ${Math.round((s.elapsed_seconds ?? 0) / 60)} min`,
+      title: t("patient.history.nebulizationStatus", { status: s.status }),
+      detail: t("patient.history.sessionDetail", {
+        medication: s.medication ?? "Session",
+        minutes: Math.round((s.elapsed_seconds ?? 0) / 60),
+      }),
       tone: s.status === "completed" ? "normal" : s.status === "failed" ? "critical" : "warning",
     })),
     ...(alerts.data ?? []).map((a) => ({
       id: `a-${a.id}`,
       at: a.created_at,
-      title: `${a.severity} alert`,
+      title: t("patient.history.severityAlert", { severity: a.severity }),
       detail: a.message,
       tone: a.severity === "critical" ? "critical" : a.severity === "warning" ? "warning" : "normal",
     })),
@@ -71,20 +83,20 @@ function HistoryBody({ patientId }: { patientId: string }) {
   return (
     <div className="space-y-6">
       <section className="panel p-5">
-        <p className="mb-3 font-display text-sm font-semibold">Weekly vitals</p>
+        <p className="mb-3 font-display text-sm font-semibold">{t("patient.history.weeklyVitals")}</p>
         <TrendChart
           data={data}
           series={[
-            { key: "bpm", label: "Heart rate (bpm)", color: "var(--chart-1)" },
-            { key: "spo2", label: "SpO₂ (%)", color: "var(--chart-2)" },
+            { key: "bpm", label: t("patient.history.heartRateSeries"), color: "var(--chart-1)" },
+            { key: "spo2", label: t("patient.history.spo2Series"), color: "var(--chart-2)" },
           ]}
         />
       </section>
 
       <section className="panel p-5">
-        <p className="mb-3 font-display text-sm font-semibold">Timeline</p>
+        <p className="mb-3 font-display text-sm font-semibold">{t("patient.history.timeline")}</p>
         {timeline.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nothing recorded in this period.</p>
+          <p className="text-sm text-muted-foreground">{t("patient.history.nothingRecorded")}</p>
         ) : (
           <ol className="relative space-y-4 border-l pl-6">
             {timeline.map((e) => (
