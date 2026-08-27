@@ -174,14 +174,14 @@ function DoctorReportsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => exportReport(r.payload, "pdf")}
+                          onClick={() => exportReport(r.payload, "pdf", t("doctor.reports.noPayload"))}
                         >
                           <FileDown className="mr-2 size-3.5" aria-hidden /> {t("doctor.reports.pdf")}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => exportReport(r.payload, "csv")}
+                          onClick={() => exportReport(r.payload, "csv", t("doctor.reports.noPayload"))}
                         >
                           <FileSpreadsheet className="mr-2 size-3.5" aria-hidden /> {t("doctor.reports.csv")}
                         </Button>
@@ -216,9 +216,9 @@ function DoctorReportsPage() {
   );
 }
 
-function exportReport(payload: unknown, format: "pdf" | "csv") {
+function exportReport(payload: unknown, format: "pdf" | "csv", noPayloadMessage: string) {
   if (!payload || typeof payload !== "object") {
-    toast.error(translateFallback());
+    toast.error(noPayloadMessage);
     return;
   }
   try {
