@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -14,18 +14,13 @@ import {
   Wind,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  pushSimulatedTelemetry,
-  raiseAlert,
-  triggerSOS,
-} from "@/lib/smartneb.functions";
+import { ingestDeviceTelemetry, raiseAlert, triggerSOS } from "@/lib/smartneb.functions";
+import { useDeviceTelemetry } from "@/hooks/use-device-telemetry";
 import { PatientPage, greeting, useSnapshot } from "@/components/smartneb/patient-layout";
 import { freshness, StatusBadge, VitalCard, type VitalStatus } from "@/components/smartneb/vitals";
 import { NebulizerControl } from "@/components/smartneb/nebulizer-control";
 import { ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
