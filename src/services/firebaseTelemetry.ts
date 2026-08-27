@@ -45,24 +45,42 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Physiological / hardware plausibility gates — invalid readings become null. */
+/**
+ * Hardware sanity gates only. These are deliberately wide: the ESP32 publishes
+ * raw sensor values (a finger off the sensor, a divider-scaled battery rail…)
+ * and the UI must show what the device actually reports, never a blank.
+ */
 function inRange(v: number | null, min: number, max: number): number | null {
   return v == null || v < min || v > max ? null : v;
 }
 
+/** The exact RTDB leaf keys published by the ESP32 firmware. */
+export const TELEMETRY_KEYS = [
+  "BPM",
+  "SpO2",
+  "BodyTemp",
+  "AmbientTemp",
+  "BatteryVoltage",
+  "BatteryPercent",
+  "BatteryCurrent",
+  "BatteryPower",
+  "BatteryTemp",
+  "Relay",
+] as const;
+
 export function normalize(raw: Record<string, unknown> | null): Omit<DeviceTelemetry, "online"> {
   if (!raw) return { ...EMPTY_TELEMETRY };
   return {
-    bpm: inRange(num(raw['BPM']), 30, 220),
-    spo2: inRange(num(raw['SpO2']), 85, 100),
-    bodyTemperature: inRange(num(raw['BodyTemp']), 30, 45),
-    ambientTemperature: inRange(num(raw['AmbientTemp']), -20, 60),
+    bpm: inRange(num(raw['BPM']), 0, 300),
+    spo2: inRange(num(raw['SpO2']), 0, 100),
+    bodyTemperature: inRange(num(raw['BodyTemp']), -20, 60),
+    ambientTemperature: inRange(num(raw['AmbientTemp']), -40, 85),
     battery: {
-      voltage: inRange(num(raw['BatteryVoltage']), 2.5, 4.5),
+      voltage: inRange(num(raw['BatteryVoltage']), 0, 30),
       percentage: inRange(num(raw['BatteryPercent']), 0, 100),
       current: num(raw['BatteryCurrent']),
       power: num(raw['BatteryPower']),
-      temperature: inRange(num(raw['BatteryTemp']), -20, 90),
+      temperature: inRange(num(raw['BatteryTemp']), -40, 125),
     },
     nebulizer: { relay: raw['Relay'] === true || raw['Relay'] === "true" || raw['Relay'] === 1 },
     lastUpdated: Date.now(),
@@ -73,19 +91,54 @@ export type TelemetryEvent =
   | { kind: "data"; telemetry: Omit<DeviceTelemetry, "online"> }
   | { kind: "error"; message: string };
 
-/** Subscribe to a device node (e.g. "Patient1"). Returns an unsubscribe fn. */
+/**
+ * Subscribe to a device node (e.g. "Patient1").
+ *
+ * One `onValue` listener per published leaf path — `/<node>/BPM`, `/<node>/SpO2`, …
+ * so a single failing key (or the unrelated `/history` subtree) can never stall
+ * the whole feed, and every value change pushes instantly with no polling.
+ * A cancelled listener (Firebase cancels on error) is automatically re-attached.
+ */
 export function subscribeTelemetry(node: string, cb: (e: TelemetryEvent) => void): Unsubscribe {
   const db = getRealtimeDb();
   if (!db) {
     cb({ kind: "error", message: "Firebase is not configured for this deployment." });
     return () => {};
   }
-  return onValue(
-    ref(db, `/${node}`),
-    (snap) => cb({ kind: "data", telemetry: normalize(snap.val() as Record<string, unknown>) }),
-    (err) => cb({ kind: "error", message: err.message }),
-  );
+
+  const raw: Record<string, unknown> = {};
+  let stopped = false;
+  const detach = new Map<string, Unsubscribe>();
+  const retries = new Map<string, ReturnType<typeof setTimeout>>();
+
+  const attach = (key: string) => {
+    if (stopped) return;
+    detach.get(key)?.();
+    const off = onValue(
+      ref(db, `/${node}/${key}`),
+      (snap) => {
+        raw[key] = snap.val();
+        cb({ kind: "data", telemetry: normalize(raw) });
+      },
+      (err) => {
+        cb({ kind: "error", message: err.message });
+        // Firebase cancels the listener on error — reconnect shortly after.
+        const timer = setTimeout(() => attach(key), 5_000);
+        retries.set(key, timer);
+      },
+    );
+    detach.set(key, off);
+  };
+
+  TELEMETRY_KEYS.forEach(attach);
+
+  return () => {
+    stopped = true;
+    retries.forEach((t) => clearTimeout(t));
+    detach.forEach((off) => off());
+  };
 }
+
 
 /** Subscribe to Firebase connectivity itself (not the ESP32). */
 export function subscribeFirebaseConnection(cb: (connected: boolean) => void): Unsubscribe {
