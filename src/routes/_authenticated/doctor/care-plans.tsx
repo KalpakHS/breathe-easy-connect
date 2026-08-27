@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TimeSlotsField } from "@/components/smartneb/time-slots-field";
+import { useT } from "@/i18n";
 import {
   Dialog,
   DialogContent,
@@ -50,11 +51,20 @@ export const Route = createFileRoute("/_authenticated/doctor/care-plans")({
 type StatusFilter = "all" | "published" | "draft" | "paused" | "ended";
 
 function DoctorCarePlansPage() {
+  const t = useT();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [editing, setEditing] = useState<DoctorCarePlanRow | null>(null);
 
+  const statusLabels: Record<StatusFilter, string> = {
+    all: t("doctor.carePlans.status.all"),
+    published: t("doctor.carePlans.status.published"),
+    draft: t("doctor.carePlans.status.draft"),
+    paused: t("doctor.carePlans.status.paused"),
+    ended: t("doctor.carePlans.status.ended"),
+  };
+
   return (
-    <DoctorPage title="Care Plans" subtitle="Nebulization therapy prescriptions you manage">
+    <DoctorPage title={t("doctor.carePlans.title")} subtitle={t("doctor.carePlans.subtitle")}>
       {({ signedIn }) => {
         const qc = useQueryClient();
         const plans = useQuery({
@@ -67,7 +77,7 @@ function DoctorCarePlansPage() {
           mutationFn: (v: { planId: string; status: "published" | "paused" | "ended" }) =>
             setCarePlanStatus({ data: v }),
           onSuccess: () => {
-            toast.success("Care plan updated");
+            toast.success(t("doctor.carePlans.updated"));
             void qc.invalidateQueries({ queryKey: ["doctor-care-plans"] });
             void qc.invalidateQueries({ queryKey: ["care-plans"] });
           },
@@ -94,15 +104,15 @@ function DoctorCarePlansPage() {
                   className="capitalize"
                   onClick={() => setFilter(s)}
                 >
-                  {s}
+                  {statusLabels[s]}
                 </Button>
               ))}
             </div>
 
             {rows.length === 0 ? (
               <EmptyState
-                title="No care plans"
-                description="Open a patient workspace to create their first nebulization plan."
+                title={t("doctor.carePlans.emptyTitle")}
+                description={t("doctor.carePlans.emptyDesc")}
               />
             ) : (
               <ul className="space-y-3">
@@ -122,13 +132,16 @@ function DoctorCarePlansPage() {
                           {plan.medication} · {plan.dosage}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {plan.duration_minutes} min · {plan.frequency_per_day}x daily · from{" "}
-                          {plan.start_date}
-                          {plan.end_date ? ` to ${plan.end_date}` : ""}
+                          {t("doctor.carePlans.durationDaily", {
+                            duration: plan.duration_minutes,
+                            freq: plan.frequency_per_day,
+                            start: plan.start_date,
+                          })}
+                          {plan.end_date ? t("doctor.carePlans.toDate", { end: plan.end_date }) : ""}
                         </p>
                         {plan.time_slots?.length ? (
                           <p className="mt-1 text-xs text-muted-foreground">
-                            Times: {plan.time_slots.join(" · ")}
+                            {t("doctor.carePlans.timesLabel", { slots: plan.time_slots.join(" · ") })}
                           </p>
                         ) : null}
                         {plan.instructions ? (
@@ -137,13 +150,13 @@ function DoctorCarePlansPage() {
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={plan.status === "published" ? "default" : "secondary"}>
-                          {plan.status}
+                          {statusLabels[plan.status as StatusFilter] ?? plan.status}
                         </Badge>
-                        {!plan.mine ? <Badge variant="outline">Another clinician</Badge> : null}
+                        {!plan.mine ? <Badge variant="outline">{t("doctor.carePlans.anotherClinician")}</Badge> : null}
                         {plan.mine ? (
                           <>
                             <Button size="sm" variant="outline" onClick={() => setEditing(plan)}>
-                              <Pencil className="mr-2 size-3.5" aria-hidden /> Edit
+                              <Pencil className="mr-2 size-3.5" aria-hidden /> {t("doctor.carePlans.edit")}
                             </Button>
                             {plan.status !== "published" ? (
                               <Button
@@ -151,7 +164,7 @@ function DoctorCarePlansPage() {
                                 variant="outline"
                                 onClick={() => status.mutate({ planId: plan.id, status: "published" })}
                               >
-                                Publish
+                                {t("doctor.carePlans.publish")}
                               </Button>
                             ) : (
                               <Button
@@ -159,7 +172,7 @@ function DoctorCarePlansPage() {
                                 variant="outline"
                                 onClick={() => status.mutate({ planId: plan.id, status: "paused" })}
                               >
-                                Pause
+                                {t("doctor.carePlans.pause")}
                               </Button>
                             )}
                             {plan.status !== "ended" ? (
@@ -168,7 +181,7 @@ function DoctorCarePlansPage() {
                                 variant="ghost"
                                 onClick={() => status.mutate({ planId: plan.id, status: "ended" })}
                               >
-                                End
+                                {t("doctor.carePlans.end")}
                               </Button>
                             ) : null}
                           </>
@@ -189,6 +202,7 @@ function DoctorCarePlansPage() {
 }
 
 function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onClose: () => void }) {
+  const t = useT();
   const qc = useQueryClient();
   const [form, setForm] = useState({
     medication: "",
@@ -232,7 +246,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
         },
       }),
     onSuccess: () => {
-      toast.success("Care plan saved");
+      toast.success(t("doctor.carePlans.saved"));
       void qc.invalidateQueries({ queryKey: ["doctor-care-plans"] });
       void qc.invalidateQueries({ queryKey: ["care-plans"] });
       onClose();
@@ -244,9 +258,9 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
     <Dialog open={Boolean(plan)} onOpenChange={(o) => (o ? null : onClose())}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit care plan</DialogTitle>
+          <DialogTitle>{t("doctor.carePlans.editTitle")}</DialogTitle>
           <DialogDescription>
-            Changes apply to {plan?.patientName ?? "the patient"} immediately.
+            {t("doctor.carePlans.editDesc", { name: plan?.patientName ?? t("doctor.carePlans.thePatient") })}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -254,7 +268,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
           onSubmit={(e) => {
             e.preventDefault();
             if (!form.medication.trim() || !form.dosage.trim()) {
-              toast.error("Medication and dosage are required");
+              toast.error(t("doctor.carePlans.medicationDosageRequired"));
               return;
             }
             save.mutate();
@@ -262,7 +276,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="edit-medication">Medication</Label>
+              <Label htmlFor="edit-medication">{t("doctor.field.medication")}</Label>
               <Input
                 id="edit-medication"
                 value={form.medication}
@@ -270,7 +284,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit-dosage">Dosage</Label>
+              <Label htmlFor="edit-dosage">{t("doctor.field.dosage")}</Label>
               <Input
                 id="edit-dosage"
                 value={form.dosage}
@@ -278,7 +292,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit-duration">Duration (minutes)</Label>
+              <Label htmlFor="edit-duration">{t("doctor.field.durationMinutes")}</Label>
               <Input
                 id="edit-duration"
                 type="number"
@@ -289,7 +303,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit-frequency">Times per day</Label>
+              <Label htmlFor="edit-frequency">{t("doctor.field.timesPerDay")}</Label>
               <Input
                 id="edit-frequency"
                 type="number"
@@ -300,7 +314,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit-start">Start date</Label>
+              <Label htmlFor="edit-start">{t("doctor.field.startDate")}</Label>
               <Input
                 id="edit-start"
                 type="date"
@@ -309,7 +323,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit-end">End date (optional)</Label>
+              <Label htmlFor="edit-end">{t("doctor.field.endDateOptional")}</Label>
               <Input
                 id="edit-end"
                 type="date"
@@ -326,7 +340,7 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="edit-instructions">Instructions</Label>
+            <Label htmlFor="edit-instructions">{t("doctor.field.instructions")}</Label>
             <Textarea
               id="edit-instructions"
               rows={3}
@@ -336,10 +350,10 @@ function EditPlanDialog({ plan, onClose }: { plan: DoctorCarePlanRow | null; onC
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={onClose}>
-              Cancel
+              {t("action.cancel")}
             </Button>
             <Button type="submit" disabled={save.isPending}>
-              Save changes
+              {t("doctor.carePlans.saveChanges")}
             </Button>
           </DialogFooter>
         </form>

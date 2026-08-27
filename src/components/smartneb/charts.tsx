@@ -91,11 +91,11 @@ export function TrendChart({
 }
 
 export const RANGES = [
-  { label: "5m", minutes: 5 },
-  { label: "15m", minutes: 15 },
-  { label: "1h", minutes: 60 },
-  { label: "6h", minutes: 360 },
-  { label: "24h", minutes: 1440 },
-  { label: "7d", minutes: 10080 },
-  { label: "30d", minutes: 43200 },
-];
+  { label: "5m", key: "time.range.5m", minutes: 5 },
+  { label: "15m", key: "time.range.15m", minutes: 15 },
+  { label: "1h", key: "time.range.1h", minutes: 60 },
+  { label: "6h", key: "time.range.6h", minutes: 360 },
+  { label: "24h", key: "time.range.24h", minutes: 1440 },
+  { label: "7d", key: "time.range.7d", minutes: 10080 },
+  { label: "30d", key: "time.range.30d", minutes: 43200 },
+] as const;

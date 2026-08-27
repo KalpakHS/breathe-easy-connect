@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n";
 
 export type VitalStatus = "normal" | "warning" | "critical" | "unknown";
 
@@ -11,11 +12,11 @@ const statusStyles: Record<VitalStatus, string> = {
   unknown: "bg-muted text-muted-foreground border-border",
 };
 
-const statusLabel: Record<VitalStatus, string> = {
-  normal: "Normal",
-  warning: "Watch",
-  critical: "Critical",
-  unknown: "No data",
+const statusLabelKey: Record<VitalStatus, string> = {
+  normal: "patient.vitalStatus.normal",
+  warning: "patient.vitalStatus.warning",
+  critical: "patient.vitalStatus.critical",
+  unknown: "patient.vitalStatus.unknown",
 };
 
 export function StatusBadge({
@@ -27,6 +28,7 @@ export function StatusBadge({
   label?: string;
   className?: string;
 }) {
+  const t = useT();
   return (
     <span
       className={cn(
@@ -42,7 +44,7 @@ export function StatusBadge({
           status === "critical" || status === "warning" ? "live-dot" : "",
         )}
       />
-      {label ?? statusLabel[status]}
+      {label ?? t(statusLabelKey[status])}
     </span>
   );
 }
@@ -64,6 +66,7 @@ export function VitalCard({
   hint?: string;
   icon?: ReactNode;
 }) {
+  const t = useT();
   const TrendIcon =
     trend == null || Math.abs(trend) < 0.01 ? ArrowRight : trend > 0 ? ArrowUpRight : ArrowDownRight;
 
@@ -99,8 +102,7 @@ export function VitalCard({
         {trend != null ? (
           <span className="inline-flex items-center gap-1">
             <TrendIcon className="size-3.5" aria-hidden />
-            {trend > 0 ? "+" : ""}
-            {trend.toFixed(1)} vs previous
+            {t("patient.vitals.vsPrevious", { value: `${trend > 0 ? "+" : ""}${trend.toFixed(1)}` })}
           </span>
         ) : null}
         {hint ? <span>{hint}</span> : null}

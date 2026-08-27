@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/doctor/dashboard")({
   head: () => ({
@@ -91,6 +92,7 @@ function today() {
 }
 
 function DoctorDashboard() {
+  const t = useT();
   const me = useMe();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string | null>(null);
@@ -189,14 +191,18 @@ function DoctorDashboard() {
     <AppShell
       me={me.data}
       nav={doctorNav}
-      title="Clinical Dashboard"
-      subtitle={`${roster.data?.length ?? 0} assigned patients · ${critical} critical alerts · ${inTherapy} in therapy`}
+      title={t("doctor.dashboard.title")}
+      subtitle={t("doctor.dashboard.subtitle", {
+        count: roster.data?.length ?? 0,
+        critical,
+        inTherapy,
+      })}
     >
       {!me.data.doctorId ? (
-        <ErrorState message="No clinician record is linked to this account yet. Ask an administrator to link you." />
+        <ErrorState message={t("doctor.noClinicianRecord")} />
       ) : (
         <div className="space-y-6">
-        <SOSPanel enabled={signedIn} title="Emergency SOS — assigned patients" />
+        <SOSPanel enabled={signedIn} title={t("doctor.sos.assignedPatients")} />
         <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
           <section className="panel flex max-h-[calc(100vh-11rem)] flex-col p-4">
             <div className="flex items-center gap-2">
@@ -204,8 +210,8 @@ function DoctorDashboard() {
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search name, MRN or condition"
-                aria-label="Search patients"
+                placeholder={t("doctor.patients.searchPlaceholder")}
+                aria-label={t("doctor.patients.searchAria")}
                 className="h-9"
               />
             </div>
@@ -214,8 +220,8 @@ function DoctorDashboard() {
                 <LoadingSkeleton rows={4} />
               ) : patients.length === 0 ? (
                 <EmptyState
-                  title="No assigned patients"
-                  description="Patients assigned to you by an administrator appear here."
+                  title={t("doctor.patients.noAssigned")}
+                  description={t("doctor.patients.noAssignedDesc")}
                 />
               ) : (
                 <ul className="space-y-2 pr-2">
@@ -241,7 +247,7 @@ function DoctorDashboard() {
               patientId={selected}
             />
           ) : (
-            <EmptyState title="Select a patient" description="Pick a patient to review live vitals." />
+            <EmptyState title={t("doctor.patients.selectPatient")} description={t("doctor.patients.selectPatientDesc")} />
           )}
         </div>
         </div>

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "./vitals";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n";
 
 export type NebState = "OFF" | "READY" | "COMMAND_SENT" | "RUNNING" | "PAUSED" | "COMPLETED" | "ERROR";
 
@@ -82,6 +83,7 @@ export function NebulizerControl({
   /** Physical relay actuation on the real device (Firebase → ESP32). */
   onRelay?: (on: boolean) => Promise<void>;
 }) {
+  const t = useT();
   const qc = useQueryClient();
   const [elapsed, setElapsed] = useState(() => restoreElapsed(session));
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -95,7 +97,7 @@ export function NebulizerControl({
     try {
       await onRelay(on);
     } catch (e) {
-      toast.error(`Relay command failed: ${(e as Error).message}`);
+      toast.error(t("patient.neb.relayFailed", { message: (e as Error).message }));
     }
   };
 
@@ -149,14 +151,13 @@ export function NebulizerControl({
       const newId = res.session.id;
       if (deviceOnline && onRelay) {
         await relay(true);
-        toast.success("Relay ON command sent to your nebulizer");
+        toast.success(t("patient.neb.relayOnSent"));
       } else if (res.simulated) {
-        toast.warning("Simulated session started", {
-          description:
-            "No device acknowledgement — the physical nebulizer was NOT switched on. The session is recorded for software tracking.",
+        toast.warning(t("patient.neb.simulatedStarted"), {
+          description: t("patient.neb.simulatedStartedDesc"),
         });
       } else {
-        toast.success("Start command sent — waiting for device confirmation");
+        toast.success(t("patient.neb.startCommandSent"));
       }
       // Device acknowledgement (ESP32 publishes back over MQTT). Simulated locally when unavailable.
       await update.mutateAsync({ action: "ack", elapsedSeconds: 0, sessionId: newId });
@@ -175,7 +176,7 @@ export function NebulizerControl({
         const next = prev + 1;
         if (next >= prescribed) {
           chime();
-          toast.success("Nebulization session complete");
+          toast.success(t("patient.neb.sessionComplete"));
           update.mutate({ action: "complete", elapsedSeconds: prescribed });
           return prescribed;
         }
@@ -204,19 +205,19 @@ export function NebulizerControl({
     <div className="panel flex flex-col items-center gap-5 p-6">
       <div className="flex w-full items-center justify-between">
         <div>
-          <p className="font-display text-sm font-semibold">Nebulizer</p>
+          <p className="font-display text-sm font-semibold">{t("vitals.nebulizer")}</p>
           <p className="text-xs text-muted-foreground">
-            {medication ?? "No medication prescribed"}
+            {medication ?? t("patient.neb.noMedication")}
             {dosage ? ` · ${dosage}` : ""}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {simulated ? <StatusBadge status="warning" label="SIMULATED" /> : null}
+          {simulated ? <StatusBadge status="warning" label={t("patient.neb.simulated")} /> : null}
           <StatusBadge status={statusTone} label={state.replace("_", " ")} />
         </div>
       </div>
 
-      <svg width={size} height={size} role="img" aria-label={`Session progress ${Math.round(pct)}%`}>
+      <svg width={size} height={size} role="img" aria-label={t("patient.neb.sessionProgressAria", { pct: Math.round(pct) })}>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={12} />
         <circle
           cx={size / 2}
@@ -241,7 +242,7 @@ export function NebulizerControl({
           {mmss(Math.max(0, prescribed - elapsed))}
         </text>
         <text x="50%" y="60%" textAnchor="middle" className="fill-muted-foreground text-[11px]">
-          {mmss(elapsed)} of {mmss(prescribed)}
+          {t("patient.neb.ofDuration", { elapsed: mmss(elapsed), prescribed: mmss(prescribed) })}
         </text>
       </svg>
 
@@ -253,7 +254,7 @@ export function NebulizerControl({
             ) : (
               <Play className="mr-2 size-4" />
             )}
-            Start session
+            {t("patient.neb.startSession")}
           </Button>
         ) : null}
         {state === "RUNNING" ? (
@@ -261,12 +262,12 @@ export function NebulizerControl({
             variant="secondary"
             onClick={() => update.mutate({ action: "pause", elapsedSeconds: elapsed })}
           >
-            <Pause className="mr-2 size-4" /> Pause
+            <Pause className="mr-2 size-4" /> {t("patient.neb.pause")}
           </Button>
         ) : null}
         {state === "PAUSED" ? (
           <Button onClick={() => update.mutate({ action: "resume", elapsedSeconds: elapsed })}>
-            <Play className="mr-2 size-4" /> Resume
+            <Play className="mr-2 size-4" /> {t("patient.neb.resume")}
           </Button>
         ) : null}
         {state === "RUNNING" || state === "PAUSED" || state === "COMMAND_SENT" ? (
@@ -274,43 +275,42 @@ export function NebulizerControl({
             variant="destructive"
             onClick={() => update.mutate({ action: "stop", elapsedSeconds: elapsed })}
           >
-            <Square className="mr-2 size-4" /> Stop
+            <Square className="mr-2 size-4" /> {t("patient.neb.stop")}
           </Button>
         ) : null}
       </div>
 
       {simulated ? (
         <p className="text-center text-xs text-warn">
-          Device is offline — running in simulator mode. The session is recorded in your record, but
-          the physical nebulizer is not switched on.
+          {t("patient.neb.offlineSimulatorNote")}
         </p>
       ) : (
         <p className="text-center text-xs text-muted-foreground">
-          State reflects the last confirmation received from the device.
+          {t("patient.neb.stateReflectsNote")}
         </p>
       )}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Start nebulization session?</AlertDialogTitle>
+            <AlertDialogTitle>{t("patient.neb.confirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {medication ? `${medication}${dosage ? ` · ${dosage}` : ""} — ` : ""}
-              {Math.round(prescribed / 60)} minute session.
+              {t("patient.neb.minuteSession", { minutes: Math.round(prescribed / 60) })}
               {simulated
-                ? " Your device is offline, so this runs in simulator mode: the session is recorded, but the physical nebulizer will not be switched on."
-                : " A start command will be sent to your device."}
+                ? t("patient.neb.confirmSimulatedNote")
+                : t("patient.neb.confirmLiveNote")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("action.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setConfirmOpen(false);
                 start.mutate();
               }}
             >
-              Start session
+              {t("patient.neb.startSession")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

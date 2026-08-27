@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Siren } from "lucide-react";
 import { DoctorPage } from "@/components/smartneb/doctor-layout";
 import { SOSPanel } from "@/components/smartneb/sos-panel";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/doctor/sos")({
   head: () => ({
@@ -25,27 +26,27 @@ export const Route = createFileRoute("/_authenticated/doctor/sos")({
 });
 
 function DoctorSOSPage() {
+  const t = useT();
   return (
-    <DoctorPage title="Emergency SOS" subtitle="Live emergencies raised by your assigned patients">
+    <DoctorPage title={t("doctor.sos.title")} subtitle={t("doctor.sos.subtitle")}>
       {({ signedIn }) => (
         <div className="space-y-6">
           <div className="panel flex items-start gap-3 border-critical/40 bg-critical/5 p-5">
             <Siren className="mt-0.5 size-5 text-critical" aria-hidden />
             <div>
-              <h2 className="font-display text-sm font-semibold">Immediate response protocol</h2>
+              <h2 className="font-display text-sm font-semibold">{t("doctor.sos.protocolTitle")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Acknowledge within 60 seconds so the patient and caregivers see that help is coming,
-                then resolve once the patient is stable or escalated to emergency services.
+                {t("doctor.sos.protocolBody")}
               </p>
             </div>
           </div>
 
-          <SOSPanel enabled={signedIn} title="Active emergencies" />
+          <SOSPanel enabled={signedIn} title={t("doctor.sos.activeEmergencies")} />
           <SOSPanel
             enabled={signedIn}
             includeResolved
             canRespond={false}
-            title="Full SOS history"
+            title={t("doctor.sos.fullHistory")}
           />
         </div>
       )}
