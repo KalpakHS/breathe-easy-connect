@@ -147,10 +147,13 @@ export function NebulizerControl({
     mutationFn: () => startSession({ data: { patientId } }),
     onSuccess: async (res) => {
       const newId = res.session.id;
-      if (res.simulated) {
+      if (deviceOnline && onRelay) {
+        await relay(true);
+        toast.success("Relay ON command sent to your nebulizer");
+      } else if (res.simulated) {
         toast.warning("Simulated session started", {
           description:
-            "No hardware acknowledgement — the physical nebulizer was NOT switched on. The session is recorded for software tracking.",
+            "No device acknowledgement — the physical nebulizer was NOT switched on. The session is recorded for software tracking.",
         });
       } else {
         toast.success("Start command sent — waiting for device confirmation");
