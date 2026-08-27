@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { listRefills, refillChamber } from "@/lib/smartneb.functions";
 import { PatientPage, useSnapshot } from "@/components/smartneb/patient-layout";
 import { NebulizerControl } from "@/components/smartneb/nebulizer-control";
+import { useDeviceTelemetry } from "@/hooks/use-device-telemetry";
 import { Gauge, StatusBadge } from "@/components/smartneb/vitals";
 import { ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,11 @@ export const Route = createFileRoute("/_authenticated/patient/nebulizer")({
 function NebulizerBody({ patientId }: { patientId: string }) {
   const qc = useQueryClient();
   const snap = useSnapshot(patientId);
+  const dev = useDeviceTelemetry({
+    patientId,
+    mrn: snap.data?.patient?.mrn ?? null,
+    deviceCode: snap.data?.device?.device_code ?? null,
+  });
   const refills = useQuery({
     queryKey: ["refills", patientId],
     queryFn: () => listRefills({ data: { patientId } }),
@@ -64,7 +70,8 @@ function NebulizerBody({ patientId }: { patientId: string }) {
         <NebulizerControl
           patientId={patientId}
           session={activeSession}
-          deviceOnline={device?.status === "online"}
+          deviceOnline={dev.telemetry.online}
+          onRelay={dev.setRelay}
           medication={carePlan?.medication ?? null}
           dosage={carePlan?.dosage ?? null}
           prescribedMinutes={carePlan?.duration_minutes ?? 10}

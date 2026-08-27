@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -14,18 +14,13 @@ import {
   Wind,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  pushSimulatedTelemetry,
-  raiseAlert,
-  triggerSOS,
-} from "@/lib/smartneb.functions";
+import { ingestDeviceTelemetry, raiseAlert, triggerSOS } from "@/lib/smartneb.functions";
+import { useDeviceTelemetry } from "@/hooks/use-device-telemetry";
 import { PatientPage, greeting, useSnapshot } from "@/components/smartneb/patient-layout";
 import { freshness, StatusBadge, VitalCard, type VitalStatus } from "@/components/smartneb/vitals";
 import { NebulizerControl } from "@/components/smartneb/nebulizer-control";
 import { ErrorState, LoadingSkeleton } from "@/components/smartneb/states";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,21 +68,46 @@ function spo2Status(v: number | null, threshold: number): VitalStatus {
 
 function DashboardBody({ patientId, fullName }: { patientId: string; fullName: string }) {
   const qc = useQueryClient();
-  const [simulate, setSimulate] = useState(false);
   const snap = useSnapshot(patientId);
   const spokenRef = useRef(0);
 
-  const push = useMutation({
-    mutationFn: () => pushSimulatedTelemetry({ data: { patientId } }),
+  // Real ESP32 telemetry (Firebase Realtime Database).
+  const dev = useDeviceTelemetry({
+    patientId,
+    mrn: snap.data?.patient?.mrn ?? null,
+    deviceCode: snap.data?.device?.device_code ?? null,
+  });
+  const t = dev.telemetry;
+
+  // Archive real readings so history, reports and the alert engine stay truthful.
+  const ingest = useMutation({
+    mutationFn: () =>
+      ingestDeviceTelemetry({
+        data: {
+          patientId,
+          bpm: t.bpm,
+          spo2: t.spo2,
+          bodyTemperature: t.bodyTemperature,
+          ambientTemperature: t.ambientTemperature,
+          batteryPercentage: t.battery.percentage,
+          batteryVoltage: t.battery.voltage,
+          batteryCurrent: t.battery.current,
+          batteryPower: t.battery.power,
+          batteryTemperature: t.battery.temperature,
+          relay: t.nebulizer.relay,
+        },
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["snapshot", patientId] }),
   });
+  const ingestRef = useRef(ingest);
+  ingestRef.current = ingest;
+  const onlineForIngest = t.online;
 
   useEffect(() => {
-    if (!simulate) return;
-    const id = setInterval(() => push.mutate(), 5000);
+    if (!onlineForIngest) return;
+    const id = setInterval(() => ingestRef.current.mutate(), 30_000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simulate]);
+  }, [onlineForIngest]);
 
   const alert = useMutation({
     mutationFn: (vars: {
@@ -115,12 +135,25 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
 
   const { patient, device, health, healthPrev, environment, battery, carePlan, activeSession } =
     snap.data ?? ({} as NonNullable<typeof snap.data>);
-  const spo2 = health?.spo2 == null ? null : Number(health.spo2);
-  const bpm = health?.bpm == null ? null : Number(health.bpm);
-  const temp = health?.body_temperature == null ? null : Number(health.body_temperature);
+  // Live device values take precedence; stored records are the fallback history.
+  const spo2 = t.spo2 ?? (health?.spo2 == null ? null : Number(health.spo2));
+  const bpm = t.bpm ?? (health?.bpm == null ? null : Number(health.bpm));
+  const temp =
+    t.bodyTemperature ?? (health?.body_temperature == null ? null : Number(health.body_temperature));
+  const ambient =
+    t.ambientTemperature ??
+    (environment?.ambient_temperature == null ? null : Number(environment.ambient_temperature));
   const spo2Threshold = Number(patient?.spo2_threshold ?? 92);
-  const battPct = battery?.percentage == null ? null : Number(battery.percentage);
+  const battPct =
+    t.battery.percentage ?? (battery?.percentage == null ? null : Number(battery.percentage));
   const fresh = freshness(health?.recorded_at);
+  const liveText = dev.loading
+    ? "Connecting to SmartNeb device…"
+    : dev.error
+      ? "Unable to connect to device data"
+      : t.online
+        ? `Device online · live ESP32 telemetry${t.lastUpdated ? ` · updated ${freshness(new Date(t.lastUpdated).toISOString()).text}` : ""}`
+        : `Device offline — showing last stored reading (${fresh.text})`;
 
   // Threshold engine: SpO2 below configured threshold raises an alert + audio/voice warning.
   useEffect(() => {
@@ -159,18 +192,22 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           <h2 className="font-display text-2xl font-semibold">
             {greeting()}, {patient?.full_name ?? fullName}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {fresh.stale
-              ? `Data connection interrupted — last updated ${fresh.text}`
-              : `Live telemetry · last updated ${fresh.text}`}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{liveText}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
-            <Switch id="sim" checked={simulate} onCheckedChange={setSimulate} />
-            <Label htmlFor="sim" className="text-xs">
-              Simulated device feed
-            </Label>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge
+              status={t.online ? "normal" : "critical"}
+              label={t.online ? "ESP32 connected" : "ESP32 offline"}
+            />
+            <StatusBadge
+              status={dev.firebaseConnected ? "normal" : "warning"}
+              label={dev.firebaseConnected ? "Device cloud linked" : "Device cloud down"}
+            />
+            <StatusBadge
+              status={t.nebulizer.relay ? "normal" : "unknown"}
+              label={t.nebulizer.relay ? "Nebulizer ON" : "Nebulizer OFF"}
+            />
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -242,7 +279,7 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           status={
             battPct == null ? "unknown" : battPct < 15 ? "critical" : battPct < 30 ? "warning" : "normal"
           }
-          hint={battery ? `${battery.voltage ?? "--"} V · ${battery.cell_temperature ?? "--"} °C` : ""}
+          hint={`${t.battery.voltage ?? battery?.voltage ?? "--"} V · ${t.battery.temperature ?? battery?.cell_temperature ?? "--"} °C`}
         />
       </section>
 
@@ -269,14 +306,9 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              {
-                label: "Ambient temp",
-                value: environment?.ambient_temperature,
-                unit: "°C",
-                icon: Thermometer,
-              },
-              { label: "Humidity", value: environment?.humidity, unit: "%", icon: Droplets },
-              { label: "Air quality index", value: environment?.aqi, unit: "AQI", icon: Wind },
+              { label: "Ambient temp", value: ambient, unit: "°C", icon: Thermometer },
+              { label: "Humidity", value: environment?.humidity ?? null, unit: "%", icon: Droplets },
+              { label: "Air quality index", value: environment?.aqi ?? null, unit: "AQI", icon: Wind },
             ].map((m) => (
               <div key={m.label} className="rounded-xl border bg-surface-2 p-4">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -289,9 +321,9 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
               </div>
             ))}
           </div>
-          {environment?.simulated ? (
+          {environment?.humidity == null || environment?.aqi == null ? (
             <p className="text-xs text-muted-foreground">
-              Environmental values are currently produced by the simulated sensor feed.
+              Humidity and air-quality sensors are not reporting from this device yet.
             </p>
           ) : null}
 
@@ -309,16 +341,16 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge
-                  status={device?.status === "online" ? "normal" : "critical"}
-                  label={device?.status === "online" ? "Online" : "Offline"}
+                  status={t.online ? "normal" : "critical"}
+                  label={t.online ? "Online" : "Offline"}
                 />
                 <StatusBadge
-                  status={device?.mqtt_connected ? "normal" : "warning"}
-                  label={device?.mqtt_connected ? "MQTT linked" : "MQTT down"}
+                  status={dev.firebaseConnected ? "normal" : "warning"}
+                  label={dev.firebaseConnected ? "Realtime DB linked" : "Realtime DB down"}
                 />
                 <StatusBadge
-                  status={device?.cloud_connected ? "normal" : "warning"}
-                  label={device?.cloud_connected ? "Cloud synced" : "Cloud offline"}
+                  status={t.nebulizer.relay ? "normal" : "unknown"}
+                  label={`Relay ${t.nebulizer.relay ? "ON" : "OFF"}`}
                 />
                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                   <Radio className="size-3.5" /> chamber {Number(device?.fluid_level ?? 0)}%
@@ -331,7 +363,8 @@ function DashboardBody({ patientId, fullName }: { patientId: string; fullName: s
         <NebulizerControl
           patientId={patientId}
           session={activeSession}
-          deviceOnline={device?.status === "online"}
+          deviceOnline={t.online}
+          onRelay={dev.setRelay}
           medication={carePlan?.medication ?? null}
           dosage={carePlan?.dosage ?? null}
           prescribedMinutes={carePlan?.duration_minutes ?? 10}

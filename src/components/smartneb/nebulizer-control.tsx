@@ -70,6 +70,7 @@ export function NebulizerControl({
   dosage,
   prescribedMinutes,
   compact = false,
+  onRelay,
 }: {
   patientId: string;
   session: ActiveSession;
@@ -78,6 +79,8 @@ export function NebulizerControl({
   dosage?: string | null;
   prescribedMinutes: number;
   compact?: boolean;
+  /** Physical relay actuation on the real device (Firebase → ESP32). */
+  onRelay?: (on: boolean) => Promise<void>;
 }) {
   const qc = useQueryClient();
   const [elapsed, setElapsed] = useState(() => restoreElapsed(session));
@@ -85,6 +88,16 @@ export function NebulizerControl({
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const prescribed = session?.prescribed_seconds ?? prescribedMinutes * 60;
   const simulated = !deviceOnline;
+
+  /** Drive the real relay; never claim success when the write fails. */
+  const relay = async (on: boolean) => {
+    if (!onRelay || !deviceOnline) return;
+    try {
+      await onRelay(on);
+    } catch (e) {
+      toast.error(`Relay command failed: ${(e as Error).message}`);
+    }
+  };
 
   const state: NebState = !session
     ? deviceOnline
@@ -120,6 +133,9 @@ export function NebulizerControl({
       }),
     onSuccess: (_d, vars) => {
       if (vars.action === "heartbeat") return;
+      if (vars.action === "resume") void relay(true);
+      if (vars.action === "pause" || vars.action === "stop" || vars.action === "complete")
+        void relay(false);
       void qc.invalidateQueries({ queryKey: ["snapshot", patientId] });
       void qc.invalidateQueries({ queryKey: ["sessions", patientId] });
       void qc.invalidateQueries({ queryKey: ["adherence", patientId] });
@@ -131,10 +147,13 @@ export function NebulizerControl({
     mutationFn: () => startSession({ data: { patientId } }),
     onSuccess: async (res) => {
       const newId = res.session.id;
-      if (res.simulated) {
+      if (deviceOnline && onRelay) {
+        await relay(true);
+        toast.success("Relay ON command sent to your nebulizer");
+      } else if (res.simulated) {
         toast.warning("Simulated session started", {
           description:
-            "No hardware acknowledgement — the physical nebulizer was NOT switched on. The session is recorded for software tracking.",
+            "No device acknowledgement — the physical nebulizer was NOT switched on. The session is recorded for software tracking.",
         });
       } else {
         toast.success("Start command sent — waiting for device confirmation");

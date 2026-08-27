@@ -938,6 +938,121 @@ export const pushSimulatedTelemetry = createServerFn({ method: "POST" })
     return { bpm, spo2, temp, recordedAt: now };
   });
 
+/**
+ * Persists a REAL reading received from the ESP32 (via Firebase Realtime
+ * Database) so history, reports, adherence and the alert engine work on
+ * genuine measurements. Nothing is generated or interpolated here.
+ */
+export const ingestDeviceTelemetry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: {
+      patientId: string;
+      bpm?: number | null;
+      spo2?: number | null;
+      bodyTemperature?: number | null;
+      ambientTemperature?: number | null;
+      batteryPercentage?: number | null;
+      batteryVoltage?: number | null;
+      batteryCurrent?: number | null;
+      batteryPower?: number | null;
+      batteryTemperature?: number | null;
+      relay?: boolean | null;
+    }) =>
+      patientInput
+        .extend({
+          bpm: z.number().nullable().optional(),
+          spo2: z.number().nullable().optional(),
+          bodyTemperature: z.number().nullable().optional(),
+          ambientTemperature: z.number().nullable().optional(),
+          batteryPercentage: z.number().nullable().optional(),
+          batteryVoltage: z.number().nullable().optional(),
+          batteryCurrent: z.number().nullable().optional(),
+          batteryPower: z.number().nullable().optional(),
+          batteryTemperature: z.number().nullable().optional(),
+          relay: z.boolean().nullable().optional(),
+        })
+        .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: owns } = await supabase.rpc("owns_patient", { _patient_id: data.patientId });
+    if (!owns) throw new Error("Not allowed");
+
+    const { data: device } = await supabase
+      .from("devices")
+      .select("id")
+      .eq("patient_id", data.patientId)
+      .maybeSingle();
+
+    const now = new Date().toISOString();
+    const writes: Array<PromiseLike<unknown>> = [];
+
+    if (data.bpm != null || data.spo2 != null || data.bodyTemperature != null) {
+      writes.push(
+        supabase.from("health_telemetry").insert({
+          patient_id: data.patientId,
+          device_id: device?.id ?? null,
+          bpm: data.bpm ?? null,
+          spo2: data.spo2 ?? null,
+          body_temperature: data.bodyTemperature ?? null,
+          recorded_at: now,
+          source: "esp32",
+        }),
+      );
+    }
+    if (data.ambientTemperature != null) {
+      writes.push(
+        supabase.from("environmental_telemetry").insert({
+          patient_id: data.patientId,
+          device_id: device?.id ?? null,
+          ambient_temperature: data.ambientTemperature,
+          // Humidity and AQI are not provided by the current firmware.
+          humidity: null,
+          aqi: null,
+          simulated: false,
+          recorded_at: now,
+          source: "esp32",
+        }),
+      );
+    }
+    if (
+      data.batteryPercentage != null ||
+      data.batteryVoltage != null ||
+      data.batteryCurrent != null
+    ) {
+      writes.push(
+        supabase.from("battery_telemetry").insert({
+          patient_id: data.patientId,
+          device_id: device?.id ?? null,
+          percentage: data.batteryPercentage ?? null,
+          voltage: data.batteryVoltage ?? null,
+          current: data.batteryCurrent ?? null,
+          power: data.batteryPower ?? null,
+          cell_temperature: data.batteryTemperature ?? null,
+          recorded_at: now,
+          source: "esp32",
+        }),
+      );
+    }
+    if (device) {
+      writes.push(
+        supabase
+          .from("devices")
+          .update({
+            last_seen_at: now,
+            status: "online",
+            cloud_connected: true,
+            nebulizer_state: data.relay ? "on" : "off",
+          })
+          .eq("id", device.id),
+      );
+    }
+
+    await Promise.all(writes);
+    return { recordedAt: now, stored: writes.length };
+  });
+
 /* ------------------------------------------------------------------ */
 /* AI assistant (RBAC-scoped, server-side model access)               */
 /* ------------------------------------------------------------------ */
