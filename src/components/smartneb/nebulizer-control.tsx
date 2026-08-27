@@ -89,6 +89,16 @@ export function NebulizerControl({
   const prescribed = session?.prescribed_seconds ?? prescribedMinutes * 60;
   const simulated = !deviceOnline;
 
+  /** Drive the real relay; never claim success when the write fails. */
+  const relay = async (on: boolean) => {
+    if (!onRelay || !deviceOnline) return;
+    try {
+      await onRelay(on);
+    } catch (e) {
+      toast.error(`Relay command failed: ${(e as Error).message}`);
+    }
+  };
+
   const state: NebState = !session
     ? deviceOnline
       ? "READY"
