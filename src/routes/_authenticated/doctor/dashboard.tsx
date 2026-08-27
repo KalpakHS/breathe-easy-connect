@@ -265,6 +265,7 @@ function RosterCard({
   active: boolean;
   onSelect: () => void;
 }) {
+  const t = useT();
   const s = spo2Status(patient.spo2, patient.spo2_threshold);
   const fresh = freshness(patient.recordedAt);
   return (
@@ -281,7 +282,7 @@ function RosterCard({
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{patient.full_name}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {patient.mrn} · {patient.condition ?? "No condition recorded"}
+            {patient.mrn} · {patient.condition ?? t("doctor.patients.noCondition")}
           </p>
         </div>
         <StatusBadge status={s} />
@@ -292,7 +293,7 @@ function RosterCard({
         <span>{fresh.text}</span>
         {patient.sessionStatus === "running" ? (
           <Badge variant="secondary" className="gap-1">
-            <Wind className="size-3" /> In therapy
+            <Wind className="size-3" /> {t("doctor.patients.inTherapy")}
           </Badge>
         ) : null}
         {patient.activeAlerts > 0 ? (
@@ -314,6 +315,7 @@ function PatientWorkspace({
   patientId: string;
   signedIn: boolean;
 }) {
+  const t = useT();
   const snapshot = useQuery({
     queryKey: ["snapshot", patientId],
     queryFn: () => getPatientSnapshot({ data: { patientId } }),
@@ -342,17 +344,21 @@ function PatientWorkspace({
       <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
         <div className="min-w-0">
           <h2 className="font-display text-xl font-semibold">
-            {p?.full_name ?? patient?.full_name ?? "Patient"}
+            {p?.full_name ?? patient?.full_name ?? t("doctor.patients.fallbackName")}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {p?.mrn ?? patient?.mrn} · {p?.condition ?? "No condition recorded"} ·{" "}
-            {patient?.deviceCode ?? "No device"}
+            {p?.mrn ?? patient?.mrn} · {p?.condition ?? t("doctor.patients.noCondition")} ·{" "}
+            {patient?.deviceCode ?? t("doctor.patients.noDevice")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge
             status={fresh.stale ? "unknown" : "normal"}
-            label={fresh.stale ? `Stale · ${fresh.text}` : `Live · ${fresh.text}`}
+            label={
+              fresh.stale
+                ? t("doctor.workspace.stale", { text: fresh.text })
+                : t("doctor.workspace.live", { text: fresh.text })
+            }
           />
           <CarePlanDialog patientId={patientId} />
         </div>
@@ -363,29 +369,29 @@ function PatientWorkspace({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <VitalCard
-            label="Oxygen saturation"
+            label={t("doctor.vitals.oxygenSaturation")}
             value={spo2 ?? null}
             unit="%"
             status={spo2Status(spo2, spo2Min)}
             trend={spo2 != null && prevSpo2 != null ? spo2 - prevSpo2 : null}
-            hint={`Threshold ${spo2Min}%`}
+            hint={t("doctor.vitals.threshold", { value: spo2Min })}
             icon={<Activity className="size-4" aria-hidden />}
           />
           <VitalCard
-            label="Heart rate"
+            label={t("doctor.vitals.heartRate")}
             value={bpm ?? null}
             unit="bpm"
             status={bpmStatus(bpm, bpmLow, bpmHigh)}
             trend={bpm != null && prevBpm != null ? bpm - prevBpm : null}
-            hint={`Range ${bpmLow}-${bpmHigh}`}
+            hint={t("doctor.vitals.range", { low: bpmLow, high: bpmHigh })}
             icon={<HeartPulse className="size-4" aria-hidden />}
           />
           <VitalCard
-            label="Body temperature"
+            label={t("doctor.vitals.bodyTemperature")}
             value={temp == null ? null : temp.toFixed(1)}
             unit="°C"
             status={tempStatus(temp, tempMax)}
-            hint={`Max ${tempMax}°C`}
+            hint={t("doctor.vitals.max", { value: tempMax })}
             icon={<Thermometer className="size-4" aria-hidden />}
           />
         </div>
@@ -393,7 +399,7 @@ function PatientWorkspace({
 
       {(snap?.activeAlerts ?? []).length > 0 ? (
         <div className="panel p-5">
-          <h3 className="font-display text-sm font-semibold">Active alerts</h3>
+          <h3 className="font-display text-sm font-semibold">{t("doctor.profile.activeAlerts")}</h3>
           <ul className="mt-3 space-y-2">
             {(snap?.activeAlerts ?? []).map((a) => (
               <li
@@ -413,8 +419,8 @@ function PatientWorkspace({
 
       <Tabs defaultValue="plans">
         <TabsList>
-          <TabsTrigger value="plans">Care plans</TabsTrigger>
-          <TabsTrigger value="notes">Clinical notes</TabsTrigger>
+          <TabsTrigger value="plans">{t("doctor.tabs.carePlans")}</TabsTrigger>
+          <TabsTrigger value="notes">{t("doctor.tabs.clinicalNotes")}</TabsTrigger>
         </TabsList>
         <TabsContent value="plans" className="mt-4">
           <CarePlanList patientId={patientId} />

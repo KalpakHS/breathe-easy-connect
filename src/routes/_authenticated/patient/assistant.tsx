@@ -14,6 +14,7 @@ import { PatientPage } from "@/components/smartneb/patient-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/patient/assistant")({
   head: () => ({
@@ -30,29 +31,31 @@ export const Route = createFileRoute("/_authenticated/patient/assistant")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => (
-    <PatientPage title="AI assistant" subtitle="Answers grounded in your own therapy data">
-      {({ patientId }) => <AssistantBody patientId={patientId} />}
-    </PatientPage>
-  ),
+  component: RouteComponent,
 });
 
-const SUGGESTIONS = [
-  "How has my SpO₂ trended this week?",
-  "Did I miss any doses recently?",
-  "Explain my current care plan simply.",
-  "What should I do if my oxygen drops?",
-];
+const SUGGESTION_KEYS = [
+  "patient.assistant.suggestion1",
+  "patient.assistant.suggestion2",
+  "patient.assistant.suggestion3",
+  "patient.assistant.suggestion4",
+] as const;
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const GREETING: Msg = {
-  role: "assistant",
-  content:
-    "Hi — I can explain your vitals, adherence and care plan. I can't diagnose or change your prescription; contact your clinician for medical decisions.",
-};
+function RouteComponent() {
+  const t = useT();
+  return (
+    <PatientPage title={t("nav.assistant")} subtitle={t("patient.assistant.subtitle")}>
+      {({ patientId }) => <AssistantBody patientId={patientId} />}
+    </PatientPage>
+  );
+}
 
 function AssistantBody({ patientId }: { patientId: string }) {
+  const t = useT();
+  const GREETING: Msg = { role: "assistant", content: t("patient.assistant.greeting") };
+  const SUGGESTIONS = SUGGESTION_KEYS.map((k) => t(k));
   const qc = useQueryClient();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [pendingUser, setPendingUser] = useState<Msg[]>([]);
@@ -98,7 +101,7 @@ function AssistantBody({ patientId }: { patientId: string }) {
     onSuccess: (_r, id) => {
       if (id === conversationId) setConversationId(null);
       void qc.invalidateQueries({ queryKey: ["ai-conversations"] });
-      toast.success("Conversation deleted");
+      toast.success(t("patient.assistant.deleted"));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -133,12 +136,12 @@ function AssistantBody({ patientId }: { patientId: string }) {
             setPendingUser([]);
           }}
         >
-          <MessageSquarePlus className="mr-2 size-4" aria-hidden /> New conversation
+          <MessageSquarePlus className="mr-2 size-4" aria-hidden /> {t("patient.assistant.newConversation")}
         </Button>
         <ScrollArea className="min-h-0 flex-1">
           <ul className="space-y-1">
             {(conversations.data ?? []).length === 0 ? (
-              <li className="px-2 py-3 text-xs text-muted-foreground">No saved conversations yet.</li>
+              <li className="px-2 py-3 text-xs text-muted-foreground">{t("patient.assistant.noConversations")}</li>
             ) : null}
             {(conversations.data ?? []).map((c) => (
               <li key={c.id} className="flex items-center gap-1">
@@ -162,7 +165,7 @@ function AssistantBody({ patientId }: { patientId: string }) {
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label={`Delete conversation ${c.title}`}
+                  aria-label={t("patient.assistant.deleteConversationAria", { title: c.title })}
                   onClick={() => remove.mutate(c.id)}
                 >
                   <Trash2 className="size-3.5" aria-hidden />
@@ -199,7 +202,7 @@ function AssistantBody({ patientId }: { patientId: string }) {
             </div>
           ))}
           {ask.isPending ? (
-            <p className="text-sm text-muted-foreground">Assistant is thinking…</p>
+            <p className="text-sm text-muted-foreground">{t("patient.assistant.thinking")}</p>
           ) : null}
           <div ref={endRef} />
         </div>
@@ -228,10 +231,10 @@ function AssistantBody({ patientId }: { patientId: string }) {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your therapy…"
-              aria-label="Ask the assistant"
+              placeholder={t("patient.assistant.inputPlaceholder")}
+              aria-label={t("patient.assistant.inputAria")}
             />
-            <Button type="submit" disabled={ask.isPending} aria-label="Send question">
+            <Button type="submit" disabled={ask.isPending} aria-label={t("patient.assistant.sendAria")}>
               <Send className="size-4" />
             </Button>
           </form>
