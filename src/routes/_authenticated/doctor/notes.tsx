@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useT } from "@/i18n";
 import {
   Select,
   SelectContent,
@@ -42,12 +43,13 @@ export const Route = createFileRoute("/_authenticated/doctor/notes")({
 });
 
 function DoctorNotesPage() {
+  const t = useT();
   const [q, setQ] = useState("");
   const [patientId, setPatientId] = useState("");
   const [note, setNote] = useState("");
 
   return (
-    <DoctorPage title="Clinical Notes" subtitle="Documentation across your patient panel">
+    <DoctorPage title={t("doctor.notes.title")} subtitle={t("doctor.notes.subtitle")}>
       {({ patients, signedIn }) => {
         const qc = useQueryClient();
         const notes = useQuery({
@@ -59,7 +61,7 @@ function DoctorNotesPage() {
         const add = useMutation({
           mutationFn: () => addClinicalNote({ data: { patientId, note: note.trim() } }),
           onSuccess: () => {
-            toast.success("Clinical note saved");
+            toast.success(t("doctor.notes.saved"));
             setNote("");
             void qc.invalidateQueries({ queryKey: ["doctor-notes"] });
             void qc.invalidateQueries({ queryKey: ["clinical-notes"] });
@@ -85,23 +87,23 @@ function DoctorNotesPage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!patientId) {
-                  toast.error("Choose a patient");
+                  toast.error(t("doctor.validation.choosePatient"));
                   return;
                 }
                 if (note.trim().length < 2) {
-                  toast.error("Write a note first");
+                  toast.error(t("doctor.validation.writeNoteFirst"));
                   return;
                 }
                 add.mutate();
               }}
             >
-              <h2 className="font-display text-sm font-semibold">New clinical note</h2>
+              <h2 className="font-display text-sm font-semibold">{t("doctor.notes.newNote")}</h2>
               <div className="grid gap-3 sm:grid-cols-[minmax(0,260px)_1fr]">
                 <div className="space-y-1.5">
-                  <Label htmlFor="note-patient">Patient</Label>
+                  <Label htmlFor="note-patient">{t("doctor.field.patient")}</Label>
                   <Select value={patientId} onValueChange={setPatientId}>
                     <SelectTrigger id="note-patient">
-                      <SelectValue placeholder="Select patient" />
+                      <SelectValue placeholder={t("doctor.patients.selectPatient")} />
                     </SelectTrigger>
                     <SelectContent>
                       {patients.map((p) => (
@@ -113,18 +115,18 @@ function DoctorNotesPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="note-body">Note</Label>
+                  <Label htmlFor="note-body">{t("doctor.notes.noteLabel")}</Label>
                   <Textarea
                     id="note-body"
                     rows={3}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Assessment, plan changes, observations…"
+                    placeholder={t("doctor.notes.notePlaceholder")}
                   />
                 </div>
               </div>
               <Button type="submit" size="sm" disabled={add.isPending}>
-                Save note
+                {t("doctor.notes.saveNote")}
               </Button>
             </form>
 
@@ -133,8 +135,8 @@ function DoctorNotesPage() {
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search notes, patient name or MRN"
-                aria-label="Search clinical notes"
+                placeholder={t("doctor.notes.searchPlaceholder")}
+                aria-label={t("doctor.notes.searchAria")}
                 className="h-9"
               />
             </div>
@@ -144,7 +146,7 @@ function DoctorNotesPage() {
             ) : notes.isError ? (
               <ErrorState message={(notes.error as Error)?.message} onRetry={() => notes.refetch()} />
             ) : rows.length === 0 ? (
-              <EmptyState title="No clinical notes" description="Notes you write appear here." />
+              <EmptyState title={t("doctor.notes.emptyTitle")} description={t("doctor.notes.emptyDesc")} />
             ) : (
               <ul className="space-y-2">
                 {rows.map((n) => (
@@ -159,7 +161,7 @@ function DoctorNotesPage() {
                       </Link>
                       <div className="flex items-center gap-2">
                         <Badge variant={n.mine ? "secondary" : "outline"}>
-                          {n.mine ? "You" : (n.doctorName ?? "Care team")}
+                          {n.mine ? t("doctor.notes.you") : (n.doctorName ?? t("doctor.notes.careTeam"))}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
                           {new Date(n.created_at).toLocaleString()}
