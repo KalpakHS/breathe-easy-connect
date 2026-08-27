@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/i18n";
 import {
   Select,
   SelectContent,
@@ -42,12 +43,13 @@ export const Route = createFileRoute("/_authenticated/doctor/reports")({
 });
 
 function DoctorReportsPage() {
+  const t = useT();
   const [patientId, setPatientId] = useState("");
   const [days, setDays] = useState(7);
   const [filterPatient, setFilterPatient] = useState("all");
 
   return (
-    <DoctorPage title="Clinical Reports" subtitle="Vitals, adherence and alert summaries">
+    <DoctorPage title={t("doctor.reports.title")} subtitle={t("doctor.reports.subtitle")}>
       {({ patients, signedIn }) => {
         const qc = useQueryClient();
         const reports = useQuery({
@@ -59,7 +61,7 @@ function DoctorReportsPage() {
         const generate = useMutation({
           mutationFn: () => buildReport({ data: { patientId, days: Number(days) } }),
           onSuccess: () => {
-            toast.success("Report generated");
+            toast.success(t("doctor.reports.generated"));
             void qc.invalidateQueries({ queryKey: ["doctor-reports"] });
           },
           onError: (e: Error) => toast.error(e.message),
@@ -80,17 +82,17 @@ function DoctorReportsPage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!patientId) {
-                  toast.error("Choose a patient");
+                  toast.error(t("doctor.validation.choosePatient"));
                   return;
                 }
                 generate.mutate();
               }}
             >
               <div className="min-w-[240px] space-y-1.5">
-                <Label htmlFor="report-patient">Patient</Label>
+                <Label htmlFor="report-patient">{t("doctor.field.patient")}</Label>
                 <Select value={patientId} onValueChange={setPatientId}>
                   <SelectTrigger id="report-patient">
-                    <SelectValue placeholder="Select patient" />
+                    <SelectValue placeholder={t("doctor.patients.selectPatient")} />
                   </SelectTrigger>
                   <SelectContent>
                     {patients.map((p) => (
@@ -102,7 +104,7 @@ function DoctorReportsPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="report-range">Range (days)</Label>
+                <Label htmlFor="report-range">{t("doctor.reports.rangeDays")}</Label>
                 <Input
                   id="report-range"
                   type="number"
@@ -114,20 +116,20 @@ function DoctorReportsPage() {
                 />
               </div>
               <Button type="submit" disabled={generate.isPending}>
-                <FileText className="mr-2 size-4" aria-hidden /> Generate report
+                <FileText className="mr-2 size-4" aria-hidden /> {t("doctor.reports.generate")}
               </Button>
             </form>
 
             <div className="panel flex flex-wrap items-center gap-3 p-4">
               <Label htmlFor="report-filter" className="text-sm">
-                Filter
+                {t("doctor.reports.filter")}
               </Label>
               <Select value={filterPatient} onValueChange={setFilterPatient}>
                 <SelectTrigger id="report-filter" className="w-64">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All patients</SelectItem>
+                  <SelectItem value="all">{t("doctor.reports.allPatients")}</SelectItem>
                   {patients.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.full_name}
@@ -146,8 +148,8 @@ function DoctorReportsPage() {
               />
             ) : rows.length === 0 ? (
               <EmptyState
-                title="No reports yet"
-                description="Generate a clinical report to summarise vitals, adherence and alerts."
+                title={t("doctor.reports.emptyTitle")}
+                description={t("doctor.reports.emptyDesc")}
               />
             ) : (
               <ul className="space-y-2">
@@ -164,7 +166,7 @@ function DoctorReportsPage() {
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{r.kind}</Badge>
                         <Badge variant={r.mine ? "secondary" : "outline"}>
-                          {r.mine ? "Requested by you" : "Care team"}
+                          {r.mine ? t("doctor.reports.requestedByYou") : t("doctor.reports.careTeam")}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
                           {new Date(r.created_at).toLocaleString()}
@@ -174,25 +176,33 @@ function DoctorReportsPage() {
                           variant="outline"
                           onClick={() => exportReport(r.payload, "pdf")}
                         >
-                          <FileDown className="mr-2 size-3.5" aria-hidden /> PDF
+                          <FileDown className="mr-2 size-3.5" aria-hidden /> {t("doctor.reports.pdf")}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => exportReport(r.payload, "csv")}
                         >
-                          <FileSpreadsheet className="mr-2 size-3.5" aria-hidden /> CSV
+                          <FileSpreadsheet className="mr-2 size-3.5" aria-hidden /> {t("doctor.reports.csv")}
                         </Button>
                       </div>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {r.summary.samples ?? 0} samples · avg SpO₂ {r.summary.avgSpo2 ?? "--"}% · min{" "}
-                      {r.summary.minSpo2 ?? "--"}% · avg HR {r.summary.avgBpm ?? "--"} ·{" "}
-                      {r.summary.alerts ?? 0} alerts · {r.summary.sessions ?? 0} sessions
+                      {t("doctor.reports.summaryLine", {
+                        samples: r.summary.samples ?? 0,
+                        avgSpo2: r.summary.avgSpo2 ?? "--",
+                        minSpo2: r.summary.minSpo2 ?? "--",
+                        avgBpm: r.summary.avgBpm ?? "--",
+                        alerts: r.summary.alerts ?? 0,
+                        sessions: r.summary.sessions ?? 0,
+                      })}
                       {r.range_start
-                        ? ` · ${new Date(r.range_start).toLocaleDateString()} → ${
-                            r.range_end ? new Date(r.range_end).toLocaleDateString() : "now"
-                          }`
+                        ? t("doctor.reports.summaryRange", {
+                            start: new Date(r.range_start).toLocaleDateString(),
+                            end: r.range_end
+                              ? new Date(r.range_end).toLocaleDateString()
+                              : t("doctor.reports.now"),
+                          })
                         : ""}
                     </p>
                   </li>
@@ -208,7 +218,7 @@ function DoctorReportsPage() {
 
 function exportReport(payload: unknown, format: "pdf" | "csv") {
   if (!payload || typeof payload !== "object") {
-    toast.error("This report has no stored payload to export.");
+    toast.error(translateFallback());
     return;
   }
   try {
