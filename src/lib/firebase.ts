@@ -3,7 +3,8 @@
  *
  * Holds ESP32 IoT telemetry + relay control ONLY. All application/business
  * data (auth, roles, patients, care plans, reports…) stays in Supabase.
- * Configuration comes from VITE_FIREBASE_* environment variables.
+ * Public database endpoint is fixed to the hardware project; remaining browser
+ * configuration comes from VITE_FIREBASE_* environment variables.
  */
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getDatabase, type Database } from "firebase/database";
@@ -11,7 +12,7 @@ import { getDatabase, type Database } from "firebase/database";
 const config = {
   apiKey: import.meta.env['VITE_FIREBASE_API_KEY'] as string | undefined,
   authDomain: import.meta.env['VITE_FIREBASE_AUTH_DOMAIN'] as string | undefined,
-  databaseURL: import.meta.env['VITE_FIREBASE_DATABASE_URL'] as string | undefined,
+  databaseURL: "https://smartneb-d98e1-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: import.meta.env['VITE_FIREBASE_PROJECT_ID'] as string | undefined,
   storageBucket: import.meta.env['VITE_FIREBASE_STORAGE_BUCKET'] as string | undefined,
   messagingSenderId: import.meta.env['VITE_FIREBASE_MESSAGING_SENDER_ID'] as string | undefined,
